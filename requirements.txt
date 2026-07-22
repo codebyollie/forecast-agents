@@ -1,0 +1,11 @@
+click>=8.0
+pyyaml>=6.0
+fastapi
+uvicorn[standard]
+httpx
+tiktoken
+pydantic>=2.0
+websockets
+eth-account
+pytest
+pytest-asyncio

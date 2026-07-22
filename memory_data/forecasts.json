@@ -1,0 +1,63 @@
+[
+  {
+    "market_id": "eth_gas_below_20_gwei",
+    "probability": 0.5,
+    "confidence": {
+      "score": 0.5,
+      "factors": {
+        "base_average_confidence": 0.5,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-06T15:28:11.272948",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.5,
+        "confidence": 0.5,
+        "reasoning": "Raw output: Error: OpenAI API Key not configured...."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.5,
+        "confidence": 0.5,
+        "reasoning": "Raw output: Error: OpenAI API Key not configured...."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.5,
+        "confidence": 0.5,
+        "reasoning": "Raw output: Error: OpenAI API Key not configured...."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.5,
+        "confidence": 0.5,
+        "reasoning": "Raw output: Error: OpenAI API Key not configured...."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.5,
+        "confidence": 0.5,
+        "reasoning": "Raw output: Error: OpenAI API Key not configured...."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.5,
+        "confidence": 0.5,
+        "reasoning": "Raw output: Error: OpenAI API Key not configured...."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.5,
+        "confidence": 0.5,
+        "reasoning": "Raw output: Error: OpenAI API Key not configured...."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.5,
+      "summary_reasoning": "Consensus Probability: 50.0% (Confidence: 50.0%)\n\nAgent breakdowns:\n- **news** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **social** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **reddit** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **research** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **macro** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **onchain** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **market** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\""
+    }
+  }
+]

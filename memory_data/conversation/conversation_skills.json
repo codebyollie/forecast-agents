@@ -1,0 +1,194 @@
+{
+  "general_skills": [
+    {
+      "name": "clarify-ambiguous-requests",
+      "description": "Use when the user's request is ambiguous, under-specified, or could be interpreted in multiple ways. Ask exactly one focused clarifying question before proceeding.",
+      "content": "## Clarify Ambiguous Requests\n\nWhen the task or constraint is unclear, do not guess — ask.\n\n**Process:**\n1. Identify the single most important ambiguity that would change your approach.\n2. Ask exactly one targeted question. Do not ask several at once.\n3. Wait for the user's answer before proceeding.\n\n**Example triggers:** vague scope (\"make it better\"), missing required input (file path, API key, model name), conflicting constraints, unknown audience.\n\n**Anti-pattern:** Proceeding with assumptions and delivering the wrong result."
+    },
+    {
+      "name": "structured-step-by-step-reasoning",
+      "description": "Use for any problem that involves multiple steps, tradeoffs, or non-trivial logic. Think out loud before answering to improve accuracy and transparency.",
+      "content": "## Structured Step-by-Step Reasoning\n\nFor non-trivial problems, reason explicitly before giving the final answer.\n\n**Steps:**\n1. Restate the core question in your own words.\n2. Identify the key sub-problems or decision points.\n3. Work through each sub-problem in order.\n4. Check your intermediate results for consistency.\n5. Summarize the conclusion clearly.\n\n**Especially useful for:** math, logic puzzles, multi-constraint planning, debugging, architecture decisions.\n\n**Anti-pattern:** Jumping to the answer without showing the reasoning chain."
+    },
+    {
+      "name": "verify-before-irreversible-action",
+      "description": "Use before taking any action that is hard to reverse: deleting files, overwriting data, sending messages, pushing to remote, modifying production systems.",
+      "content": "## Verify Before Irreversible Action\n\nBefore executing any destructive or hard-to-undo operation, pause and confirm.\n\n**Checklist:**\n- State explicitly what you are about to do and why.\n- Identify what cannot be undone if this goes wrong.\n- Ask the user to confirm if the action is significant.\n- Prefer dry-run or preview modes when available (`git diff`, `--dry-run`, staging environments).\n\n**Examples of irreversible actions:** `rm -rf`, `git push --force`, `DROP TABLE`, sending an email, publishing a post.\n\n**Anti-pattern:** Silently executing destructive operations without a confirmation step."
+    },
+    {
+      "name": "graceful-error-recovery",
+      "description": "Use when a tool call, command, or API request fails. Diagnose the root cause systematically before retrying or changing approach.",
+      "content": "## Graceful Error Recovery\n\nWhen something fails, diagnose before retrying.\n\n**Process:**\n1. Read the full error message — do not skip the stack trace.\n2. Identify the root cause: typo, missing dependency, permission, network, logic bug?\n3. Fix the root cause, not just the symptom.\n4. If the fix is uncertain, try the simplest hypothesis first.\n5. If two retries fail, step back and consider an alternative approach.\n\n**Anti-patterns:**\n- Retrying the same failed call in a loop.\n- Swallowing errors silently with bare `except: pass`.\n- Blaming the environment before checking your own code."
+    },
+    {
+      "name": "audience-aware-communication",
+      "description": "Use when writing any explanation, documentation, or response that will be read by someone else. Match vocabulary, depth, and format to the audience's expertise level.",
+      "content": "## Audience-Aware Communication\n\nBefore writing, consider who will read this.\n\n**Questions to ask:**\n- Expert or beginner? Use jargon only if the audience knows it.\n- Needs to act or just understand? Action-oriented writing uses imperative mood.\n- Reading for reference or scanning? Use headers, bullets, and code blocks.\n\n**Adaptation rules:**\n- Beginners: define terms, use analogies, avoid acronyms.\n- Experts: skip basics, link to references, focus on the non-obvious.\n- Mixed audience: lead with the executive summary, put details in sections.\n\n**Anti-pattern:** Writing at your own knowledge level without adjusting for the reader."
+    }
+  ],
+  "task_specific_skills": {
+    "coding": [
+      {
+        "name": "git-workflow",
+        "description": "Use when working with git: making commits, creating branches, resolving merge conflicts, opening pull requests, or reviewing diffs.",
+        "content": "## Git Workflow Best Practices\n\n**Commits:**\n- Write commit messages in imperative mood: `Add feature X`, not `Added feature X`.\n- One logical change per commit. Do not bundle unrelated changes.\n- Stage specific files (`git add <file>`), not `git add .` blindly.\n\n**Branches:**\n- Branch from the latest main/master: `git checkout -b feature/my-change`.\n- Keep branches short-lived; merge or rebase frequently.\n\n**Pull Requests:**\n- Include a short description of *why*, not just *what*.\n- Reference related issues (`Closes #123`).\n- Keep PRs focused — one feature or fix per PR.\n\n**Never:** force-push to shared branches, skip hooks with `--no-verify`, or commit secrets."
+      },
+      {
+        "name": "debug-systematically",
+        "description": "Use when diagnosing a bug, unexpected behavior, or test failure. Follow a structured debugging process instead of randomly changing code.",
+        "content": "## Debug Systematically\n\n**Process:**\n1. **Reproduce** the bug with the smallest possible input.\n2. **Isolate** — narrow down which component/function causes it.\n3. **Hypothesize** — form a specific, falsifiable hypothesis.\n4. **Test** — verify or disprove the hypothesis with a minimal experiment.\n5. **Fix** — address the root cause, not just the symptom.\n6. **Verify** — re-run the failing test and related tests.\n\n**Useful tools:** `print`/`logging`, `pdb`/`ipdb`, unit tests, git bisect.\n\n**Anti-patterns:**\n- Changing multiple things at once and not knowing what fixed it.\n- Ignoring related test failures.\n- Commenting out code instead of understanding it."
+      },
+      {
+        "name": "secure-code-review",
+        "description": "Use when reviewing or writing code that handles user input, authentication, file I/O, network requests, or database queries. Check for common security vulnerabilities.",
+        "content": "## Secure Code Review Checklist\n\n**Input Validation:**\n- Never trust user-supplied input; validate type, length, and format at boundaries.\n- Use parameterized queries — never string-interpolate SQL.\n- Sanitize before rendering HTML to prevent XSS.\n\n**Secrets & Credentials:**\n- No hardcoded passwords, API keys, or tokens in source code.\n- Use environment variables or a secrets manager.\n- Check `.gitignore` before adding any config files.\n\n**Dependencies:**\n- Pin dependency versions; audit with `pip audit` or `npm audit`.\n- Minimize surface area: remove unused packages.\n\n**Auth:**\n- Verify authorization on every protected endpoint, not just at login.\n- Use short-lived tokens; implement refresh flows."
+      },
+      {
+        "name": "test-before-ship",
+        "description": "Use when implementing a new feature or fixing a bug. Write or update tests before marking the task done.",
+        "content": "## Test Before Ship\n\n**Test pyramid:**\n- Unit tests for pure functions and business logic (fast, many).\n- Integration tests for service interactions and DB queries (medium).\n- End-to-end tests for critical user journeys (slow, few).\n\n**Test quality checklist:**\n- Does the test actually fail when the code is broken?\n- Does it cover the happy path AND the most likely error cases?\n- Is the test name descriptive enough to diagnose a failure from the name alone?\n\n**For bug fixes:** add a regression test that reproduces the bug before fixing it.\n\n**Anti-patterns:**\n- Tests that only test the mock, not the real behavior.\n- Skipping tests because \"it probably works\"."
+      }
+    ],
+    "research": [
+      {
+        "name": "source-evaluation",
+        "description": "Use when presenting information from external sources, citing research, or answering factual questions. Assess source credibility and recency before relying on it.",
+        "content": "## Source Evaluation\n\n**CRAAP criteria (quick version):**\n- **Currency:** Is the source recent enough for this topic? (Technology: < 2 years; science: check if superseded)\n- **Relevance:** Does it directly address the question?\n- **Authority:** Is the author or organization credible in this domain?\n- **Accuracy:** Is it peer-reviewed, cited, or verifiable from other sources?\n- **Purpose:** Is it informational vs. promotional vs. opinion?\n\n**Red flags:** anonymous authorship, no citations, sensational language, single-source claims.\n\n**Best practice:** triangulate important facts across 2–3 independent sources before asserting them."
+      },
+      {
+        "name": "structured-research-workflow",
+        "description": "Use when conducting research on a topic from scratch: literature review, competitive analysis, technical due diligence, or fact-finding.",
+        "content": "## Structured Research Workflow\n\n1. **Define scope** — Write the specific question you are trying to answer. Avoid scope creep.\n2. **Search broadly first** — Use multiple search strategies and keywords.\n3. **Filter ruthlessly** — Keep only sources that directly address the question.\n4. **Read deeply** — Skim abstracts/intros; read in full only when clearly relevant.\n5. **Synthesize, don't transcribe** — Group findings by theme; note agreements and conflicts.\n6. **Cite** — Record source URL/DOI at time of reading; don't reconstruct later.\n7. **Flag uncertainty** — Clearly separate what is established vs. contested vs. unknown.\n\n**Anti-pattern:** Reporting the first search result without checking alternatives."
+      },
+      {
+        "name": "uncertainty-acknowledgment",
+        "description": "Use when you are not sure about a fact, have outdated knowledge, or the question is contested. Explicitly communicate the level of confidence instead of asserting uncertain things as fact.",
+        "content": "## Acknowledge Uncertainty\n\n**Calibrated language:**\n- High confidence: `X is Y` or `Research shows X`\n- Medium confidence: `X is likely Y` or `Evidence suggests X`\n- Low confidence: `X may be Y, but I'm not certain` or `I don't have reliable information on X`\n\n**When to say \"I don't know\":**\n- Events after your training cutoff.\n- Highly specific or niche facts you cannot verify.\n- Contested topics where experts disagree.\n\n**Never:** state uncertain things as definitive facts, hallucinate citations, or make up plausible-sounding but unverified details."
+      }
+    ],
+    "data_analysis": [
+      {
+        "name": "data-validation-first",
+        "description": "Use before any data analysis, transformation, or modeling. Always inspect and validate the data before drawing conclusions or writing transformations.",
+        "content": "## Data Validation First\n\nBefore writing any analysis code, understand the data:\n\n```python\n# Always run these first\ndf.shape          # rows x columns\ndf.dtypes         # column types\ndf.isnull().sum() # missing values per column\ndf.describe()     # statistics for numeric columns\ndf.head()         # sample rows\n```\n\n**Key questions:**\n- Are there nulls in columns you'll join or filter on?\n- Are numeric columns stored as strings? (parse_dates, astype)\n- Are there unexpected duplicates (check primary key uniqueness)?\n- Does the row count match your expectation from the source?\n\n**Anti-pattern:** Running `.groupby().sum()` without first checking for nulls in the groupby key."
+      },
+      {
+        "name": "sql-best-practices",
+        "description": "Use when writing SQL queries: selects, joins, aggregations, window functions, or schema modifications.",
+        "content": "## SQL Best Practices\n\n**Query quality:**\n- Use `SELECT col1, col2` — never `SELECT *` in production code.\n- Use CTEs (`WITH`) for readability instead of deeply nested subqueries.\n- Filter early: apply `WHERE` before `JOIN` when possible to reduce data scanned.\n- Use `EXPLAIN` / `EXPLAIN ANALYZE` to inspect query plans for slow queries.\n\n**Safety:**\n- Always use parameterized queries from application code — never string interpolation.\n- Wrap destructive operations (`DELETE`, `UPDATE`, `DROP`) in a transaction.\n- Test on a staging/dev environment before running on production.\n\n**Naming:** `snake_case` for tables/columns, descriptive names, consistent pluralization."
+      },
+      {
+        "name": "visualization-selection",
+        "description": "Use when creating charts, plots, or dashboards. Choose the visualization type that best communicates the data relationship.",
+        "content": "## Visualization Selection Guide\n\n| Goal | Chart Type |\n|------|------------|\n| Compare categories | Bar chart (horizontal if many labels) |\n| Show distribution | Histogram, box plot, violin plot |\n| Show trend over time | Line chart |\n| Show correlation | Scatter plot, heatmap |\n| Show part-to-whole | Pie (<=5 slices), stacked bar |\n\n**Principles:**\n- Label axes and include units.\n- Use color purposefully — not just for decoration.\n- Avoid 3D charts; they distort perception.\n- Start y-axis at 0 for bar charts (truncated bars mislead).\n- Use a colorblind-safe palette (e.g., `viridis`, `colorbrewer`)."
+      }
+    ],
+    "security": [
+      {
+        "name": "input-validation-and-sanitization",
+        "description": "Use when implementing any endpoint, form handler, CLI tool, or function that accepts external input. Validate and sanitize all untrusted data before processing.",
+        "content": "## Input Validation and Sanitization\n\n**Validation principles:**\n- Validate at the system boundary (API layer, form handler) — not deep in business logic.\n- Validate type, range, length, and format explicitly.\n- Reject unexpected input by default (allowlist > denylist).\n\n**SQL injection prevention:** Always use parameterized queries or an ORM.\n\n**XSS prevention:** Escape HTML output; use Content-Security-Policy headers; avoid `innerHTML` with user data.\n\n**Path traversal prevention:** Resolve paths to canonical form and verify they are under the expected directory.\n\n```python\nimport os\nbase = '/allowed/dir'\ncanonical = os.path.realpath(os.path.join(base, user_input))\nassert canonical.startswith(base + os.sep)\n```"
+      },
+      {
+        "name": "secrets-management",
+        "description": "Use when handling API keys, passwords, tokens, private keys, or any sensitive credential. Never hardcode secrets in source code.",
+        "content": "## Secrets Management\n\n**Rules:**\n1. **Never** hardcode secrets in source files, configs committed to git, or logs.\n2. Use environment variables for local development (`python-dotenv`).\n3. Use a secrets manager (AWS Secrets Manager, HashiCorp Vault, 1Password CLI) in production.\n4. Add `.env` and `*.pem` to `.gitignore` before the first commit.\n5. Rotate secrets immediately if they are exposed (leaked in a commit, log, or error message).\n\n**Scanning:** Use `ggshield`, `truffleHog`, or `git-secrets` in CI to block secret commits.\n\n**Anti-patterns:**\n- `os.environ.get('KEY', 'hardcoded_default')` in production code.\n- Logging full request/response bodies that may contain tokens."
+      },
+      {
+        "name": "auth-and-authorization-patterns",
+        "description": "Use when implementing authentication (login, token issuance) or authorization (access control, permissions). Apply correct patterns for JWTs, OAuth2, session management, and RBAC.",
+        "content": "## Auth & Authorization Patterns\n\n**Authentication (who are you?):**\n- Use a battle-tested library — do not roll your own crypto.\n- Hash passwords with bcrypt/argon2; never MD5/SHA1 for passwords.\n- Use short-lived JWTs (15–60 min) with refresh tokens; store refresh tokens securely.\n- Implement MFA for sensitive operations.\n\n**Authorization (what can you do?):**\n- Check authorization on every request, not just at login.\n- Enforce RBAC or ABAC at the service layer, not the UI.\n- Apply principle of least privilege: grant minimal permissions needed.\n\n**OAuth2 / OIDC:**\n- Use the Authorization Code flow with PKCE for user-facing apps.\n- Validate `iss`, `aud`, `exp`, and `nonce` claims on every token.\n\n**Session management:**\n- Regenerate session ID after login (session fixation prevention).\n- Set `HttpOnly` and `Secure` flags on session cookies."
+      }
+    ],
+    "communication": [
+      {
+        "name": "professional-email-drafting",
+        "description": "Use when drafting emails, Slack messages, announcements, or any external/internal communication. Apply professional structure and appropriate tone.",
+        "content": "## Professional Email Drafting\n\n**Structure:**\n1. **Subject line:** Specific and scannable. `[Action needed] Deadline for X by Friday` beats `Update`.\n2. **Opening:** One sentence establishing context or purpose.\n3. **Body:** Key information — what happened, what decision was made, what is needed.\n4. **Clear ask:** One explicit call to action with a deadline if applicable.\n5. **Closing:** Professional sign-off matching the relationship.\n\n**Tone calibration:**\n- Formal (executives, clients, first contact): no slang, complete sentences.\n- Semi-formal (team members, regular contacts): casual but professional.\n\n**Length:** One screen or less. Use bullets for multiple items."
+      },
+      {
+        "name": "technical-writing-clarity",
+        "description": "Use when writing documentation, READMEs, technical specs, runbooks, or any text that explains a system or process to other engineers.",
+        "content": "## Technical Writing for Clarity\n\n**Principles:**\n- **Lead with the purpose:** What is this document for and who is it for?\n- **One idea per paragraph.** Long paragraphs hide key information.\n- **Use active voice:** `Run the script` not `The script should be run`.\n- **Concrete over abstract:** Show an example rather than describing it abstractly.\n- **Avoid jargon** you have not defined unless the audience definitely knows it.\n\n**Structure for runbooks/how-tos:**\n1. Overview (1–2 sentences)\n2. Prerequisites\n3. Steps (numbered, imperative)\n4. Verification / expected output\n5. Troubleshooting\n\n**Anti-patterns:** Documenting `what` without `why`, outdated examples, walls of text without headers."
+      },
+      {
+        "name": "async-communication-etiquette",
+        "description": "Use when writing messages in async channels (Slack, GitHub issues, email threads) where the reader may not have context and cannot ask follow-up questions immediately.",
+        "content": "## Async Communication Etiquette\n\n**Make messages self-contained:**\n- Include enough context that the reader doesn't need to chase down previous messages.\n- Link to relevant issues, PRs, docs, or code rather than assuming the reader has them open.\n\n**Structure for complex messages:**\n- **Context:** 1–2 sentences on the situation.\n- **Problem/question:** What specifically do you need?\n- **Options considered** (for decisions): What alternatives exist?\n- **Deadline:** By when do you need a response?\n\n**Anti-patterns:**\n- `Hey, got a sec?` without stating the topic (forces a round trip).\n- Tagging @channel for non-urgent messages."
+      }
+    ],
+    "automation": [
+      {
+        "name": "idempotent-script-design",
+        "description": "Use when writing scripts, cron jobs, data pipelines, or any automated process that may be run multiple times. Design operations to be safely re-runnable.",
+        "content": "## Idempotent Script Design\n\nAn idempotent operation produces the same result whether run once or ten times.\n\n**Techniques:**\n- **Check before create:** `CREATE TABLE IF NOT EXISTS`, `mkdir -p`, check file existence before writing.\n- **Upsert instead of insert:** Use `INSERT ... ON CONFLICT DO UPDATE` in SQL.\n- **Atomic writes:** Write to a temp file, then rename — prevents corrupt partial output.\n- **Track progress:** Write a completion marker or checkpoint so reruns skip done work.\n\n**Testing idempotency:** Run your script twice on the same input and verify the output is identical.\n\n**Anti-patterns:**\n- Appending to a file without checking if the data is already there.\n- Inserting rows without checking for duplicates."
+      },
+      {
+        "name": "robust-error-handling-in-scripts",
+        "description": "Use when writing shell scripts, Python automation, or any unattended batch job. Ensure failures are detected, logged, and handled — not silently ignored.",
+        "content": "## Robust Error Handling in Scripts\n\n**Shell scripts:**\n```bash\nset -euo pipefail  # Exit on error, undefined var, pipe failure\ntrap 'echo \"Failed at line $LINENO\"' ERR\n```\n\n**Python scripts:**\n```python\nimport logging, sys\nlogging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')\ntry:\n    main()\nexcept Exception as e:\n    logging.exception(\"Unhandled error: %s\", e)\n    sys.exit(1)\n```\n\n**Retry with backoff** for transient network/API failures:\n```python\nfrom tenacity import retry, stop_after_attempt, wait_exponential\n@retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=10))\ndef call_api(): ...\n```"
+      },
+      {
+        "name": "structured-logging-and-observability",
+        "description": "Use when building production services, pipelines, or automation that needs to be debugged, monitored, or audited. Add structured logs, metrics, and health checks.",
+        "content": "## Structured Logging and Observability\n\n**Log levels:**\n- `DEBUG`: detailed diagnostic (off in production)\n- `INFO`: normal operation milestones\n- `WARNING`: recoverable unexpected state\n- `ERROR`: operation failed, action needed\n\n**Structured logs (JSON) over free-form text:**\n```python\nimport structlog\nlog = structlog.get_logger()\nlog.info(\"request_complete\", method=\"POST\", path=\"/api/data\", status=200, latency_ms=42)\n```\n\n**Metrics to expose:** request rate, error rate, latency (p50/p95/p99), queue depth.\n\n**Health check endpoint:** `/health` returning `{\"status\": \"ok\"}` — required for load balancers.\n\n**Anti-pattern:** Logging only on error; you can't diagnose what you didn't observe."
+      }
+    ],
+    "productivity": [
+      {
+        "name": "task-decomposition",
+        "description": "Use when a user presents a large, vague goal. Break it into concrete, ordered sub-tasks before starting any work.",
+        "content": "## Task Decomposition\n\nBefore starting a large goal, decompose it.\n\n**Steps:**\n1. Restate the end goal in one sentence.\n2. List the concrete sub-tasks needed to reach it, in order.\n3. Identify dependencies (which tasks block others).\n4. Estimate relative complexity and flag any unknowns.\n5. Confirm the breakdown with the user before executing.\n\n**Anti-pattern:** Starting immediately on step 1 of an unclear plan and discovering halfway through that the approach was wrong."
+      },
+      {
+        "name": "prioritize-by-impact",
+        "description": "Use when the user has a list of tasks and needs help deciding what to do first. Rank by impact and urgency, not just order of mention.",
+        "content": "## Prioritize by Impact\n\nNot all tasks are equal — help the user focus on what matters most.\n\n**Framework (2×2 matrix):**\n- High impact + urgent → do first\n- High impact + not urgent → schedule\n- Low impact + urgent → delegate or batch\n- Low impact + not urgent → defer or drop\n\n**Questions to ask:**\n- What happens if this isn't done today? This week?\n- Which task unlocks the most other work when completed?\n- Is there a hard deadline or dependency?\n\n**Anti-pattern:** Working through a list in order of appearance rather than importance."
+      },
+      {
+        "name": "structured-progress-update",
+        "description": "Use when summarizing progress on an ongoing project or multi-step task. Give a clear, scannable status report.",
+        "content": "## Structured Progress Update\n\nWhen reporting on work in progress, use a consistent structure:\n\n**Format:**\n- **Done:** List completed items concisely.\n- **In progress:** What is currently being worked on and expected completion.\n- **Blocked:** Any items waiting on external input — state exactly what is needed.\n- **Next:** The immediately next action item.\n\n**Principles:**\n- Be specific: `Completed API integration for /users endpoint` not `worked on API`.\n- Surface blockers proactively — don't wait to be asked.\n- Keep it scannable: bullets over paragraphs."
+      }
+    ],
+    "agentic": [
+      {
+        "name": "tool-selection-strategy",
+        "description": "Use when deciding which tools to call in an agentic workflow. Choose the minimal, most direct tool for each step and avoid redundant or speculative tool calls.",
+        "content": "## Tool Selection Strategy\n\n**Principles:**\n- **Least tool principle:** Use the most specific, lightweight tool that accomplishes the goal.\n- **Read before writing:** Always read a file before editing it to understand current state.\n- **Avoid speculative calls:** Don't call a tool \"just to see what happens\". Have a clear hypothesis.\n- **Parallelize independent calls:** If two reads don't depend on each other, fire them simultaneously.\n\n**Decision heuristic:**\n1. Can I answer this from memory/context? No tool call needed.\n2. Is this a file operation? Use Read/Write/Edit tools.\n3. Is this a code search? Use Grep/Glob tools.\n4. Is this a system operation? Use Bash (last resort).\n\n**Anti-pattern:** Using a heavy tool (Agent, Bash) when a lightweight dedicated tool suffices."
+      },
+      {
+        "name": "plan-before-multi-step-execution",
+        "description": "Use before executing a sequence of 3 or more steps, especially when steps are irreversible or depend on each other. Write out the plan and verify it before starting execution.",
+        "content": "## Plan Before Multi-Step Execution\n\nFor complex tasks, plan first and execute second.\n\n**Planning phase:**\n1. Decompose the task into concrete, ordered steps.\n2. Identify dependencies between steps.\n3. Flag irreversible actions that need user confirmation.\n4. Identify what can fail and what the recovery path is.\n\n**Execution phase:**\n- Follow the plan step by step; update it if you discover new information.\n- After each step, verify the expected output before proceeding.\n- If a step fails, re-evaluate the remaining plan — don't blindly continue.\n\n**Anti-pattern:** Starting to execute before understanding the full scope of the task."
+      },
+      {
+        "name": "context-window-management",
+        "description": "Use in long conversations or multi-turn agentic sessions where context may be lost or the conversation is approaching token limits. Summarize, prioritize, and compact context proactively.",
+        "content": "## Context Window Management\n\n**Proactive summarization:**\n- At natural breakpoints, summarize key decisions and state into a compact form.\n- Keep the active context focused on the current task; move resolved context to a summary.\n\n**Prioritization:**\n- Most important: current task description, constraints, and already-confirmed decisions.\n- Less important: verbose tool outputs that have been processed; intermediate reasoning.\n\n**File-based memory:** For long-running sessions, write important state to a file rather than keeping it all in the conversation.\n\n**Avoid:** Repeatedly re-reading large files you already have in context; re-running expensive searches for information already retrieved."
+      }
+    ]
+  },
+  "common_mistakes": [
+    {
+      "name": "avoid-acting-on-assumptions",
+      "description": "Common mistake: proceeding with assumptions about ambiguous requirements instead of asking a clarifying question first.",
+      "content": "## Avoid Acting on Assumptions\n\n**Mistake pattern:** User says something ambiguous → you assume the most likely interpretation → you deliver something → it's wrong.\n\n**Fix:** When requirements are ambiguous, ask ONE clarifying question. The cost of pausing to ask is always lower than the cost of delivering the wrong result.\n\n**Especially risky assumptions:**\n- The target programming language or framework.\n- Whether a file should be overwritten or appended.\n- What \"clean up\" or \"improve\" means in context.\n- Whether a test environment or production is the target."
+    },
+    {
+      "name": "avoid-hallucinating-specifics",
+      "description": "Common mistake: stating specific facts (API endpoints, library versions, config options, function signatures) with false confidence when uncertain.",
+      "content": "## Avoid Hallucinating Specifics\n\n**High-risk categories for hallucination:**\n- Specific API endpoint URLs or request/response schemas.\n- Library version numbers and feature availability per version.\n- Names of real people, organizations, or publications.\n- File paths and environment-specific configuration.\n\n**Prevention:**\n- If unsure of a specific value, say so explicitly.\n- Recommend the user verify against official documentation.\n- Use `<version>` or `<your-endpoint>` as placeholders rather than guessing.\n\n**Anti-pattern:** Confidently stating a URL or function signature that sounds right but does not exist."
+    },
+    {
+      "name": "avoid-scope-creep",
+      "description": "Common mistake: doing unrequested work — refactoring, adding extra features, cleaning up style — when the user asked for a specific, targeted change.",
+      "content": "## Avoid Scope Creep\n\n**Mistake pattern:** User asks to fix a specific bug → you also refactor the function, rename variables, add docstrings, and restructure the file → harder to review, introduces new risk.\n\n**Rule:** Only change what was asked. If you notice other issues while working, mention them as a note rather than silently fixing them.\n\n**Exception:** If a requested change is impossible without fixing a directly blocking dependency, fix the minimum required dependency and explain why.\n\n**Anti-pattern:** `while I'm here, I also improved...` without being asked."
+    },
+    {
+      "name": "do-not-retry-without-diagnosis",
+      "description": "Common mistake: retrying the same failing command or API call without understanding why it failed. This wastes time and may make things worse.",
+      "content": "## Do Not Retry Without Diagnosis\n\n**Mistake pattern:** Tool call fails → retry the same call → fails again → repeat.\n\n**Fix:** After the first failure, read the error message carefully and diagnose the root cause before retrying.\n\n**Questions to ask:**\n- Is this a transient error (network timeout, rate limit)? Retry with backoff.\n- Is this a permanent error (wrong input, missing resource, permission denied)? Fix the cause.\n\n**Anti-pattern:** Blindly retrying or escalating without examining the error output."
+    }
+  ]
+}

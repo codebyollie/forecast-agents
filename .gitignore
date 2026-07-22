@@ -1,0 +1,6 @@
+*.pyc
+__pycache__/
+records/
+wandb/
+memory_data/skills
+robinhood-chain-migration-prompt*.md

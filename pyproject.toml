@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forecast-ai"
+version = "0.1.0"
+description = "Open-Source Multi-Agent Intelligence Infrastructure for Prediction Markets"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "tiktoken",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+# Real-time WebSocket subscriptions
+ws = [
+    "websockets",
+]
+# Onchain integration
+onchain = [
+    "eth-account",
+]
+# Development and tests
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[project.scripts]
+forecast = "forecast_ai.cli.main:forecast"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["forecast_ai*"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E731", "F403", "F405"]

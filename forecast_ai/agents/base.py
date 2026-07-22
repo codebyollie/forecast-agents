@@ -1,0 +1,124 @@
+"""
+Base Forecast Agent implementation.
+
+Defines the core prompt generation and output parsing logic for specialized agents.
+"""
+
+from abc import ABC, abstractmethod
+import json
+import re
+from typing import List, Dict, Any, Optional
+from ..models.evidence import Evidence
+from ..models.prediction import Prediction
+from ..models.confidence import ConfidenceScore
+from ..providers.base import BaseProvider
+from ..config import ForecastConfig
+
+class ForecastAgent(ABC):
+    def __init__(self, name: str, provider: BaseProvider, config: ForecastConfig):
+        self.name = name
+        self.provider = provider
+        self.config = config
+
+    @abstractmethod
+    def get_system_instruction(self) -> str:
+        """
+        Define the specialized system prompt for this agent.
+        """
+        pass
+
+    async def forecast(self, question: str, evidence: List[Evidence]) -> Prediction:
+        """
+        Run the agent prediction flow using LLM.
+        """
+        system_instruction = self.get_system_instruction()
+        
+        # Format evidence context
+        evidence_context = ""
+        if evidence:
+            evidence_context = "AVAILABLE EVIDENCE:\n"
+            for i, ev in enumerate(evidence):
+                evidence_context += f"[{i+1}] Source: {ev.source_name} | Date: {ev.timestamp} | Relevance: {ev.relevance_score:.2f}\n"
+                if ev.title:
+                    evidence_context += f"Title: {ev.title}\n"
+                evidence_context += f"Content: {ev.content}\n"
+                if ev.url:
+                    evidence_context += f"Link: {ev.url}\n"
+                evidence_context += "-" * 40 + "\n"
+        else:
+            evidence_context = "NO DIRECT EXTERNAL EVIDENCE AVAILABLE FOR THIS ANALYSIS.\n"
+
+        user_prompt = f"""
+MARKET QUESTION: "{question}"
+
+{evidence_context}
+
+Please analyze the available evidence relative to the question above.
+You must output a JSON object containing:
+- "probability": A float between 0.0 and 1.0 representing your estimated likelihood of the event resolving to YES.
+- "confidence": A float between 0.0 and 1.0 representing your certainty of this forecast.
+- "reasoning": A detailed explanation of your analysis, highlighting supporting evidence and potential caveats.
+- "warnings": A list of warning messages regarding data sparseness, conflicts, or high volatility.
+
+Return ONLY valid JSON. Do not include markdown wraps or additional conversation.
+"""
+
+        temperature = 0.3
+        if self.name in self.config.agents:
+            temperature = self.config.agents[self.name].temperature
+
+        raw_response = await self.provider.generate(
+            system_prompt=system_instruction,
+            user_prompt=user_prompt,
+            temperature=temperature
+        )
+
+        # Parse JSON output
+        probability = 0.5
+        confidence_val = 0.5
+        reasoning = "Failed to parse agent reasoning."
+        warnings = []
+
+        try:
+            # Clean markdown code block wraps if present
+            cleaned = raw_response.strip()
+            if cleaned.startswith("```"):
+                cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
+                cleaned = re.sub(r"\n```$", "", cleaned)
+            
+            data = json.loads(cleaned.strip())
+            probability = float(data.get("probability", 0.5))
+            confidence_val = float(data.get("confidence", 0.5))
+            reasoning = str(data.get("reasoning", ""))
+            warnings = list(data.get("warnings", []))
+        except Exception:
+            # Fallback regex parsing if JSON fails
+            prob_match = re.search(r'"probability"\s*:\s*(0\.\d+|1\.0|0|1)', raw_response)
+            if prob_match:
+                try:
+                    probability = float(prob_match.group(1))
+                except Exception:
+                    pass
+            
+            conf_match = re.search(r'"confidence"\s*:\s*(0\.\d+|1\.0|0|1)', raw_response)
+            if conf_match:
+                try:
+                    confidence_val = float(conf_match.group(1))
+                except Exception:
+                    pass
+
+            reason_match = re.search(r'"reasoning"\s*:\s*"([^"]+)"', raw_response)
+            if reason_match:
+                reasoning = reason_match.group(1)
+            else:
+                reasoning = f"Raw output: {raw_response[:200]}..."
+
+        confidence = ConfidenceScore(score=confidence_val, warnings=warnings)
+        
+        return Prediction(
+            agent_name=self.name,
+            probability=probability,
+            confidence=confidence,
+            reasoning=reasoning,
+            evidence_used=evidence
+        )

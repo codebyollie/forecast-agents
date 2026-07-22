@@ -1,0 +1,53 @@
+"""
+Watch Pipeline.
+
+Regularly monitors active prediction markets and updates forecasts.
+"""
+
+import asyncio
+import logging
+from typing import List
+from ..config import ForecastConfig
+from .forecast import ForecastPipeline
+from ..polymarket.gamma import GammaClient
+from ..kalshi.client import KalshiClient
+
+logger = logging.getLogger(__name__)
+
+class WatchPipeline:
+    def __init__(self, config: ForecastConfig, forecast_pipeline: ForecastPipeline):
+        self.config = config
+        self.forecast_pipeline = forecast_pipeline
+        self.gamma_client = GammaClient(config.polymarket.gamma_api_url)
+        self.kalshi_client = KalshiClient(config.kalshi.api_base_url)
+        self._running = False
+
+    async def watch_markets(self, category: str, interval_seconds: int = 300):
+        self._running = True
+        logger.info(f"WatchPipeline started for category: {category} (Interval: {interval_seconds}s)")
+        
+        while self._running:
+            try:
+                # Fetch active markets from Polymarket & Kalshi
+                pm_markets = await self.gamma_client.list_markets(active=True, limit=5)
+                kalshi_markets = await self.kalshi_client.fetch_markets(limit=5)
+                
+                tasks = []
+                for market in pm_markets:
+                    tasks.append(self.forecast_pipeline.run_forecast(market.question, market.id))
+                for km in kalshi_markets:
+                    tasks.append(self.forecast_pipeline.run_forecast(km.title, km.ticker))
+
+                if tasks:
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                    for res in results:
+                        if not isinstance(res, Exception):
+                            logger.info(f"Forecast updated: Prob={res.probability * 100:.1f}%, Conf={res.confidence.score * 100:.1f}%")
+
+            except Exception as e:
+                logger.error(f"Error in watch loop: {e}")
+
+            await asyncio.sleep(interval_seconds)
+
+    def stop(self):
+        self._running = False
