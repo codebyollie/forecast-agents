@@ -1,9 +1,5 @@
 # 🔮 Forecast AI
 
-<p align="center">
-  <img src="assets/banner.jpg" alt="Forecast AI Banner" width="100%">
-</p>
-
 ### Open-Source Multi-Agent Intelligence Infrastructure for Prediction Markets
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
