@@ -32,6 +32,8 @@ Rather than querying a single LLM model, Forecast AI deploys specialized agents 
 
 Trade recommendations are formatted for seamless hand-off to your personal **Robinhood Agentic Trading MCP** (`https://agent.robinhood.com/mcp/trading`) session.
 
+$FORAI 0xcc9c1ec224c3824ae5ea699ec72ef5fad4165e49 - official Forecat AI token launched on RobinHood
+
 ---
 
 ## 📚 Documentation Index
