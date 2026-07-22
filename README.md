@@ -9,6 +9,18 @@
 [![X](https://img.shields.io/badge/X-%40forecast__agents-black?style=for-the-badge)](https://x.com/forecast_agents)
 
 <p align="center">
+  <a href="https://railway.app/template/new?template=https://github.com/codebyollie/forecast-agents">
+    <img src="https://railway.app/button.svg" alt="Deploy on Railway">
+  </a>
+  <a href="https://render.com/deploy?repo=https://github.com/codebyollie/forecast-agents">
+    <img src="https://render.com/images/deploy-to-render.svg" alt="Deploy to Render">
+  </a>
+  <a href="https://codespaces.new/codebyollie/forecast-agents">
+    <img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces">
+  </a>
+</p>
+
+<p align="center">
   <b>🌐 Available in other languages:</b><br>
   <a href="assets/README_AR.md">العربية</a> | 
   <a href="assets/README_DE.md">Deutsch</a> | 
@@ -135,6 +147,12 @@ Forecast AI resolves this by deploying **collaborative multi-agent reasoning**. 
 ---
 
 ## 🛠 Installation
+
+### 0. Quick One-Line Automated Installer
+Run the idempotent installer script to automatically clone, install dependencies, and launch `forecast setup`:
+```bash
+curl -sSL https://raw.githubusercontent.com/codebyollie/forecast-agents/main/install.sh | bash
+```
 
 ### 1. Core Editable Installation
 Clone the repository and install the package in development mode:
