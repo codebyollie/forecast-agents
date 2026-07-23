@@ -44,8 +44,6 @@ Rather than querying a single LLM model, Forecast AI deploys specialized agents 
 
 Trade recommendations are formatted for seamless hand-off to your personal **Robinhood Agentic Trading MCP** (`https://agent.robinhood.com/mcp/trading`) session.
 
-$FORAI 0xcc9c1ec224c3824ae5ea699ec72ef5fad4165e49 - official Forecat AI token launched on RobinHood
-
 ---
 
 ## 📚 Documentation Index
@@ -59,6 +57,7 @@ For detailed guides and module specifications, see the [docs/](docs/) directory:
 | [docs/consensus.md](docs/consensus.md) | Mathematical formulation of confidence weighting and calibration. |
 | [docs/deployment.md](docs/deployment.md) | Docker build and container deployment guides. |
 | [docs/examples.md](docs/examples.md) | Python library usage and integration code snippets. |
+| [docs/getting-started-keys.md](docs/getting-started-keys.md) | Configuring LLM provider API keys locally or via environment variables. |
 | [docs/kalshi.md](docs/kalshi.md) | Kalshi API client usage and Robinhood Predict market data mirroring. |
 | [docs/memory.md](docs/memory.md) | Long-term memory storage, Brier scoring, and Bayesian reputation loops. |
 | [docs/polymarket.md](docs/polymarket.md) | Read-only Polymarket Gamma and CLOB integration details. |

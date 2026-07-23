@@ -87,6 +87,6 @@ class ForecastConfig:
     server: ServerConfig = field(default_factory=ServerConfig)
     default_provider: str = "openai"
     fallback_providers: List[str] = field(default_factory=lambda: [
-        "openai", "anthropic", "gemini", "openrouter", "ollama"
+        "gemini"
     ])
 

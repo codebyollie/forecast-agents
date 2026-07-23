@@ -2,6 +2,7 @@
 Interactive setup wizard for Forecast AI.
 """
 
+import os
 import click
 from pathlib import Path
 from ..config import ForecastConfig, ProviderConfig, PolymarketConfig
@@ -17,7 +18,7 @@ class SetupWizard:
         click.secho("Set up your prediction market intelligence infrastructure in minutes.", fg="cyan")
         click.secho("=" * 60, fg="cyan")
 
-        # Load existing config or defaults
+        # Load config with env overrides
         cfg = self.cs.load_config()
 
         # 1. Default LLM Provider Selection
@@ -32,6 +33,11 @@ class SetupWizard:
 
         # Configure selected provider keys
         p_cfg = cfg.providers[provider]
+        env_var_name = f"{provider.upper()}_API_KEY"
+        env_val = os.environ.get(env_var_name)
+        if env_val:
+            click.secho(f"ℹ️ {provider.capitalize()} API Key currently set via environment variable ({env_var_name}).", fg="yellow")
+
         api_key = click.prompt(
             f"Enter API key for {provider} (press enter to skip or keep current)",
             default=p_cfg.api_key if p_cfg.api_key else "",
@@ -53,6 +59,9 @@ class SetupWizard:
             default=cfg.kalshi.api_base_url
         )
         cfg.kalshi.api_base_url = kalshi_url
+
+        if os.environ.get("KALSHI_API_KEY"):
+            click.secho("ℹ️ Kalshi API Key currently set via environment variable (KALSHI_API_KEY).", fg="yellow")
 
         kalshi_key = click.prompt(
             "Kalshi API Key (optional for public market data)",
@@ -88,4 +97,3 @@ class SetupWizard:
         click.secho("🎉 Forecast AI Configuration successfully saved! 🎉", fg="green", bold=True)
         click.secho(f"Config path: {self.cs.config_file}", fg="green")
         click.secho("=" * 60, fg="green")
-

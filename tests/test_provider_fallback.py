@@ -21,6 +21,7 @@ class MockSucceedingProvider(BaseProvider):
 @pytest.mark.asyncio
 async def test_fallback_primary_fails_secondary_succeeds():
     cfg = ForecastConfig()
+    cfg.fallback_providers = ["anthropic", "gemini"]
     pm = ProviderManager(cfg)
 
     # Inject mock providers

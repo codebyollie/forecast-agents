@@ -2,7 +2,7 @@
 Configuration Store for Forecast AI.
 
 Reads and writes configuration options to/from ~/.forecast_ai/config.yaml
-and bridges to the ForecastConfig class.
+and bridges to the ForecastConfig class with Environment Variable override support.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import yaml
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from .config import (
     ForecastConfig,
@@ -47,7 +47,7 @@ def _coerce(value: Any) -> Any:
     return value
 
 class ConfigStore:
-    """Read/write ForecastConfig to/from yaml."""
+    """Read/write ForecastConfig to/from yaml with environment variable overrides."""
 
     def __init__(self, config_file: Path = CONFIG_FILE):
         self.config_file = config_file
@@ -71,6 +71,56 @@ class ConfigStore:
                 yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
         except Exception as e:
             raise RuntimeError(f"Failed to write config file: {e}")
+
+    def apply_env_overrides(self, config: ForecastConfig) -> ForecastConfig:
+        """
+        Apply environment variable overrides to ForecastConfig.
+        Environment variables take precedence over config.yaml file settings.
+        """
+        # Provider API Key & Base URL overrides
+        if os.environ.get("OPENAI_API_KEY"):
+            config.providers["openai"].api_key = os.environ["OPENAI_API_KEY"]
+        if os.environ.get("GEMINI_API_KEY"):
+            config.providers["gemini"].api_key = os.environ["GEMINI_API_KEY"]
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            config.providers["anthropic"].api_key = os.environ["ANTHROPIC_API_KEY"]
+        if os.environ.get("OPENROUTER_API_KEY"):
+            config.providers["openrouter"].api_key = os.environ["OPENROUTER_API_KEY"]
+        if os.environ.get("OLLAMA_API_BASE"):
+            config.providers["ollama"].api_base = os.environ["OLLAMA_API_BASE"]
+
+        # Kalshi overrides
+        if os.environ.get("KALSHI_API_KEY"):
+            config.kalshi.api_key = os.environ["KALSHI_API_KEY"]
+        if os.environ.get("KALSHI_API_BASE_URL"):
+            config.kalshi.api_base_url = os.environ["KALSHI_API_BASE_URL"]
+
+        # Polymarket overrides
+        if os.environ.get("POLYMARKET_GAMMA_API_URL"):
+            config.polymarket.gamma_api_url = os.environ["POLYMARKET_GAMMA_API_URL"]
+        if os.environ.get("POLYMARKET_CLOB_API_URL"):
+            config.polymarket.clob_api_url = os.environ["POLYMARKET_CLOB_API_URL"]
+
+        # Robinhood Agentic overrides
+        if os.environ.get("ROBINHOOD_MCP_ENDPOINT"):
+            config.robinhood_agentic.mcp_endpoint = os.environ["ROBINHOOD_MCP_ENDPOINT"]
+
+        # Server overrides
+        if os.environ.get("SERVER_HOST"):
+            config.server.host = os.environ["SERVER_HOST"]
+        if os.environ.get("SERVER_PORT"):
+            try:
+                config.server.port = int(os.environ["SERVER_PORT"])
+            except ValueError:
+                pass
+        if os.environ.get("SERVER_API_KEY"):
+            config.server.api_key = os.environ["SERVER_API_KEY"]
+
+        # Default provider override
+        if os.environ.get("DEFAULT_PROVIDER"):
+            config.default_provider = os.environ["DEFAULT_PROVIDER"]
+
+        return config
 
     def load_config(self) -> ForecastConfig:
         raw = self.load_raw()
@@ -113,6 +163,8 @@ class ConfigStore:
                     agent = config.agents[name]
                     agent.enabled = bool(a_data.get("enabled", agent.enabled))
                     agent.provider = a_data.get("provider", agent.provider)
+                    if "fallback_providers" in a_data and isinstance(a_data["fallback_providers"], list):
+                        agent.fallback_providers = a_data["fallback_providers"]
                     agent.temperature = float(a_data.get("temperature", agent.temperature))
                     agent.max_sources_to_query = int(a_data.get("max_sources_to_query", agent.max_sources_to_query))
                     agent.weight = float(a_data.get("weight", agent.weight))
@@ -138,15 +190,22 @@ class ConfigStore:
             config.server.host = srv.get("host", config.server.host)
             config.server.port = int(srv.get("port", config.server.port))
             config.server.api_key = srv.get("api_key", config.server.api_key)
+            if "public_feed_monthly_budget_usd" in srv:
+                config.server.public_feed_monthly_budget_usd = float(srv["public_feed_monthly_budget_usd"])
 
         config.default_provider = raw.get("default_provider", config.default_provider)
+        if "fallback_providers" in raw and isinstance(raw["fallback_providers"], list):
+            config.fallback_providers = raw["fallback_providers"]
+
+        # Apply environment variable overrides (takes precedence over config.yaml)
+        config = self.apply_env_overrides(config)
 
         return config
 
     def save_config(self, config: ForecastConfig):
-        # Convert to dictionary representation for yaml serialization
         data = {
             "default_provider": config.default_provider,
+            "fallback_providers": config.fallback_providers,
             "providers": {
                 name: {
                     "provider": p.provider,
@@ -173,6 +232,7 @@ class ConfigStore:
                 name: {
                     "enabled": a.enabled,
                     "provider": a.provider,
+                    "fallback_providers": a.fallback_providers,
                     "temperature": a.temperature,
                     "max_sources_to_query": a.max_sources_to_query,
                     "weight": a.weight,
@@ -193,6 +253,7 @@ class ConfigStore:
                 "host": config.server.host,
                 "port": config.server.port,
                 "api_key": config.server.api_key,
+                "public_feed_monthly_budget_usd": config.server.public_feed_monthly_budget_usd,
             }
         }
         self.save_raw(data)
