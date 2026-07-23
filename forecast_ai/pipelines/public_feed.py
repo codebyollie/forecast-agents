@@ -167,12 +167,12 @@ class PublicFeedRunner:
             )
 
             # Record LLM call count for spend guard
-            num_agent_calls = len(result.predictions)
+            num_agent_calls = len(result.individual_predictions)
             self._record_spend(num_agent_calls)
 
             # Extract per-agent breakdown (summary only)
             agent_breakdown = []
-            for pred in result.predictions:
+            for pred in result.individual_predictions:
                 agent_breakdown.append({
                     "agent_name": pred.agent_name,
                     "probability": round(pred.probability, 4),
