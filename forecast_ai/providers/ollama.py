@@ -4,7 +4,7 @@ Ollama local LLM provider integration.
 
 from typing import Optional
 import httpx
-from .base import BaseProvider
+from .base import BaseProvider, ProviderError
 
 class OllamaProvider(BaseProvider):
     def __init__(self, api_base: str = "http://localhost:11434", model_id: str = "llama3"):
@@ -39,8 +39,13 @@ class OllamaProvider(BaseProvider):
                 resp = await client.post(url, json=payload, timeout=90.0)
                 if resp.status_code == 200:
                     data = resp.json()
-                    return data["message"]["content"]
+                    try:
+                        return data["message"]["content"]
+                    except (KeyError, IndexError) as parse_err:
+                        raise ProviderError("ollama", f"Error parsing response payload: {data}", parse_err)
                 else:
-                    return f"Error from Ollama API: {resp.status_code} - {resp.text}"
+                    raise ProviderError("ollama", f"HTTP {resp.status_code}: {resp.text}")
+            except ProviderError:
+                raise
             except Exception as e:
-                return f"Error calling Ollama Provider: {e}"
+                raise ProviderError("ollama", f"Network or execution error: {e}", e)

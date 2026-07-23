@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "forecast run",
-    "healthcheckPath": "/health",
+    "healthcheckPath": "/healthz",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10

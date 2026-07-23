@@ -4,7 +4,7 @@ OpenRouter LLM provider integration.
 
 from typing import Optional
 import httpx
-from .base import BaseProvider
+from .base import BaseProvider, ProviderError
 
 class OpenRouterProvider(BaseProvider):
     def __init__(self, api_key: str, api_base: str = "https://openrouter.ai/api/v1", model_id: str = "meta-llama/llama-3.1-405b"):
@@ -20,7 +20,7 @@ class OpenRouterProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> str:
         if not self.api_key:
-            return "Error: OpenRouter API Key not configured."
+            raise ProviderError("openrouter", "OpenRouter API Key not configured.")
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -45,8 +45,13 @@ class OpenRouterProvider(BaseProvider):
                 resp = await client.post(f"{self.api_base}/chat/completions", headers=headers, json=payload, timeout=90.0)
                 if resp.status_code == 200:
                     data = resp.json()
-                    return data["choices"][0]["message"]["content"]
+                    try:
+                        return data["choices"][0]["message"]["content"]
+                    except (KeyError, IndexError) as parse_err:
+                        raise ProviderError("openrouter", f"Error parsing response payload: {data}", parse_err)
                 else:
-                    return f"Error from OpenRouter API: {resp.status_code} - {resp.text}"
+                    raise ProviderError("openrouter", f"HTTP {resp.status_code}: {resp.text}")
+            except ProviderError:
+                raise
             except Exception as e:
-                return f"Error calling OpenRouter Provider: {e}"
+                raise ProviderError("openrouter", f"Network or execution error: {e}", e)

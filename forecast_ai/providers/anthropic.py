@@ -4,7 +4,7 @@ Anthropic LLM provider integration.
 
 from typing import Optional
 import httpx
-from .base import BaseProvider
+from .base import BaseProvider, ProviderError
 
 class AnthropicProvider(BaseProvider):
     def __init__(self, api_key: str, api_base: str = "https://api.anthropic.com/v1", model_id: str = "claude-3-5-sonnet-latest"):
@@ -20,7 +20,7 @@ class AnthropicProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> str:
         if not self.api_key:
-            return "Error: Anthropic API Key not configured."
+            raise ProviderError("anthropic", "Anthropic API Key not configured.")
 
         headers = {
             "x-api-key": self.api_key,
@@ -43,8 +43,13 @@ class AnthropicProvider(BaseProvider):
                 resp = await client.post(f"{self.api_base}/messages", headers=headers, json=payload, timeout=60.0)
                 if resp.status_code == 200:
                     data = resp.json()
-                    return data["content"][0]["text"]
+                    try:
+                        return data["content"][0]["text"]
+                    except (KeyError, IndexError) as parse_err:
+                        raise ProviderError("anthropic", f"Error parsing response payload: {data}", parse_err)
                 else:
-                    return f"Error from Anthropic API: {resp.status_code} - {resp.text}"
+                    raise ProviderError("anthropic", f"HTTP {resp.status_code}: {resp.text}")
+            except ProviderError:
+                raise
             except Exception as e:
-                return f"Error calling Anthropic Provider: {e}"
+                raise ProviderError("anthropic", f"Network or execution error: {e}", e)

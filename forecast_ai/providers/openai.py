@@ -4,7 +4,7 @@ OpenAI LLM provider integration.
 
 from typing import Optional
 import httpx
-from .base import BaseProvider
+from .base import BaseProvider, ProviderError
 
 class OpenAIProvider(BaseProvider):
     def __init__(self, api_key: str, api_base: str = "https://api.openai.com/v1", model_id: str = "gpt-4o"):
@@ -20,7 +20,7 @@ class OpenAIProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> str:
         if not self.api_key:
-            return "Error: OpenAI API Key not configured."
+            raise ProviderError("openai", "OpenAI API Key not configured.")
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -43,8 +43,13 @@ class OpenAIProvider(BaseProvider):
                 resp = await client.post(f"{self.api_base}/chat/completions", headers=headers, json=payload, timeout=60.0)
                 if resp.status_code == 200:
                     data = resp.json()
-                    return data["choices"][0]["message"]["content"]
+                    try:
+                        return data["choices"][0]["message"]["content"]
+                    except (KeyError, IndexError) as parse_err:
+                        raise ProviderError("openai", f"Error parsing response payload: {data}", parse_err)
                 else:
-                    return f"Error from OpenAI API: {resp.status_code} - {resp.text}"
+                    raise ProviderError("openai", f"HTTP {resp.status_code}: {resp.text}")
+            except ProviderError:
+                raise
             except Exception as e:
-                return f"Error calling OpenAI Provider: {e}"
+                raise ProviderError("openai", f"Network or execution error: {e}", e)

@@ -15,10 +15,19 @@ from ..providers.base import BaseProvider
 from ..config import ForecastConfig
 
 class ForecastAgent(ABC):
-    def __init__(self, name: str, provider: BaseProvider, config: ForecastConfig):
+    def __init__(
+        self,
+        name: str,
+        provider: BaseProvider,
+        config: ForecastConfig,
+        provider_manager: Optional[Any] = None,
+        primary_provider_name: str = "openai"
+    ):
         self.name = name
         self.provider = provider
         self.config = config
+        self.provider_manager = provider_manager
+        self.primary_provider_name = primary_provider_name
 
     @abstractmethod
     def get_system_instruction(self) -> str:
@@ -27,7 +36,7 @@ class ForecastAgent(ABC):
         """
         pass
 
-    async def forecast(self, question: str, evidence: List[Evidence]) -> Prediction:
+    async def forecast(self, question: str, evidence: List[Evidence], is_public_feed: bool = False) -> Prediction:
         """
         Run the agent prediction flow using LLM.
         """
@@ -67,11 +76,21 @@ Return ONLY valid JSON. Do not include markdown wraps or additional conversation
         if self.name in self.config.agents:
             temperature = self.config.agents[self.name].temperature
 
-        raw_response = await self.provider.generate(
-            system_prompt=system_instruction,
-            user_prompt=user_prompt,
-            temperature=temperature
-        )
+        if self.provider_manager:
+            raw_response = await self.provider_manager.generate_with_fallback(
+                primary_name=self.primary_provider_name,
+                system_prompt=system_instruction,
+                user_prompt=user_prompt,
+                temperature=temperature,
+                agent_name=self.name,
+                is_public_feed=is_public_feed
+            )
+        else:
+            raw_response = await self.provider.generate(
+                system_prompt=system_instruction,
+                user_prompt=user_prompt,
+                temperature=temperature
+            )
 
         # Parse JSON output
         probability = 0.5

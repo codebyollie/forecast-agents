@@ -36,6 +36,7 @@ class RobinhoodAgenticConfig:
 class AgentSettings:
     enabled: bool = True
     provider: str = "openai"    # Provider name to route queries to
+    fallback_providers: List[str] = field(default_factory=list)
     temperature: float = 0.3
     max_sources_to_query: int = 5
     weight: float = 1.0         # Default reliability weight for consensus
@@ -58,6 +59,7 @@ class ServerConfig:
     host: str = "0.0.0.0"
     port: int = 30000
     api_key: str = ""
+    public_feed_monthly_budget_usd: float = 50.0
 
 @dataclass
 class ForecastConfig:
@@ -84,3 +86,7 @@ class ForecastConfig:
     memory: MemoryConfig = field(default_factory=MemoryConfig)
     server: ServerConfig = field(default_factory=ServerConfig)
     default_provider: str = "openai"
+    fallback_providers: List[str] = field(default_factory=lambda: [
+        "openai", "anthropic", "gemini", "openrouter", "ollama"
+    ])
+

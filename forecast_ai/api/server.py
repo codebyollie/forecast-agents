@@ -9,8 +9,10 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from . import routes
+from .public_routes import create_public_router
 from ..config import ForecastConfig
 from ..pipelines.forecast import ForecastPipeline
+from ..pipelines.public_feed import PublicFeedRunner
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,8 @@ class ApiServer:
     def __init__(self, config: ForecastConfig, pipeline: ForecastPipeline):
         self.config = config
         self.pipeline = pipeline
-        self.app = FastAPI(title="Forecast AI API", version="0.1.0")
+        self.public_runner = PublicFeedRunner(config, forecast_pipeline=pipeline)
+        self.app = FastAPI(title="Forecast AI API", version="0.2.0")
         self._server_task: Optional[asyncio.Task] = None
         self._init_app()
 
@@ -35,6 +38,10 @@ class ApiServer:
         # Set pipeline reference in routes
         routes._pipeline = self.pipeline
         self.app.include_router(routes.router)
+
+        # Mount Public Read-Only Router
+        public_router = create_public_router(self.public_runner)
+        self.app.include_router(public_router)
 
     async def start(self):
         """

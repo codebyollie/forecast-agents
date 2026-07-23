@@ -1,9 +1,17 @@
 """
-Base Provider interface.
+Base Provider interface and provider exception definitions.
 """
 
 from abc import ABC, abstractmethod
 from typing import Optional
+
+class ProviderError(Exception):
+    """Raised when an LLM provider API call fails."""
+    def __init__(self, provider_name: str, message: str, raw_exception: Optional[Exception] = None):
+        super().__init__(f"[{provider_name}] {message}")
+        self.provider_name = provider_name
+        self.message = message
+        self.raw_exception = raw_exception
 
 class BaseProvider(ABC):
     @abstractmethod

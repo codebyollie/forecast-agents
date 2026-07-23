@@ -4,7 +4,7 @@ Gemini LLM provider integration.
 
 from typing import Optional
 import httpx
-from .base import BaseProvider
+from .base import BaseProvider, ProviderError
 
 class GeminiProvider(BaseProvider):
     def __init__(self, api_key: str, model_id: str = "gemini-2.5-flash"):
@@ -19,7 +19,7 @@ class GeminiProvider(BaseProvider):
         max_tokens: Optional[int] = None
     ) -> str:
         if not self.api_key:
-            return "Error: Gemini API Key not configured."
+            raise ProviderError("gemini", "Gemini API Key not configured.")
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_id}:generateContent?key={self.api_key}"
         
@@ -48,12 +48,13 @@ class GeminiProvider(BaseProvider):
                 resp = await client.post(url, headers=headers, json=payload, timeout=60.0)
                 if resp.status_code == 200:
                     data = resp.json()
-                    # Parse output parts
                     try:
                         return data["candidates"][0]["content"]["parts"][0]["text"]
-                    except (KeyError, IndexError):
-                        return f"Error parsing Gemini response: {data}"
+                    except (KeyError, IndexError) as parse_err:
+                        raise ProviderError("gemini", f"Error parsing response payload: {data}", parse_err)
                 else:
-                    return f"Error from Gemini API: {resp.status_code} - {resp.text}"
+                    raise ProviderError("gemini", f"HTTP {resp.status_code}: {resp.text}")
+            except ProviderError:
+                raise
             except Exception as e:
-                return f"Error calling Gemini Provider: {e}"
+                raise ProviderError("gemini", f"Network or execution error: {e}", e)
