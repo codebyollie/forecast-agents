@@ -66,7 +66,7 @@ class ForecastConfig:
     providers: Dict[str, ProviderConfig] = field(default_factory=lambda: {
         "openai": ProviderConfig(provider="openai", model_id="gpt-4o"),
         "anthropic": ProviderConfig(provider="anthropic", model_id="claude-3-5-sonnet-latest"),
-        "gemini": ProviderConfig(provider="gemini", model_id="gemini-2.5-flash"),
+        "gemini": ProviderConfig(provider="gemini", model_id="gemini-flash-latest"),
         "ollama": ProviderConfig(provider="ollama", api_base="http://localhost:11434", model_id="llama3"),
         "openrouter": ProviderConfig(provider="openrouter", model_id="meta-llama/llama-3.1-405b"),
     })

@@ -7,7 +7,7 @@ import httpx
 from .base import BaseProvider, ProviderError
 
 class GeminiProvider(BaseProvider):
-    def __init__(self, api_key: str, model_id: str = "gemini-2.5-flash"):
+    def __init__(self, api_key: str, model_id: str = "gemini-flash-latest"):
         self.api_key = api_key
         self.model_id = model_id
 
