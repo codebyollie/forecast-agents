@@ -3,7 +3,7 @@ Curated Topic Definitions for Public Read-Only Forecast Feed.
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import List, Optional
 
 @dataclass
 class CuratedTopic:
@@ -13,7 +13,7 @@ class CuratedTopic:
     tier: str                      # "long" (6h) or "short" (2h)
     refresh_interval_hours: int
     source_venue: str              # "Kalshi / Robinhood Predict" or "Polymarket"
-    market_ticker: str
+    market_ticker: str             # Ticker symbol or slug on exchange
 
 CURATED_TOPICS: List[CuratedTopic] = [
     CuratedTopic(
@@ -23,7 +23,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="long",
         refresh_interval_hours=6,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXFED"
+        market_ticker="KXFEDCUT-26"
     ),
     CuratedTopic(
         topic_id="us-cpi-inflation",
@@ -32,7 +32,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="long",
         refresh_interval_hours=6,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXCPI"
+        market_ticker="KXCPI-26"
     ),
     CuratedTopic(
         topic_id="btc-above-100k",
@@ -41,7 +41,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="short",
         refresh_interval_hours=2,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXBTC"
+        market_ticker="KXBTC-100K"
     ),
     CuratedTopic(
         topic_id="eth-above-4k",
@@ -50,7 +50,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="short",
         refresh_interval_hours=2,
         source_venue="Polymarket",
-        market_ticker="ETH-4K"
+        market_ticker="ethereum-above-4000"
     ),
     CuratedTopic(
         topic_id="spacex-starship-orbital",
@@ -59,7 +59,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="short",
         refresh_interval_hours=2,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXSTARSHIP"
+        market_ticker="KXSTARSHIP-26"
     ),
     CuratedTopic(
         topic_id="sol-market-cap-rank",
@@ -68,11 +68,11 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="short",
         refresh_interval_hours=2,
         source_venue="Polymarket",
-        market_ticker="SOL-TOP4"
+        market_ticker="solana-top-4-market-cap"
     ),
 ]
 
-def get_topic_by_id(topic_id: str) -> CuratedTopic | None:
+def get_topic_by_id(topic_id: str) -> Optional[CuratedTopic]:
     for topic in CURATED_TOPICS:
         if topic.topic_id == topic_id:
             return topic

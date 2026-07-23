@@ -17,6 +17,8 @@ from ..config import ForecastConfig
 from ..pipelines.forecast import ForecastPipeline
 from ..public_feed_topics import CURATED_TOPICS, CuratedTopic, get_topic_by_id
 from ..providers import ProviderError
+from ..kalshi.client import KalshiClient
+from ..polymarket.gamma import GammaClient
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,22 @@ logger = logging.getLogger(__name__)
 ESTIMATED_COST_PER_LLM_CALL_USD = 0.0015
 
 class PublicFeedRunner:
-    def __init__(self, config: ForecastConfig, forecast_pipeline: Optional[ForecastPipeline] = None):
+    def __init__(
+        self,
+        config: ForecastConfig,
+        forecast_pipeline: Optional[ForecastPipeline] = None,
+        kalshi_client: Optional[KalshiClient] = None,
+        gamma_client: Optional[GammaClient] = None
+    ):
         self.config = config
         self.forecast_pipeline = forecast_pipeline or ForecastPipeline(config)
+        self.kalshi_client = kalshi_client or KalshiClient(
+            base_url=config.kalshi.api_base_url,
+            api_key=config.kalshi.api_key
+        )
+        self.gamma_client = gamma_client or GammaClient(
+            base_url=config.polymarket.gamma_api_url
+        )
         self.store_dir = Path(config.memory.store_dir)
         self.store_file = self.store_dir / "public_feed.json"
         self._ensure_store_dir()
@@ -93,6 +108,46 @@ class PublicFeedRunner:
             return f"{sentences[0]}."
         return full_reasoning[:180] + "..."
 
+    async def fetch_live_market_price(self, topic: CuratedTopic) -> Optional[float]:
+        """
+        Fetches the real live market price for a curated topic from its source venue
+        (Kalshi / Robinhood Predict via KalshiClient or Polymarket via GammaClient).
+        Returns None if the fetch fails.
+        """
+        venue = topic.source_venue.lower()
+        ticker = topic.market_ticker
+
+        if "kalshi" in venue or "robinhood" in venue:
+            try:
+                m = await self.kalshi_client.fetch_market_by_ticker(ticker)
+                if m:
+                    if m.yes_bid > 0 and m.yes_ask > 0:
+                        return round((m.yes_bid + m.yes_ask) / 2.0, 4)
+                    elif m.last_price > 0:
+                        return round(m.last_price, 4)
+                ob = await self.kalshi_client.fetch_orderbook(ticker)
+                if ob and ob.midpoint > 0:
+                    return round(ob.midpoint, 4)
+            except Exception as e:
+                logger.warning(f"[PublicFeedRunner] Kalshi live market price fetch failed for '{ticker}': {e}")
+
+        elif "polymarket" in venue:
+            try:
+                m = await self.gamma_client.fetch_market_by_slug(ticker)
+                if not m:
+                    m = await self.gamma_client.fetch_market(ticker)
+                if m and m.raw_data:
+                    outcome_prices = m.raw_data.get("outcomePrices")
+                    if outcome_prices:
+                        if isinstance(outcome_prices, str):
+                            outcome_prices = json.loads(outcome_prices)
+                        if isinstance(outcome_prices, list) and len(outcome_prices) > 0:
+                            return round(float(outcome_prices[0]), 4)
+            except Exception as e:
+                logger.warning(f"[PublicFeedRunner] Polymarket live market price fetch failed for '{ticker}': {e}")
+
+        return None
+
     async def update_topic(self, topic: CuratedTopic) -> bool:
         """
         Runs forecast pipeline for a single topic and updates store.
@@ -126,20 +181,26 @@ class PublicFeedRunner:
                     "warnings": pred.confidence.warnings
                 })
 
-            # Mock or fetch venue market price (e.g. 0.48 or 0.65 for market vs consensus delta)
-            market_price = 0.50
-            if "fed" in topic.topic_id:
-                market_price = 0.62
-            elif "cpi" in topic.topic_id:
-                market_price = 0.44
-            elif "btc" in topic.topic_id:
-                market_price = 0.78
-            elif "eth" in topic.topic_id:
-                market_price = 0.55
-            elif "starship" in topic.topic_id:
-                market_price = 0.70
-            elif "sol" in topic.topic_id:
-                market_price = 0.85
+            # Fetch real live market price from venue client
+            live_price = await self.fetch_live_market_price(topic)
+            store = self._load_store()
+            existing = store.get("topics", {}).get(topic.topic_id, {})
+
+            if live_price is not None:
+                market_price = live_price
+                logger.info(f"[PublicFeedRunner] Fetched live market price for '{topic.topic_id}' ({topic.market_ticker}): {market_price}")
+            elif existing and "market_price" in existing:
+                market_price = float(existing["market_price"])
+                logger.warning(
+                    f"[PublicFeedRunner] Live market price fetch failed for '{topic.topic_id}' ({topic.market_ticker}). "
+                    f"Retaining last-known-good market_price: {market_price}"
+                )
+            else:
+                market_price = 0.50
+                logger.warning(
+                    f"[PublicFeedRunner] Live market price fetch failed for '{topic.topic_id}' ({topic.market_ticker}) "
+                    f"with no previous record. Defaulting to 0.50."
+                )
 
             consensus_prob = round(result.consensus_probability, 4)
             price_delta = round(consensus_prob - market_price, 4)
@@ -161,10 +222,9 @@ class PublicFeedRunner:
                 "last_updated": datetime.now(timezone.utc).isoformat()
             }
 
-            store = self._load_store()
             store["topics"][topic.topic_id] = payload
             self._save_store(store)
-            logger.info(f"[PublicFeedRunner] Topic '{topic.topic_id}' updated successfully. Consensus: {consensus_prob}")
+            logger.info(f"[PublicFeedRunner] Topic '{topic.topic_id}' updated successfully. Consensus: {consensus_prob}, MarketPrice: {market_price}")
             return True
 
         except Exception as e:

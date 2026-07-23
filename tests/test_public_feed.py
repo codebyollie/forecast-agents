@@ -66,3 +66,50 @@ def test_spend_guard_not_triggered(mock_runner):
         "topics": {}
     })
     assert mock_runner.is_spend_guard_triggered() is False
+
+@pytest.mark.asyncio
+async def test_fetch_live_market_price_kalshi(mock_runner):
+    class MockKalshiClient:
+        async def fetch_market_by_ticker(self, ticker):
+            from forecast_ai.kalshi.models import KalshiMarket
+            return KalshiMarket(
+                ticker=ticker, title="Test", subtitle="", category="", event_ticker="",
+                status="open", yes_bid=0.60, yes_ask=0.64, no_bid=0.36, no_ask=0.40,
+                last_price=0.62, volume=100.0, open_interest=500.0, expiration_time="", result=None, raw_data={}
+            )
+        async def fetch_orderbook(self, ticker):
+            return None
+
+    mock_runner.kalshi_client = MockKalshiClient()
+    topic = CURATED_TOPICS[0]  # fed-rate-q3-2026 (Kalshi)
+    price = await mock_runner.fetch_live_market_price(topic)
+    assert price == 0.62  # (0.60 + 0.64) / 2
+
+@pytest.mark.asyncio
+async def test_fetch_live_market_price_retains_last_known_good_on_failure(mock_runner):
+    class FailingKalshiClient:
+        async def fetch_market_by_ticker(self, ticker):
+            raise Exception("API Connection Timeout")
+        async def fetch_orderbook(self, ticker):
+            raise Exception("API Connection Timeout")
+
+    mock_runner.kalshi_client = FailingKalshiClient()
+    topic = CURATED_TOPICS[0]
+
+    # Pre-populate last known good price 0.68
+    mock_runner._save_store({
+        "monthly_spend_usd": 0.0,
+        "topics": {
+            topic.topic_id: {
+                "market_price": 0.68
+            }
+        }
+    })
+
+    live_price = await mock_runner.fetch_live_market_price(topic)
+    assert live_price is None
+
+    # Verify last-known-good price 0.68 exists in store
+    store = mock_runner._load_store()
+    existing_price = store.get("topics", {}).get(topic.topic_id, {}).get("market_price")
+    assert existing_price == 0.68
