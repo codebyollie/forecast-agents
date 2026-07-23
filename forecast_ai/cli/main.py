@@ -34,10 +34,6 @@ def setup():
 def run(category: str, no_server: bool):
     """Start Forecast AI watching loops and API server services."""
     cs = ConfigStore()
-    if not cs.exists():
-        click.secho("No configuration found. Please run 'forecast setup' first.", fg="yellow")
-        sys.exit(1)
-
     launcher = ForecastLauncher(cs)
     click.echo(f"Starting Forecast AI launcher for category: {category}...")
     try:

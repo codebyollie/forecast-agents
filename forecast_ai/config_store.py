@@ -108,6 +108,11 @@ class ConfigStore:
         # Server overrides
         if os.environ.get("SERVER_HOST"):
             config.server.host = os.environ["SERVER_HOST"]
+        if os.environ.get("PORT"):
+            try:
+                config.server.port = int(os.environ["PORT"])
+            except ValueError:
+                pass
         if os.environ.get("SERVER_PORT"):
             try:
                 config.server.port = int(os.environ["SERVER_PORT"])

@@ -1,20 +1,19 @@
 services:
   - type: web
     name: forecast-agents
-    env: python
+    runtime: python
     region: oregon
     buildCommand: pip install -e ".[ws]"
     startCommand: forecast run
+    healthCheckPath: /healthz
     envVars:
       - key: OPENAI_API_KEY
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
       - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
       - key: KALSHI_API_KEY
         sync: false
-      - key: SERVER_PORT
-        value: "30000"
