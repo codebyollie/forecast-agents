@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import os
+import gc
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -225,6 +226,7 @@ class PublicFeedRunner:
             store["topics"][topic.topic_id] = payload
             self._save_store(store)
             logger.info(f"[PublicFeedRunner] Topic '{topic.topic_id}' updated successfully. Consensus: {consensus_prob}, MarketPrice: {market_price}")
+            gc.collect()
             return True
 
         except Exception as e:
@@ -233,6 +235,7 @@ class PublicFeedRunner:
                 f"Preserving last-known-good state.",
                 exc_info=True
             )
+            gc.collect()
             return False
 
     async def refresh_all_due_topics(self):
