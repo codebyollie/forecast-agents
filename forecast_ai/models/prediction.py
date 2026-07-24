@@ -4,7 +4,7 @@ Prediction model definition.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Dict, Any, Optional
 from .evidence import Evidence
 from .confidence import ConfidenceScore
 
@@ -15,4 +15,5 @@ class Prediction:
     confidence: ConfidenceScore
     reasoning: str
     evidence_used: List[Evidence] = field(default_factory=list)
+    citations: List[Dict[str, str]] = field(default_factory=list)  # Top citations (title + url)
     timestamp: datetime = field(default_factory=datetime.utcnow)

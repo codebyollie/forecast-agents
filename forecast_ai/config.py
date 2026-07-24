@@ -82,6 +82,15 @@ class SupabaseConfig:
     table_name: str = "profiles"
 
 @dataclass
+class FactsAIConfig:
+    enabled: bool = False  # Off by default to prevent unintended API costs
+    api_key: str = ""
+    api_url: str = "https://deep-research-api.degodmode3-33.workers.dev/answer"
+    query_max_length: int = 1000
+    rate_limit_per_min: int = 100
+    coarse_refresh_interval_cycles: int = 2
+
+@dataclass
 class ProfileConfig:
     tier: HolderTierConfig = field(default_factory=HolderTierConfig)
     privy: PrivyAuthConfig = field(default_factory=PrivyAuthConfig)
@@ -100,6 +109,7 @@ class ForecastConfig:
     polymarket: PolymarketConfig = field(default_factory=PolymarketConfig)
     kalshi: KalshiConfig = field(default_factory=KalshiConfig)
     robinhood_agentic: RobinhoodAgenticConfig = field(default_factory=RobinhoodAgenticConfig)
+    facts_ai: FactsAIConfig = field(default_factory=FactsAIConfig)
     agents: Dict[str, AgentSettings] = field(default_factory=lambda: {
         "news": AgentSettings(enabled=True, weight=1.2),
         "social": AgentSettings(enabled=True, weight=0.8),

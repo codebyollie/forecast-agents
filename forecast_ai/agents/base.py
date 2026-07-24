@@ -42,11 +42,54 @@ class ForecastAgent(ABC):
         """
         system_instruction = self.get_system_instruction()
         
+        # Clone evidence list so we can append agent-specific evidence safely
+        active_evidence = list(evidence or [])
+        prediction_citations: List[Dict[str, str]] = []
+
+        # Wire FactsAI for Research and Macro Agents if enabled
+        if self.name.lower() in ("research", "macro") and self.config.facts_ai.enabled and self.config.facts_ai.api_key:
+            try:
+                from ..sources.facts_ai import FactsAISource
+                facts_source = FactsAISource(
+                    api_key=self.config.facts_ai.api_key,
+                    api_url=self.config.facts_ai.api_url,
+                    query_max_length=self.config.facts_ai.query_max_length
+                )
+                res = await facts_source.fetch_deep_research(question)
+                
+                if res.get("answer"):
+                    active_evidence.append(Evidence(
+                        source_name="FactsAI Deep Research",
+                        content=res["answer"],
+                        relevance_score=0.95,
+                        title=f"FactsAI Synthesis for: {question[:60]}",
+                        url="https://factsai.org"
+                    ))
+                
+                for c in res.get("citations", []):
+                    title = c.get("title") or "Cited Source"
+                    url = c.get("url") or ""
+                    if url or title:
+                        prediction_citations.append({"title": title, "url": url})
+                        active_evidence.append(Evidence(
+                            source_name="FactsAI Citation",
+                            content=f"FactsAI Verified Source: {title}",
+                            relevance_score=0.90,
+                            title=title,
+                            url=url
+                        ))
+            except Exception as e:
+                # Fall back gracefully to standard reasoning without failing the whole forecast
+                import logging
+                logging.getLogger(__name__).warning(
+                    f"[{self.name}] FactsAI call failed: {e}. Falling back to standard evidence."
+                )
+
         # Format evidence context
         evidence_context = ""
-        if evidence:
+        if active_evidence:
             evidence_context = "AVAILABLE EVIDENCE:\n"
-            for i, ev in enumerate(evidence):
+            for i, ev in enumerate(active_evidence):
                 evidence_context += f"[{i+1}] Source: {ev.source_name} | Date: {ev.timestamp} | Relevance: {ev.relevance_score:.2f}\n"
                 if ev.title:
                     evidence_context += f"Title: {ev.title}\n"
@@ -139,5 +182,6 @@ Return ONLY valid JSON. Do not include markdown wraps or additional conversation
             probability=probability,
             confidence=confidence,
             reasoning=reasoning,
-            evidence_used=evidence
+            evidence_used=active_evidence,
+            citations=prediction_citations
         )

@@ -155,6 +155,14 @@ class ConfigStore:
             except ValueError:
                 pass
 
+        # FactsAI Deep Research overrides
+        if os.environ.get("FACTSAI_API_KEY"):
+            config.facts_ai.api_key = os.environ["FACTSAI_API_KEY"]
+        if os.environ.get("FACTSAI_ENABLED"):
+            config.facts_ai.enabled = os.environ["FACTSAI_ENABLED"].lower() in ("true", "1", "yes")
+        if os.environ.get("FACTSAI_API_URL"):
+            config.facts_ai.api_url = os.environ["FACTSAI_API_URL"]
+
         return config
 
     def load_config(self) -> ForecastConfig:

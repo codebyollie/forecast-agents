@@ -25,3 +25,7 @@ services:
         sync: false
       - key: PRIVY_APP_SECRET
         sync: false
+      - key: FACTSAI_API_KEY
+        sync: false
+      - key: FACTSAI_ENABLED
+        sync: false

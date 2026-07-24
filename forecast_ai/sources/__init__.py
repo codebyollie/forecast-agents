@@ -6,6 +6,7 @@ from .twitter import TwitterSource
 from .reddit import RedditSource
 from .blockchain import BlockchainSource
 from .kalshi import KalshiSource
+from .facts_ai import FactsAISource, FactsAIError
 from ..models.evidence import Evidence
 from ..config import ForecastConfig
 
@@ -20,6 +21,12 @@ class SourceManager:
             "blockchain": BlockchainSource(),
             "kalshi": KalshiSource(api_base_url=config.kalshi.api_base_url),
         }
+        if config.facts_ai.enabled and config.facts_ai.api_key:
+            self.sources["facts_ai"] = FactsAISource(
+                api_key=config.facts_ai.api_key,
+                api_url=config.facts_ai.api_url,
+                query_max_length=config.facts_ai.query_max_length
+            )
 
     async def gather_evidence(self, query: str, limit: int = 5) -> List[Evidence]:
         all_evidence = []
