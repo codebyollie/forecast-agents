@@ -3,4 +3,5 @@ __pycache__/
 records/
 wandb/
 memory_data/skills
+memory_data/*.json
 *prompt*.md

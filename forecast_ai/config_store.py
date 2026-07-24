@@ -125,6 +125,36 @@ class ConfigStore:
         if os.environ.get("DEFAULT_PROVIDER"):
             config.default_provider = os.environ["DEFAULT_PROVIDER"]
 
+        # Profile, Privy, Supabase & Holder Tier overrides
+        if os.environ.get("PRIVY_APP_ID"):
+            config.profile.privy.app_id = os.environ["PRIVY_APP_ID"]
+        if os.environ.get("PRIVY_APP_SECRET"):
+            config.profile.privy.app_secret = os.environ["PRIVY_APP_SECRET"]
+        if os.environ.get("PRIVY_JWKS_URL"):
+            config.profile.privy.jwks_url = os.environ["PRIVY_JWKS_URL"]
+
+        if os.environ.get("SUPABASE_URL"):
+            config.profile.supabase.url = os.environ["SUPABASE_URL"]
+        supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY")
+        if supabase_key:
+            config.profile.supabase.key = supabase_key
+
+        if os.environ.get("FORAI_TOKEN_CONTRACT"):
+            config.profile.tier.token_contract_address = os.environ["FORAI_TOKEN_CONTRACT"]
+        if os.environ.get("ROBINHOOD_CHAIN_RPC"):
+            config.profile.tier.rpc_url = os.environ["ROBINHOOD_CHAIN_RPC"]
+
+        if os.environ.get("HOLDER_THRESHOLD"):
+            try:
+                config.profile.tier.holder_threshold = float(os.environ["HOLDER_THRESHOLD"])
+            except ValueError:
+                pass
+        if os.environ.get("PRO_HOLDER_THRESHOLD"):
+            try:
+                config.profile.tier.pro_holder_threshold = float(os.environ["PRO_HOLDER_THRESHOLD"])
+            except ValueError:
+                pass
+
         return config
 
     def load_config(self) -> ForecastConfig:

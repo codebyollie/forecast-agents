@@ -2,7 +2,7 @@
 Unified Configuration for Forecast AI.
 
 Dataclass-based configuration settings for LLMs, Polymarket endpoints,
-Consensus Engine calibration, specialized agents, and memory.
+Consensus Engine calibration, specialized agents, memory, and user profiles.
 """
 
 from dataclasses import dataclass, field
@@ -62,6 +62,33 @@ class ServerConfig:
     public_feed_monthly_budget_usd: float = 50.0
 
 @dataclass
+class HolderTierConfig:
+    token_contract_address: str = "0xcc9c1ec224c3824ae5ea699ec72ef5fad4165e49"
+    rpc_url: str = "https://rpc.robinhood.com"
+    holder_threshold: float = 1000.0        # >= 1,000 $FORAI -> Holder
+    pro_holder_threshold: float = 10000.0   # >= 10,000 $FORAI -> Pro Holder
+    balance_cache_ttl_seconds: int = 300    # Cache balance checks for 5 minutes
+
+@dataclass
+class PrivyAuthConfig:
+    app_id: str = ""
+    app_secret: str = ""
+    jwks_url: str = "https://auth.privy.io/.well-known/jwks.json"
+
+@dataclass
+class SupabaseConfig:
+    url: str = ""
+    key: str = ""  # Service role key or anon key
+    table_name: str = "profiles"
+
+@dataclass
+class ProfileConfig:
+    tier: HolderTierConfig = field(default_factory=HolderTierConfig)
+    privy: PrivyAuthConfig = field(default_factory=PrivyAuthConfig)
+    supabase: SupabaseConfig = field(default_factory=SupabaseConfig)
+    early_adopter_cutoff: str = "2026-09-01T00:00:00Z"
+
+@dataclass
 class ForecastConfig:
     providers: Dict[str, ProviderConfig] = field(default_factory=lambda: {
         "openai": ProviderConfig(provider="openai", model_id="gpt-4o"),
@@ -85,8 +112,8 @@ class ForecastConfig:
     consensus: ConsensusConfig = field(default_factory=ConsensusConfig)
     memory: MemoryConfig = field(default_factory=MemoryConfig)
     server: ServerConfig = field(default_factory=ServerConfig)
+    profile: ProfileConfig = field(default_factory=ProfileConfig)
     default_provider: str = "openai"
     fallback_providers: List[str] = field(default_factory=lambda: [
         "gemini"
     ])
-

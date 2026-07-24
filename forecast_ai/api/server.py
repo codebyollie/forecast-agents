@@ -43,6 +43,11 @@ class ApiServer:
         public_router = create_public_router(self.public_runner)
         self.app.include_router(public_router)
 
+        # Mount Authenticated Profile Router (/profile/me)
+        from .profile_routes import create_profile_router
+        profile_router = create_profile_router(self.config)
+        self.app.include_router(profile_router)
+
     async def start(self):
         """
         Starts the API server asynchronously.
