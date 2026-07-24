@@ -125,5 +125,7 @@ class ForecastConfig:
     profile: ProfileConfig = field(default_factory=ProfileConfig)
     default_provider: str = "openai"
     fallback_providers: List[str] = field(default_factory=lambda: [
-        "gemini"
+        "gemini",
+        "anthropic",
+        "openrouter"
     ])

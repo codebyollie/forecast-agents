@@ -23,4 +23,4 @@ def test_config_store_env_overrides(tmp_path, monkeypatch):
 def test_default_and_fallback_provider_defaults():
     cfg = ForecastConfig()
     assert cfg.default_provider == "openai"
-    assert cfg.fallback_providers == ["gemini"]
+    assert cfg.fallback_providers == ["gemini", "anthropic", "openrouter"]
