@@ -238,7 +238,14 @@ CREATE TABLE IF NOT EXISTS public.profile_activity (
 -- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS wants_analysis_access BOOLEAN DEFAULT false;
 -- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS enabled_partner_features JSONB DEFAULT '[]'::jsonb;
 
--- Enable RLS if desired, or access via service_role key
+-- Enable Row Level Security (RLS) on all public tables to eliminate warnings
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profile_activity ENABLE ROW LEVEL SECURITY;
+
+-- Allow service_role key full access
+DROP POLICY IF EXISTS "Service role full access on profiles" ON public.profiles;
+CREATE POLICY "Service role full access on profiles" ON public.profiles FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Service role full access on profile_activity" ON public.profile_activity;
+CREATE POLICY "Service role full access on profile_activity" ON public.profile_activity FOR ALL TO service_role USING (true) WITH CHECK (true);
 """
