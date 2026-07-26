@@ -85,22 +85,38 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         # 3. Map balance -> holder tier
         holder_tier = balance_checker.evaluate_holder_tier(forai_balance)
 
-        # 4. Evaluate badges
+        # 4. Evaluate badges and partner features map
         created_at_iso = existing.get("created_at") or datetime.now(timezone.utc).isoformat()
         existing_badges = existing.get("badges") or []
-        badges = badge_evaluator.evaluate_badges(holder_tier, created_at_iso, existing_badges)
+        badge_ids = badge_evaluator.evaluate_badges(holder_tier, created_at_iso, existing_badges)
+        structured_badges = badge_evaluator.evaluate_structured_badges(
+            holder_tier=holder_tier,
+            created_at_iso=created_at_iso,
+            existing_badges=existing_badges,
+            mcp_connected=bool(config.robinhood_agentic.enabled)
+        )
+
+        enabled_features = existing.get("enabled_partner_features") or []
+        partner_features_map = {
+            "facts_ai": "facts_ai" in enabled_features
+        }
 
         # 5. Assemble updated profile dict
         now_iso = datetime.now(timezone.utc).isoformat()
         profile_data = {
+            "id": privy_user_id,
             "privy_user_id": privy_user_id,
             "email": email,
             "wallet_address": wallet_address,
+            "tier": holder_tier,
             "holder_tier": holder_tier,
+            "balance": round(forai_balance, 4),
             "forai_balance": round(forai_balance, 4),
             "balance_last_checked_at": now_iso,
-            "badges": badges,
-            "enabled_partner_features": existing.get("enabled_partner_features") or [],
+            "partner_features": partner_features_map,
+            "enabled_partner_features": enabled_features,
+            "badges": structured_badges,
+            "badge_ids": badge_ids,
             "track_record_status": existing.get("track_record_status", "placeholder_active"),
             "created_at": created_at_iso,
             "updated_at": now_iso
@@ -140,6 +156,12 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         if "created_at" not in existing or not existing["created_at"]:
             existing["created_at"] = datetime.now(timezone.utc).isoformat()
         existing["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+        # Update partner_features map in response
+        existing["id"] = privy_user_id
+        existing["partner_features"] = {
+            "facts_ai": "facts_ai" in updated_features
+        }
 
         saved = await store.upsert_profile(existing)
         response.headers["Cache-Control"] = "no-cache"

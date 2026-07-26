@@ -84,6 +84,16 @@ async def get_current_privy_user(
         payload.get("user", {}).get("wallet", {}).get("address")
     )
 
+    if not wallet_address:
+        linked = payload.get("linked_accounts") or payload.get("wallets") or payload.get("user", {}).get("linked_accounts") or []
+        if isinstance(linked, list):
+            for acc in linked:
+                if isinstance(acc, dict):
+                    addr = acc.get("address") or acc.get("wallet_address")
+                    if addr and isinstance(addr, str) and addr.startswith("0x") and len(addr) == 42:
+                        wallet_address = addr
+                        break
+
     return {
         "privy_user_id": str(privy_user_id),
         "email": email,
