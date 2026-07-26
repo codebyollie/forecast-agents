@@ -10,13 +10,14 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 
 class PartnerFeatureToggleRequest(BaseModel):
-    feature: str
-    enabled: bool
+    feature: Optional[str] = None
+    enabled: Optional[bool] = None
+    facts_ai: Optional[bool] = None
 
 from ..config import ForecastConfig
 from .auth import get_current_privy_user
@@ -136,8 +137,10 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         user: Dict[str, Any] = Depends(get_current_privy_user)
     ) -> Dict[str, Any]:
         """
-        Toggles a partner feature (e.g. 'facts_ai') on or off for the authenticated user.
-        Body: {"feature": "facts_ai", "enabled": true}
+        Toggles partner feature preferences (e.g. 'facts_ai') for the authenticated user.
+        Supports both JSON payloads:
+        1. {"facts_ai": true}
+        2. {"feature": "facts_ai", "enabled": true}
         """
         privy_user_id = user["privy_user_id"]
         check_user_rate_limit(privy_user_id)
@@ -145,25 +148,67 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         existing = await store.get_profile(privy_user_id) or {}
         features_set = set(existing.get("enabled_partner_features") or [])
 
-        if req.enabled:
-            features_set.add(req.feature)
-        else:
-            features_set.discard(req.feature)
+        # Handle {"facts_ai": true/false}
+        if req.facts_ai is not None:
+            if req.facts_ai:
+                features_set.add("facts_ai")
+            else:
+                features_set.discard("facts_ai")
+
+        # Handle {"feature": "facts_ai", "enabled": true/false}
+        if req.feature and req.enabled is not None:
+            if req.enabled:
+                features_set.add(req.feature)
+            else:
+                features_set.discard(req.feature)
 
         updated_features = sorted(list(features_set))
         existing["enabled_partner_features"] = updated_features
         existing["privy_user_id"] = privy_user_id
-        if "created_at" not in existing or not existing["created_at"]:
-            existing["created_at"] = datetime.now(timezone.utc).isoformat()
-        existing["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-        # Update partner_features map in response
-        existing["id"] = privy_user_id
-        existing["partner_features"] = {
-            "facts_ai": "facts_ai" in updated_features
+        # Re-fetch profile data using get_my_profile logic to return full profile object
+        email = user.get("email") or existing.get("email") or ""
+        wallet_address = user.get("wallet_address") or existing.get("wallet_address") or ""
+        forai_balance = 0.0
+        if wallet_address:
+            forai_balance = await balance_checker.fetch_onchain_balance(wallet_address)
+        elif existing.get("forai_balance"):
+            forai_balance = float(existing["forai_balance"])
+
+        holder_tier = balance_checker.evaluate_holder_tier(forai_balance)
+        created_at_iso = existing.get("created_at") or datetime.now(timezone.utc).isoformat()
+        existing_badges = existing.get("badges") or []
+        badge_ids = badge_evaluator.evaluate_badges(holder_tier, created_at_iso, existing_badges)
+        structured_badges = badge_evaluator.evaluate_structured_badges(
+            holder_tier=holder_tier,
+            created_at_iso=created_at_iso,
+            existing_badges=existing_badges,
+            mcp_connected=bool(config.robinhood_agentic.enabled)
+        )
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        profile_data = {
+            "id": privy_user_id,
+            "privy_user_id": privy_user_id,
+            "email": email,
+            "wallet_address": wallet_address,
+            "tier": holder_tier,
+            "holder_tier": holder_tier,
+            "balance": round(forai_balance, 4),
+            "forai_balance": round(forai_balance, 4),
+            "balance_last_checked_at": now_iso,
+            "partner_features": {
+                "facts_ai": "facts_ai" in updated_features
+            },
+            "enabled_partner_features": updated_features,
+            "badges": structured_badges,
+            "badge_ids": badge_ids,
+            "track_record_status": existing.get("track_record_status", "placeholder_active"),
+            "created_at": created_at_iso,
+            "updated_at": now_iso
         }
 
-        saved = await store.upsert_profile(existing)
+        saved = await store.upsert_profile(profile_data)
         response.headers["Cache-Control"] = "no-cache"
         return saved
 

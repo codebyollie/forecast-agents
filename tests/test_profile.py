@@ -121,27 +121,30 @@ def test_profile_endpoint_success_and_partner_features():
     assert isinstance(data["enabled_partner_features"], list)
     assert data["track_record_status"] == "placeholder_active"
 
-    # Test PATCH /profile/partner-features to enable facts_ai
+    # Test PATCH /profile/partner-features to enable facts_ai using {"facts_ai": True}
     patch_resp = client.patch(
         "/profile/partner-features",
-        json={"feature": "facts_ai", "enabled": True},
+        json={"facts_ai": True},
         headers={"Authorization": f"Bearer {token}"}
     )
     assert patch_resp.status_code == 200
+    assert patch_resp.json()["partner_features"]["facts_ai"] is True
     assert "facts_ai" in patch_resp.json()["enabled_partner_features"]
 
     # Re-fetch profile to verify persistence
     resp2 = client.get("/profile/me", headers={"Authorization": f"Bearer {token}"})
     assert resp2.status_code == 200
+    assert resp2.json()["partner_features"]["facts_ai"] is True
     assert "facts_ai" in resp2.json()["enabled_partner_features"]
 
-    # Test PATCH /profile/partner-features to disable facts_ai
+    # Test PATCH /profile/partner-features to disable facts_ai using {"facts_ai": False}
     patch_resp2 = client.patch(
         "/profile/partner-features",
-        json={"feature": "facts_ai", "enabled": False},
+        json={"facts_ai": False},
         headers={"Authorization": f"Bearer {token}"}
     )
     assert patch_resp2.status_code == 200
+    assert patch_resp2.json()["partner_features"]["facts_ai"] is False
     assert "facts_ai" not in patch_resp2.json()["enabled_partner_features"]
 
 def test_agents_meta_endpoint():
