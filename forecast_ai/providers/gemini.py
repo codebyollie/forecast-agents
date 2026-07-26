@@ -43,18 +43,25 @@ class GeminiProvider(BaseProvider):
             "Content-Type": "application/json"
         }
 
+        import asyncio
+
         async with httpx.AsyncClient() as client:
-            try:
-                resp = await client.post(url, headers=headers, json=payload, timeout=60.0)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    try:
-                        return data["candidates"][0]["content"]["parts"][0]["text"]
-                    except (KeyError, IndexError) as parse_err:
-                        raise ProviderError("gemini", f"Error parsing response payload: {data}", parse_err)
-                else:
-                    raise ProviderError("gemini", f"HTTP {resp.status_code}: {resp.text}")
-            except ProviderError:
-                raise
-            except Exception as e:
-                raise ProviderError("gemini", f"Network or execution error: {e}", e)
+            max_retries = 3
+            for attempt in range(max_retries + 1):
+                try:
+                    resp = await client.post(url, headers=headers, json=payload, timeout=60.0)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        try:
+                            return data["candidates"][0]["content"]["parts"][0]["text"]
+                        except (KeyError, IndexError) as parse_err:
+                            raise ProviderError("gemini", f"Error parsing response payload: {data}", parse_err)
+                    elif resp.status_code == 429 and attempt < max_retries:
+                        await asyncio.sleep(2.0 * (attempt + 1))
+                        continue
+                    else:
+                        raise ProviderError("gemini", f"HTTP {resp.status_code}: {resp.text}")
+                except ProviderError:
+                    raise
+                except Exception as e:
+                    raise ProviderError("gemini", f"Network or execution error: {e}", e)
