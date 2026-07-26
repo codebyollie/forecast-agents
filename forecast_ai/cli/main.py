@@ -142,7 +142,7 @@ def agents():
     for name, s in cfg.agents.items():
         status = "ENABLED" if s.enabled else "DISABLED"
         fg_color = "green" if s.enabled else "red"
-        click.echo(f"  * {name:<10} [")
+        click.echo(f"  * {name:<12} [", nl=False)
         click.secho(f"{status}", fg=fg_color, nl=False)
         click.echo(f"]  Weight: {s.weight:.1f}  Provider: {s.provider}")
 
