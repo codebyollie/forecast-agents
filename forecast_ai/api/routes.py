@@ -28,9 +28,27 @@ def get_pipeline() -> ForecastPipeline:
         raise HTTPException(status_code=500, detail="Forecast pipeline is not initialized.")
     return _pipeline
 
+AGENT_METADATA = [
+    {"id": "news", "name": "News Agent", "icon": "ti-news", "color": "blue"},
+    {"id": "social", "name": "Social Agent", "icon": "ti-message-circle", "color": "pink"},
+    {"id": "reddit", "name": "Reddit Agent", "icon": "ti-brand-reddit", "color": "coral"},
+    {"id": "research", "name": "Research Agent", "icon": "ti-microscope", "color": "purple"},
+    {"id": "macro", "name": "Macro Agent", "icon": "ti-building-bank", "color": "green"},
+    {"id": "onchain", "name": "On-Chain Agent", "icon": "ti-link", "color": "teal"},
+    {"id": "market", "name": "Market Agent", "icon": "ti-chart-candle", "color": "amber"}
+]
+
 @router.get("/healthz")
 async def healthz():
     return {"status": "ok", "message": "Forecast AI API Server active."}
+
+@router.get("/agents/meta")
+async def get_agents_metadata():
+    """
+    Returns static metadata for all 7 agents,
+    including Tabler icon identifiers and brand color pairings.
+    """
+    return AGENT_METADATA
 
 @router.post("/predict")
 async def predict(req: PredictionRequest, pipeline: ForecastPipeline = Depends(get_pipeline)):

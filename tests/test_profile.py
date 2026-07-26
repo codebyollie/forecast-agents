@@ -30,11 +30,11 @@ def test_balance_checker_tier_mapping():
     checker = BalanceChecker(cfg.profile.tier)
 
     assert checker.evaluate_holder_tier(0.0) == "Free"
-    assert checker.evaluate_holder_tier(500.0) == "Free"
-    assert checker.evaluate_holder_tier(1000.0) == "Holder"
-    assert checker.evaluate_holder_tier(5000.0) == "Holder"
-    assert checker.evaluate_holder_tier(10000.0) == "Pro Holder"
-    assert checker.evaluate_holder_tier(50000.0) == "Pro Holder"
+    assert checker.evaluate_holder_tier(150000.0) == "Free"
+    assert checker.evaluate_holder_tier(200000.0) == "Holder"
+    assert checker.evaluate_holder_tier(500000.0) == "Holder"
+    assert checker.evaluate_holder_tier(1000000.0) == "Pro Holder"
+    assert checker.evaluate_holder_tier(5000000.0) == "Pro Holder"
 
 def test_badge_evaluator():
     evaluator = BadgeEvaluator(early_adopter_cutoff="2026-09-01T00:00:00Z")
@@ -68,8 +68,9 @@ async def test_supabase_in_memory_fallback():
         "privy_user_id": "did:privy:user_999",
         "email": "user999@example.com",
         "holder_tier": "Holder",
-        "forai_balance": 1500.0,
-        "badges": ["holder"]
+        "forai_balance": 250000.0,
+        "badges": ["holder"],
+        "enabled_partner_features": ["facts_ai"]
     }
     saved = await store.upsert_profile(new_profile)
     assert saved["privy_user_id"] == "did:privy:user_999"
@@ -78,6 +79,7 @@ async def test_supabase_in_memory_fallback():
     assert p2 is not None
     assert p2["email"] == "user999@example.com"
     assert p2["holder_tier"] == "Holder"
+    assert p2["enabled_partner_features"] == ["facts_ai"]
 
 def test_profile_endpoint_unauthenticated():
     cfg = ForecastConfig()
@@ -101,7 +103,7 @@ def test_profile_endpoint_expired_token():
     assert resp.status_code == 401
     assert "expired" in resp.json()["detail"]
 
-def test_profile_endpoint_success():
+def test_profile_endpoint_success_and_partner_features():
     cfg = ForecastConfig()
     pipeline = ForecastPipeline(cfg)
     server = ApiServer(cfg, pipeline)
@@ -116,4 +118,45 @@ def test_profile_endpoint_success():
     assert data["email"] == "privyuser@example.com"
     assert data["holder_tier"] in ("Free", "Holder", "Pro Holder")
     assert isinstance(data["badges"], list)
+    assert isinstance(data["enabled_partner_features"], list)
     assert data["track_record_status"] == "placeholder_active"
+
+    # Test PATCH /profile/partner-features to enable facts_ai
+    patch_resp = client.patch(
+        "/profile/partner-features",
+        json={"feature": "facts_ai", "enabled": True},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert patch_resp.status_code == 200
+    assert "facts_ai" in patch_resp.json()["enabled_partner_features"]
+
+    # Re-fetch profile to verify persistence
+    resp2 = client.get("/profile/me", headers={"Authorization": f"Bearer {token}"})
+    assert resp2.status_code == 200
+    assert "facts_ai" in resp2.json()["enabled_partner_features"]
+
+    # Test PATCH /profile/partner-features to disable facts_ai
+    patch_resp2 = client.patch(
+        "/profile/partner-features",
+        json={"feature": "facts_ai", "enabled": False},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert patch_resp2.status_code == 200
+    assert "facts_ai" not in patch_resp2.json()["enabled_partner_features"]
+
+def test_agents_meta_endpoint():
+    cfg = ForecastConfig()
+    pipeline = ForecastPipeline(cfg)
+    server = ApiServer(cfg, pipeline)
+    client = TestClient(server.app)
+
+    resp = client.get("/agents/meta")
+    assert resp.status_code == 200
+    meta = resp.json()
+    assert len(meta) == 7
+    agent_ids = [a["id"] for a in meta]
+    assert "news" in agent_ids
+    assert "research" in agent_ids
+    assert "market" in agent_ids
+    assert meta[0]["icon"].startswith("ti-")
+    assert "color" in meta[0]

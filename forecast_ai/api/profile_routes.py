@@ -12,6 +12,11 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from pydantic import BaseModel
+
+class PartnerFeatureToggleRequest(BaseModel):
+    feature: str
+    enabled: bool
 
 from ..config import ForecastConfig
 from .auth import get_current_privy_user
@@ -95,6 +100,7 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
             "forai_balance": round(forai_balance, 4),
             "balance_last_checked_at": now_iso,
             "badges": badges,
+            "enabled_partner_features": existing.get("enabled_partner_features") or [],
             "track_record_status": existing.get("track_record_status", "placeholder_active"),
             "created_at": created_at_iso,
             "updated_at": now_iso
@@ -106,5 +112,37 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         # Add CORS and Cache headers
         response.headers["Cache-Control"] = "private, max-age=60"
         return saved_profile
+
+    @router.patch("/partner-features")
+    async def toggle_partner_feature(
+        req: PartnerFeatureToggleRequest,
+        response: Response,
+        user: Dict[str, Any] = Depends(get_current_privy_user)
+    ) -> Dict[str, Any]:
+        """
+        Toggles a partner feature (e.g. 'facts_ai') on or off for the authenticated user.
+        Body: {"feature": "facts_ai", "enabled": true}
+        """
+        privy_user_id = user["privy_user_id"]
+        check_user_rate_limit(privy_user_id)
+
+        existing = await store.get_profile(privy_user_id) or {}
+        features_set = set(existing.get("enabled_partner_features") or [])
+
+        if req.enabled:
+            features_set.add(req.feature)
+        else:
+            features_set.discard(req.feature)
+
+        updated_features = sorted(list(features_set))
+        existing["enabled_partner_features"] = updated_features
+        existing["privy_user_id"] = privy_user_id
+        if "created_at" not in existing or not existing["created_at"]:
+            existing["created_at"] = datetime.now(timezone.utc).isoformat()
+        existing["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+        saved = await store.upsert_profile(existing)
+        response.headers["Cache-Control"] = "no-cache"
+        return saved
 
     return router

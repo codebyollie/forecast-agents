@@ -111,10 +111,14 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     forai_balance NUMERIC DEFAULT 0,
     balance_last_checked_at TIMESTAMPTZ,
     badges JSONB DEFAULT '[]'::jsonb,
+    enabled_partner_features JSONB DEFAULT '[]'::jsonb,
     track_record_status TEXT DEFAULT 'placeholder_active',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration query for existing databases:
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS enabled_partner_features JSONB DEFAULT '[]'::jsonb;
 
 -- Enable RLS if desired, or access via service_role key
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

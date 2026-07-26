@@ -65,9 +65,9 @@ class ServerConfig:
 class HolderTierConfig:
     token_contract_address: str = "0xcc9c1ec224c3824ae5ea699ec72ef5fad4165e49"
     rpc_url: str = "https://rpc.robinhood.com"
-    holder_threshold: float = 1000.0        # >= 1,000 $FORAI -> Holder
-    pro_holder_threshold: float = 10000.0   # >= 10,000 $FORAI -> Pro Holder
-    balance_cache_ttl_seconds: int = 300    # Cache balance checks for 5 minutes
+    holder_threshold: float = 200000.0        # >= 200,000 $FORAI -> Holder
+    pro_holder_threshold: float = 1000000.0   # >= 1,000,000 $FORAI -> Pro Holder
+    balance_cache_ttl_seconds: int = 300      # Cache balance checks for 5 minutes
 
 @dataclass
 class PrivyAuthConfig:
