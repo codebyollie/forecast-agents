@@ -68,6 +68,7 @@ class HolderTierConfig:
     holder_threshold: float = 200000.0        # >= 200,000 $FORAI -> Holder
     pro_holder_threshold: float = 1000000.0   # >= 1,000,000 $FORAI -> Pro Holder
     balance_cache_ttl_seconds: int = 300      # Cache balance checks for 5 minutes
+    long_term_holder_days: int = 30           # Days required to earn Long-Term Holder badge
 
 @dataclass
 class PrivyAuthConfig:

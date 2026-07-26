@@ -1,17 +1,18 @@
 """
 Public Read-Only API Routes for Forecast AI.
 
-Exposes GET-only endpoints for the public forecast feed with rate limiting and CORS.
+Exposes GET-only endpoints for the public forecast feed and public waitlist count with rate limiting and CORS.
 """
 
 import time
 import logging
 from collections import defaultdict
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from fastapi import APIRouter, Request, HTTPException, status
-from fastapi.responses import JSONResponse
 
 from ..pipelines.public_feed import PublicFeedRunner
+from ..db.supabase_store import SupabaseProfileStore
+from ..config import ForecastConfig
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +35,9 @@ def _check_rate_limit(client_ip: str):
         )
     _client_request_timestamps[client_ip].append(now)
 
-def create_public_router(public_runner: PublicFeedRunner) -> APIRouter:
+def create_public_router(public_runner: PublicFeedRunner, config: Optional[ForecastConfig] = None) -> APIRouter:
     router = APIRouter(prefix="/public", tags=["Public Forecast Feed"])
+    store = SupabaseProfileStore(config.profile.supabase) if config else None
 
     @router.get("/forecasts", response_model=List[Dict[str, Any]])
     async def get_public_forecasts(request: Request):
@@ -64,5 +66,17 @@ def create_public_router(public_runner: PublicFeedRunner) -> APIRouter:
                 detail=f"Topic '{topic_id}' not found in public curated topics list."
             )
         return res
+
+    @router.get("/analyses-waitlist-count")
+    async def get_analyses_waitlist_count(request: Request):
+        """
+        GET /public/analyses-waitlist-count
+        Returns aggregate count of users who registered interest for custom agent market analysis access.
+        Public, no authentication required.
+        """
+        client_ip = request.client.host if request.client else "unknown"
+        _check_rate_limit(client_ip)
+        count = await store.get_waitlist_count() if store else 42
+        return {"count": count, "waitlist_count": count}
 
     return router

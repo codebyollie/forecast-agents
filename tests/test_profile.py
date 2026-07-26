@@ -147,6 +147,68 @@ def test_profile_endpoint_success_and_partner_features():
     assert patch_resp2.json()["partner_features"]["facts_ai"] is False
     assert "facts_ai" not in patch_resp2.json()["enabled_partner_features"]
 
+def test_activity_log_and_waitlist_endpoints():
+    cfg = ForecastConfig()
+    pipeline = ForecastPipeline(cfg)
+    server = ApiServer(cfg, pipeline)
+    client = TestClient(server.app)
+
+    token = create_mock_jwt(sub="did:privy:test_user_activity", email="actuser@example.com")
+
+    # 1. Join waitlist via PATCH /profile/waitlist
+    w_resp = client.patch(
+        "/profile/waitlist",
+        json={"wants_analysis_access": True},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert w_resp.status_code == 200
+    assert w_resp.json()["wants_analysis_access"] is True
+
+    # 2. Verify public waitlist count endpoint GET /public/analyses-waitlist-count
+    c_resp = client.get("/public/analyses-waitlist-count")
+    assert c_resp.status_code == 200
+    assert "waitlist_count" in c_resp.json()
+    assert c_resp.json()["waitlist_count"] >= 1
+
+    # 3. Toggle partner feature to trigger another activity event
+    client.patch(
+        "/profile/partner-features",
+        json={"facts_ai": True},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    # 4. Fetch activity feed GET /profile/activity
+    act_resp = client.get("/profile/activity?limit=10", headers={"Authorization": f"Bearer {token}"})
+    assert act_resp.status_code == 200
+    events = act_resp.json()
+    assert isinstance(events, list)
+    assert len(events) >= 2
+    event_types = [e["event_type"] for e in events]
+    assert "waitlist_joined" in event_types
+    assert "partner_feature_toggled" in event_types
+
+def test_expanded_badges_and_locked_reasons():
+    cfg = ForecastConfig()
+    pipeline = ForecastPipeline(cfg)
+    server = ApiServer(cfg, pipeline)
+    client = TestClient(server.app)
+
+    token = create_mock_jwt(sub="did:privy:test_user_badges", email="badgeuser@example.com")
+    resp = client.get("/profile/me", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+
+    badges = resp.json()["badges"]
+    assert len(badges) == 7
+    b_ids = [b["id"] for b in badges]
+    assert "power_user" in b_ids
+    assert "top_forecaster" in b_ids
+    assert "long_term_holder" in b_ids
+
+    # Verify locked reason strings exist for unearned badges
+    power_user_b = next(b for b in badges if b["id"] == "power_user")
+    assert power_user_b["earned"] is False
+    assert "analysis" in power_user_b["locked_reason"].lower()
+
 def test_agents_meta_endpoint():
     cfg = ForecastConfig()
     pipeline = ForecastPipeline(cfg)

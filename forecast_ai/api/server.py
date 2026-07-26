@@ -40,7 +40,7 @@ class ApiServer:
         self.app.include_router(routes.router)
 
         # Mount Public Read-Only Router
-        public_router = create_public_router(self.public_runner)
+        public_router = create_public_router(self.public_runner, self.config)
         self.app.include_router(public_router)
 
         # Mount Authenticated Profile Router (/profile/me)
