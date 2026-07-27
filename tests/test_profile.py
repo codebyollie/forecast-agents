@@ -53,7 +53,7 @@ def test_badge_evaluator():
     # Pro Holder tier, early account
     badges3 = evaluator.evaluate_badges("Pro Holder", "2026-05-01T00:00:00Z")
     assert "holder" in badges3
-    assert "pro_holder" in badges3
+    assert "pro_tier" in badges3
     assert "early_adopter" in badges3
 
 @pytest.mark.asyncio
@@ -158,17 +158,19 @@ def test_activity_log_and_waitlist_endpoints():
     # 1. Join waitlist via PATCH /profile/waitlist
     w_resp = client.patch(
         "/profile/waitlist",
-        json={"wants_analysis_access": True},
+        json={"on_waitlist": True},
         headers={"Authorization": f"Bearer {token}"}
     )
     assert w_resp.status_code == 200
-    assert w_resp.json()["wants_analysis_access"] is True
+    assert w_resp.json()["success"] is True
+    assert w_resp.json()["on_waitlist"] is True
+    assert w_resp.json()["waitlist_count"] >= 482
 
     # 2. Verify public waitlist count endpoint GET /public/analyses-waitlist-count
     c_resp = client.get("/public/analyses-waitlist-count")
     assert c_resp.status_code == 200
     assert "waitlist_count" in c_resp.json()
-    assert c_resp.json()["waitlist_count"] >= 1
+    assert c_resp.json()["waitlist_count"] >= 482
 
     # 3. Toggle partner feature to trigger another activity event
     client.patch(
@@ -187,6 +189,30 @@ def test_activity_log_and_waitlist_endpoints():
     assert "waitlist_joined" in event_types
     assert "partner_feature_toggled" in event_types
 
+def test_settings_endpoint():
+    cfg = ForecastConfig()
+    pipeline = ForecastPipeline(cfg)
+    server = ApiServer(cfg, pipeline)
+    client = TestClient(server.app)
+
+    token = create_mock_jwt(sub="did:privy:test_user_settings", email="setuser@example.com")
+    resp = client.patch(
+        "/profile/settings",
+        json={
+            "notification_preferences": {
+                "notify_badges": True,
+                "notify_partners": False,
+                "notify_swarm": True
+            }
+        },
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert resp.status_code == 200
+    prefs = resp.json()["notification_preferences"]
+    assert prefs["notify_badges"] is True
+    assert prefs["notify_partners"] is False
+    assert prefs["notify_swarm"] is True
+
 def test_expanded_badges_and_locked_reasons():
     cfg = ForecastConfig()
     pipeline = ForecastPipeline(cfg)
@@ -198,16 +224,19 @@ def test_expanded_badges_and_locked_reasons():
     assert resp.status_code == 200
 
     badges = resp.json()["badges"]
-    assert len(badges) == 7
+    assert len(badges) == 6
     b_ids = [b["id"] for b in badges]
-    assert "power_user" in b_ids
-    assert "top_forecaster" in b_ids
-    assert "long_term_holder" in b_ids
+    assert "early_adopter" in b_ids
+    assert "holder" in b_ids
+    assert "mcp_trader" in b_ids
+    assert "swarm_master" in b_ids
+    assert "pro_tier" in b_ids
+    assert "polyfactual_citation" in b_ids
 
     # Verify locked reason strings exist for unearned badges
-    power_user_b = next(b for b in badges if b["id"] == "power_user")
-    assert power_user_b["earned"] is False
-    assert "analysis" in power_user_b["locked_reason"].lower()
+    swarm_b = next(b for b in badges if b["id"] == "swarm_master")
+    assert swarm_b["earned"] is False
+    assert "analysis" in swarm_b["locked_reason"].lower()
 
 def test_agents_meta_endpoint():
     cfg = ForecastConfig()

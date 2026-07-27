@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List, Union
 import httpx
 from ..config import HolderTierConfig
 
@@ -25,60 +25,68 @@ class BalanceChecker:
         """Clears in-memory balance cache."""
         _BALANCE_CACHE.clear()
 
-    async def fetch_onchain_balance(self, wallet_address: str) -> float:
+    async def fetch_onchain_balance(self, wallet_address: Union[str, List[str]]) -> float:
         """
         Executes an eth_call JSON-RPC request for ERC-20 balanceOf(address).
         `0x70a08231` is the function selector for `balanceOf(address)`.
+        Supports querying a single address string or list of linked addresses.
         """
-        if not wallet_address or not wallet_address.startswith("0x") or len(wallet_address) != 42:
-            return 0.0
+        addresses: List[str] = []
+        if isinstance(wallet_address, str):
+            addresses = [a.strip() for a in wallet_address.split(",") if a.strip()]
+        elif isinstance(wallet_address, list):
+            addresses = [str(a).strip() for a in wallet_address if a]
 
-        # Check cache
+        total_balance = 0.0
         now = time.time()
-        cached = _BALANCE_CACHE.get(wallet_address.lower())
-        if cached:
-            cached_bal, cached_time = cached
-            if (now - cached_time) < self.config.balance_cache_ttl_seconds:
-                return cached_bal
 
-        # Build ERC-20 balanceOf data: selector (4 bytes) + 32-byte padded address
-        clean_addr = wallet_address[2:].zfill(64).lower()
-        call_data = f"0x70a08231{clean_addr}"
+        for addr in addresses:
+            if not addr.startswith("0x") or len(addr) != 42:
+                continue
 
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "eth_call",
-            "params": [
-                {
-                    "to": self.config.token_contract_address,
-                    "data": call_data
-                },
-                "latest"
-            ],
-            "id": 1
-        }
+            # Check cache
+            cached = _BALANCE_CACHE.get(addr.lower())
+            if cached and (now - cached[1]) < self.config.balance_cache_ttl_seconds:
+                total_balance += cached[0]
+                continue
 
-        async with httpx.AsyncClient() as client:
-            try:
-                resp = await client.post(self.config.rpc_url, json=payload, timeout=10.0)
-                if resp.status_code == 200:
-                    res_json = resp.json()
-                    hex_val = res_json.get("result", "0x0")
-                    if hex_val and hex_val != "0x":
-                        raw_int = int(hex_val, 16)
-                        # Standard 18 decimals ERC-20
-                        balance = raw_int / 1e18
-                        _BALANCE_CACHE[wallet_address.lower()] = (balance, now)
-                        return balance
-                else:
-                    logger.warning(f"[BalanceChecker] RPC returned status {resp.status_code}")
-            except Exception as e:
-                logger.warning(f"[BalanceChecker] Exception checking balance for {wallet_address}: {e}")
+            # Build ERC-20 balanceOf data: selector (4 bytes) + 32-byte padded address
+            clean_addr = addr[2:].zfill(64).lower()
+            call_data = f"0x70a08231{clean_addr}"
 
-        # Fallback to cache if RPC fails
-        if cached:
-            return cached[0]
-        return 0.0
+            payload = {
+                "jsonrpc": "2.0",
+                "method": "eth_call",
+                "params": [
+                    {
+                        "to": self.config.token_contract_address,
+                        "data": call_data
+                    },
+                    "latest"
+                ],
+                "id": 1
+            }
+
+            async with httpx.AsyncClient() as client:
+                try:
+                    resp = await client.post(self.config.rpc_url, json=payload, timeout=10.0)
+                    if resp.status_code == 200:
+                        res_json = resp.json()
+                        hex_val = res_json.get("result", "0x0")
+                        if hex_val and hex_val != "0x":
+                            raw_int = int(hex_val, 16)
+                            # Standard 18 decimals ERC-20
+                            balance = raw_int / 1e18
+                            _BALANCE_CACHE[addr.lower()] = (balance, now)
+                            total_balance += balance
+                    else:
+                        logger.warning(f"[BalanceChecker] RPC returned status {resp.status_code}")
+                except Exception as e:
+                    logger.warning(f"[BalanceChecker] Exception checking balance for {addr}: {e}")
+                    if cached:
+                        total_balance += cached[0]
+
+        return total_balance
 
     def evaluate_holder_tier(self, balance: float) -> str:
         """

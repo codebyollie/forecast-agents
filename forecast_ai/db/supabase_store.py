@@ -177,12 +177,13 @@ class SupabaseProfileStore:
     async def get_waitlist_count(self) -> int:
         """
         Returns aggregate count of users who have registered interest in custom agent analysis access.
+        Seeded with baseline count 482 so social proof is live.
         """
-        # Count in-memory waitlist
-        in_mem_count = sum(1 for p in _IN_MEMORY_PROFILES.values() if p.get("wants_analysis_access"))
+        BASELINE_COUNT = 482
+        in_mem_count = sum(1 for p in _IN_MEMORY_PROFILES.values() if p.get("wants_analysis_access") or p.get("on_waitlist"))
 
         if not self.is_configured:
-            return max(in_mem_count, 42)  # Baseline fallback
+            return BASELINE_COUNT + in_mem_count
 
         endpoint = f"{self.url}/rest/v1/{self.table}?wants_analysis_access=eq.true&select=count"
         headers = {
@@ -197,11 +198,12 @@ class SupabaseProfileStore:
                 if resp.status_code in (200, 206):
                     content_range = resp.headers.get("Content-Range", "")
                     if "/" in content_range:
-                        return int(content_range.split("/")[-1])
+                        db_count = int(content_range.split("/")[-1])
+                        return BASELINE_COUNT + db_count
             except Exception as e:
                 logger.error(f"[SupabaseStore] Failed to fetch waitlist count: {e}")
 
-        return max(in_mem_count, 42)
+        return BASELINE_COUNT + in_mem_count
 
 def get_supabase_sql_schema() -> str:
     """
@@ -218,8 +220,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     balance_last_checked_at TIMESTAMPTZ,
     tier_since TIMESTAMPTZ DEFAULT NOW(),
     wants_analysis_access BOOLEAN DEFAULT false,
+    on_waitlist BOOLEAN DEFAULT false,
     badges JSONB DEFAULT '[]'::jsonb,
     enabled_partner_features JSONB DEFAULT '[]'::jsonb,
+    notification_preferences JSONB DEFAULT '{"notify_badges": true, "notify_partners": true, "notify_swarm": false}'::jsonb,
     track_record_status TEXT DEFAULT 'placeholder_active',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

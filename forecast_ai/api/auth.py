@@ -78,25 +78,31 @@ async def get_current_privy_user(
 
     # Extract linked email & wallet address if present in claims
     email = payload.get("email") or payload.get("user", {}).get("email")
-    wallet_address = (
+    primary_wallet = (
         payload.get("wallet_address") or
         payload.get("address") or
         payload.get("user", {}).get("wallet", {}).get("address")
     )
 
-    if not wallet_address:
-        linked = payload.get("linked_accounts") or payload.get("wallets") or payload.get("user", {}).get("linked_accounts") or []
-        if isinstance(linked, list):
-            for acc in linked:
-                if isinstance(acc, dict):
-                    addr = acc.get("address") or acc.get("wallet_address")
-                    if addr and isinstance(addr, str) and addr.startswith("0x") and len(addr) == 42:
-                        wallet_address = addr
-                        break
+    wallets_list = []
+    if primary_wallet and isinstance(primary_wallet, str) and primary_wallet.startswith("0x") and len(primary_wallet) == 42:
+        wallets_list.append(primary_wallet)
+
+    linked = payload.get("linked_accounts") or payload.get("wallets") or payload.get("user", {}).get("linked_accounts") or []
+    if isinstance(linked, list):
+        for acc in linked:
+            if isinstance(acc, dict):
+                addr = acc.get("address") or acc.get("wallet_address")
+                if addr and isinstance(addr, str) and addr.startswith("0x") and len(addr) == 42:
+                    if addr not in wallets_list:
+                        wallets_list.append(addr)
+                    if not primary_wallet:
+                        primary_wallet = addr
 
     return {
         "privy_user_id": str(privy_user_id),
         "email": email,
-        "wallet_address": wallet_address,
+        "wallet_address": primary_wallet or "",
+        "wallet_addresses": wallets_list,
         "token_claims": payload
     }

@@ -1,7 +1,7 @@
 """
 User Badge Evaluator.
 
-Derives user badges based on holder tier, balance, tier_since duration, and account creation cutoff date.
+Derives user badges based on holder tier, balance, tier_since duration, partner integrations, and account creation cutoff date.
 """
 
 from __future__ import annotations
@@ -22,21 +22,7 @@ BADGE_CATALOG: Dict[str, Dict[str, Any]] = {
         "title": "Verified Holder",
         "description": "Holds 200,000+ $FORAI tokens on Robinhood Chain.",
         "iconType": "shield",
-        "locked_reason": "Requires holding 200,000+ $FORAI tokens on Robinhood Chain."
-    },
-    "pro_holder": {
-        "id": "pro_holder",
-        "title": "Pro Holder",
-        "description": "Holds 1,000,000+ $FORAI tokens on Robinhood Chain.",
-        "iconType": "crown",
-        "locked_reason": "Requires holding 1,000,000+ $FORAI tokens on Robinhood Chain."
-    },
-    "long_term_holder": {
-        "id": "long_term_holder",
-        "title": "Long-Term Holder",
-        "description": "Maintained $FORAI Holder tier continuously for 30+ days.",
-        "iconType": "award",
-        "locked_reason": "Requires holding 200,000+ $FORAI for 30+ consecutive days."
+        "locked_reason": "Requires 200,000+ $FORAI held on-chain."
     },
     "mcp_trader": {
         "id": "mcp_trader",
@@ -45,19 +31,26 @@ BADGE_CATALOG: Dict[str, Dict[str, Any]] = {
         "iconType": "zap",
         "locked_reason": "Requires connecting Robinhood Agentic Trading MCP."
     },
-    "power_user": {
-        "id": "power_user",
-        "title": "Power User",
-        "description": "Run 10+ custom agent market analyses.",
-        "iconType": "flame",
-        "locked_reason": "Available once custom analysis history is active."
+    "swarm_master": {
+        "id": "swarm_master",
+        "title": "Swarm Analyst",
+        "description": "Ran 50+ multi-agent consensus queries.",
+        "iconType": "star",
+        "locked_reason": "Available once analysis history exists."
     },
-    "top_forecaster": {
-        "id": "top_forecaster",
-        "title": "Top Forecaster",
-        "description": "Achieve top 10% forecast accuracy across prediction markets.",
-        "iconType": "trophy",
-        "locked_reason": "Available once forecast accuracy tracking is live."
+    "pro_tier": {
+        "id": "pro_tier",
+        "title": "Pro Elite",
+        "description": "Reached Pro Holder tier status (1,000,000+ $FORAI).",
+        "iconType": "shield",
+        "locked_reason": "Requires Pro Holder tier status (1M $FORAI)."
+    },
+    "polyfactual_citation": {
+        "id": "polyfactual_citation",
+        "title": "FactsAI Scholar",
+        "description": "Used FactsAI primary source citations in predictions.",
+        "iconType": "sparkles",
+        "locked_reason": "Enable FactsAI partner integration to unlock."
     }
 }
 
@@ -79,7 +72,8 @@ class BadgeEvaluator:
         holder_tier: str,
         created_at_iso: str,
         existing_badges: Any = None,
-        tier_since_iso: Optional[str] = None
+        tier_since_iso: Optional[str] = None,
+        facts_ai_enabled: bool = False
     ) -> List[str]:
         raw_list = existing_badges or []
         extracted_ids = []
@@ -95,17 +89,11 @@ class BadgeEvaluator:
         if holder_tier in ("Holder", "Pro Holder"):
             badges.add("holder")
         if holder_tier == "Pro Holder":
-            badges.add("pro_holder")
+            badges.add("pro_tier")
 
-        # Long term holder badge evaluation
-        if holder_tier in ("Holder", "Pro Holder") and tier_since_iso:
-            try:
-                dt_tier = datetime.fromisoformat(tier_since_iso.replace("Z", "+00:00"))
-                days_held = (datetime.now(timezone.utc) - dt_tier).total_seconds() / 86400.0
-                if days_held >= self.long_term_holder_days:
-                    badges.add("long_term_holder")
-            except Exception:
-                pass
+        # FactsAI Scholar badge
+        if facts_ai_enabled:
+            badges.add("polyfactual_citation")
 
         # Early adopter badge
         if created_at_iso:
@@ -124,21 +112,31 @@ class BadgeEvaluator:
         created_at_iso: str,
         existing_badges: Any = None,
         tier_since_iso: Optional[str] = None,
-        mcp_connected: bool = True
+        mcp_connected: bool = True,
+        facts_ai_enabled: bool = False
     ) -> List[Dict[str, Any]]:
-        earned_ids = set(self.evaluate_badges(holder_tier, created_at_iso, existing_badges, tier_since_iso))
+        earned_ids = set(self.evaluate_badges(
+            holder_tier=holder_tier,
+            created_at_iso=created_at_iso,
+            existing_badges=existing_badges,
+            tier_since_iso=tier_since_iso,
+            facts_ai_enabled=facts_ai_enabled
+        ))
         if mcp_connected:
             earned_ids.add("mcp_trader")
 
         structured = []
         for b_id, meta in BADGE_CATALOG.items():
             is_earned = b_id in earned_ids
-            structured.append({
+            badge_obj: Dict[str, Any] = {
                 "id": meta["id"],
                 "title": meta["title"],
                 "description": meta["description"],
                 "iconType": meta["iconType"],
-                "earned": is_earned,
-                "locked_reason": None if is_earned else meta.get("locked_reason")
-            })
+                "earned": is_earned
+            }
+            if not is_earned and meta.get("locked_reason"):
+                badge_obj["locked_reason"] = meta["locked_reason"]
+            structured.append(badge_obj)
+
         return structured

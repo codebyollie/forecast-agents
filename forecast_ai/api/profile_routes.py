@@ -2,7 +2,7 @@
 Authenticated Profile API Routes (`/profile/me`).
 
 Provides user profile data, $FORAI token balance holder tier, badges,
-and track-record placeholder status.
+partner features, notification settings, and waitlist management.
 """
 
 from __future__ import annotations
@@ -21,6 +21,15 @@ class PartnerFeatureToggleRequest(BaseModel):
 
 class WaitlistRequest(BaseModel):
     wants_analysis_access: Optional[bool] = True
+    on_waitlist: Optional[bool] = True
+
+class NotificationPreferences(BaseModel):
+    notify_badges: Optional[bool] = True
+    notify_partners: Optional[bool] = True
+    notify_swarm: Optional[bool] = False
+
+class SettingsUpdateRequest(BaseModel):
+    notification_preferences: Optional[NotificationPreferences] = None
 
 from ..config import ForecastConfig
 from .auth import get_current_privy_user
@@ -39,7 +48,7 @@ def check_user_rate_limit(user_id: str):
     """Simple sliding window rate limiter for profile endpoints."""
     now = time.time()
     timestamps = _USER_RATE_LIMITS.setdefault(user_id, [])
-    # Remove timestamps outside the window
+
     _USER_RATE_LIMITS[user_id] = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW_SECONDS]
     
     if len(_USER_RATE_LIMITS[user_id]) >= RATE_LIMIT_MAX_REQUESTS:
@@ -56,6 +65,95 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
     balance_checker = BalanceChecker(config.profile.tier)
     badge_evaluator = BadgeEvaluator(config.profile.early_adopter_cutoff, config.profile.tier.long_term_holder_days)
 
+    async def _assemble_profile_response(
+        privy_user_id: str,
+        user_claims: Dict[str, Any],
+        existing: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Helper function to build complete standardized profile payload."""
+        email = user_claims.get("email") or existing.get("email") or ""
+
+        # Extract linked wallets array if present
+        primary_wallet = user_claims.get("wallet_address") or existing.get("wallet_address") or ""
+        wallets_list = user_claims.get("wallet_addresses") or [primary_wallet] if primary_wallet else []
+        if existing.get("wallet_address") and existing["wallet_address"] not in wallets_list:
+            wallets_list.append(existing["wallet_address"])
+
+        # Query on-chain $FORAI token balance across linked wallets
+        forai_balance = 0.0
+        if wallets_list:
+            forai_balance = await balance_checker.fetch_onchain_balance(wallets_list)
+        elif existing.get("forai_balance"):
+            forai_balance = float(existing["forai_balance"])
+
+        holder_tier = balance_checker.evaluate_holder_tier(forai_balance)
+        old_tier = existing.get("holder_tier") or "Free"
+        now_iso = datetime.now(timezone.utc).isoformat()
+        tier_since = existing.get("tier_since") or now_iso
+
+        if old_tier != holder_tier:
+            tier_since = now_iso
+            await store.add_activity_event(
+                privy_user_id=privy_user_id,
+                event_type="tier_upgraded",
+                event_detail=f"Tier updated to {holder_tier}"
+            )
+
+        enabled_features = existing.get("enabled_partner_features") or []
+        facts_ai_enabled = "facts_ai" in enabled_features
+
+        created_at_iso = existing.get("created_at") or now_iso
+        existing_badges = existing.get("badges") or []
+        badge_ids = badge_evaluator.evaluate_badges(
+            holder_tier=holder_tier,
+            created_at_iso=created_at_iso,
+            existing_badges=existing_badges,
+            tier_since_iso=tier_since,
+            facts_ai_enabled=facts_ai_enabled
+        )
+
+        structured_badges = badge_evaluator.evaluate_structured_badges(
+            holder_tier=holder_tier,
+            created_at_iso=created_at_iso,
+            existing_badges=existing_badges,
+            tier_since_iso=tier_since,
+            mcp_connected=bool(config.robinhood_agentic.enabled),
+            facts_ai_enabled=facts_ai_enabled
+        )
+
+        notif_prefs = existing.get("notification_preferences") or {
+            "notify_badges": True,
+            "notify_partners": True,
+            "notify_swarm": False
+        }
+
+        on_waitlist = bool(existing.get("on_waitlist", False) or existing.get("wants_analysis_access", False))
+
+        return {
+            "id": privy_user_id,
+            "privy_user_id": privy_user_id,
+            "email": email,
+            "wallet_address": primary_wallet,
+            "tier": holder_tier,
+            "holder_tier": holder_tier,
+            "balance": int(round(forai_balance)),
+            "forai_balance": round(forai_balance, 4),
+            "balance_last_checked_at": now_iso,
+            "tier_since": tier_since,
+            "on_waitlist": on_waitlist,
+            "wants_analysis_access": on_waitlist,
+            "partner_features": {
+                "facts_ai": facts_ai_enabled
+            },
+            "enabled_partner_features": enabled_features,
+            "notification_preferences": notif_prefs,
+            "badges": structured_badges,
+            "badge_ids": badge_ids,
+            "track_record_status": existing.get("track_record_status", "placeholder_active"),
+            "created_at": created_at_iso,
+            "updated_at": now_iso
+        }
+
     @router.get("/me")
     async def get_my_profile(
         response: Response,
@@ -67,78 +165,10 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         privy_user_id = user["privy_user_id"]
         check_user_rate_limit(privy_user_id)
 
-        # 1. Fetch existing profile from Supabase store
         existing = await store.get_profile(privy_user_id) or {}
+        profile_data = await _assemble_profile_response(privy_user_id, user, existing)
 
-        # Merge linked accounts
-        email = user.get("email") or existing.get("email") or ""
-        wallet_address = user.get("wallet_address") or existing.get("wallet_address") or ""
-
-        # 2. Check $FORAI token balance (cached)
-        forai_balance = 0.0
-        if wallet_address:
-            forai_balance = await balance_checker.fetch_onchain_balance(wallet_address)
-        elif existing.get("forai_balance"):
-            forai_balance = float(existing["forai_balance"])
-
-        # 3. Map balance -> holder tier
-        holder_tier = balance_checker.evaluate_holder_tier(forai_balance)
-        old_tier = existing.get("holder_tier") or "Free"
-
-        # Maintain tier_since timestamp
-        now_iso = datetime.now(timezone.utc).isoformat()
-        tier_since = existing.get("tier_since") or now_iso
-        if old_tier != holder_tier:
-            tier_since = now_iso
-            await store.add_activity_event(
-                privy_user_id=privy_user_id,
-                event_type="tier_upgraded",
-                event_detail=f"Tier updated to {holder_tier}"
-            )
-
-        # 4. Evaluate badges and partner features map
-        created_at_iso = existing.get("created_at") or now_iso
-        existing_badges = existing.get("badges") or []
-        badge_ids = badge_evaluator.evaluate_badges(holder_tier, created_at_iso, existing_badges, tier_since)
-        structured_badges = badge_evaluator.evaluate_structured_badges(
-            holder_tier=holder_tier,
-            created_at_iso=created_at_iso,
-            existing_badges=existing_badges,
-            tier_since_iso=tier_since,
-            mcp_connected=bool(config.robinhood_agentic.enabled)
-        )
-
-        enabled_features = existing.get("enabled_partner_features") or []
-        partner_features_map = {
-            "facts_ai": "facts_ai" in enabled_features
-        }
-
-        # 5. Assemble updated profile dict
-        profile_data = {
-            "id": privy_user_id,
-            "privy_user_id": privy_user_id,
-            "email": email,
-            "wallet_address": wallet_address,
-            "tier": holder_tier,
-            "holder_tier": holder_tier,
-            "balance": round(forai_balance, 4),
-            "forai_balance": round(forai_balance, 4),
-            "balance_last_checked_at": now_iso,
-            "tier_since": tier_since,
-            "wants_analysis_access": bool(existing.get("wants_analysis_access", False)),
-            "partner_features": partner_features_map,
-            "enabled_partner_features": enabled_features,
-            "badges": structured_badges,
-            "badge_ids": badge_ids,
-            "track_record_status": existing.get("track_record_status", "placeholder_active"),
-            "created_at": created_at_iso,
-            "updated_at": now_iso
-        }
-
-        # 6. Save updated profile state to Supabase store
         saved_profile = await store.upsert_profile(profile_data)
-
-        # Add CORS and Cache headers
         response.headers["Cache-Control"] = "private, max-age=60"
         return saved_profile
 
@@ -193,52 +223,43 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
             event_detail=f"{feature_name} ({status_text})"
         )
 
-        # Re-fetch profile data to return complete profile object
-        email = user.get("email") or existing.get("email") or ""
-        wallet_address = user.get("wallet_address") or existing.get("wallet_address") or ""
-        forai_balance = 0.0
-        if wallet_address:
-            forai_balance = await balance_checker.fetch_onchain_balance(wallet_address)
-        elif existing.get("forai_balance"):
-            forai_balance = float(existing["forai_balance"])
+        profile_data = await _assemble_profile_response(privy_user_id, user, existing)
+        saved = await store.upsert_profile(profile_data)
+        response.headers["Cache-Control"] = "no-cache"
+        return saved
 
-        holder_tier = balance_checker.evaluate_holder_tier(forai_balance)
-        now_iso = datetime.now(timezone.utc).isoformat()
-        created_at_iso = existing.get("created_at") or now_iso
-        tier_since = existing.get("tier_since") or now_iso
-        existing_badges = existing.get("badges") or []
-        badge_ids = badge_evaluator.evaluate_badges(holder_tier, created_at_iso, existing_badges, tier_since)
-        structured_badges = badge_evaluator.evaluate_structured_badges(
-            holder_tier=holder_tier,
-            created_at_iso=created_at_iso,
-            existing_badges=existing_badges,
-            tier_since_iso=tier_since,
-            mcp_connected=bool(config.robinhood_agentic.enabled)
+    @router.patch("/settings")
+    async def update_settings(
+        req: SettingsUpdateRequest,
+        response: Response,
+        user: Dict[str, Any] = Depends(get_current_privy_user)
+    ) -> Dict[str, Any]:
+        """
+        PATCH /profile/settings
+        Accepts notification preferences:
+        {"notification_preferences": {"notify_badges": bool, "notify_partners": bool, "notify_swarm": bool}}
+        """
+        privy_user_id = user["privy_user_id"]
+        check_user_rate_limit(privy_user_id)
+
+        existing = await store.get_profile(privy_user_id) or {}
+        if req.notification_preferences:
+            prefs_dict = req.notification_preferences.model_dump(exclude_unset=True)
+            current_prefs = existing.get("notification_preferences") or {
+                "notify_badges": True,
+                "notify_partners": True,
+                "notify_swarm": False
+            }
+            current_prefs.update(prefs_dict)
+            existing["notification_preferences"] = current_prefs
+
+        await store.add_activity_event(
+            privy_user_id=privy_user_id,
+            event_type="settings_updated",
+            event_detail="Notification preferences updated"
         )
 
-        profile_data = {
-            "id": privy_user_id,
-            "privy_user_id": privy_user_id,
-            "email": email,
-            "wallet_address": wallet_address,
-            "tier": holder_tier,
-            "holder_tier": holder_tier,
-            "balance": round(forai_balance, 4),
-            "forai_balance": round(forai_balance, 4),
-            "balance_last_checked_at": now_iso,
-            "tier_since": tier_since,
-            "wants_analysis_access": bool(existing.get("wants_analysis_access", False)),
-            "partner_features": {
-                "facts_ai": "facts_ai" in updated_features
-            },
-            "enabled_partner_features": updated_features,
-            "badges": structured_badges,
-            "badge_ids": badge_ids,
-            "track_record_status": existing.get("track_record_status", "placeholder_active"),
-            "created_at": created_at_iso,
-            "updated_at": now_iso
-        }
-
+        profile_data = await _assemble_profile_response(privy_user_id, user, existing)
         saved = await store.upsert_profile(profile_data)
         response.headers["Cache-Control"] = "no-cache"
         return saved
@@ -252,12 +273,20 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         """
         PATCH /profile/waitlist
         Registers the logged-in user's interest for custom agent market analysis access.
+        Returns {"success": true, "on_waitlist": true, "waitlist_count": N}
         """
         privy_user_id = user["privy_user_id"]
         check_user_rate_limit(privy_user_id)
 
-        wants = req.wants_analysis_access if req and req.wants_analysis_access is not None else True
+        wants = True
+        if req:
+            if req.on_waitlist is not None:
+                wants = req.on_waitlist
+            elif req.wants_analysis_access is not None:
+                wants = req.wants_analysis_access
+
         existing = await store.get_profile(privy_user_id) or {}
+        existing["on_waitlist"] = wants
         existing["wants_analysis_access"] = wants
         existing["privy_user_id"] = privy_user_id
 
@@ -268,50 +297,17 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
                 event_detail="Registered interest for custom agent analysis access"
             )
 
-        now_iso = datetime.now(timezone.utc).isoformat()
-        email = user.get("email") or existing.get("email") or ""
-        wallet_address = user.get("wallet_address") or existing.get("wallet_address") or ""
-        forai_balance = float(existing.get("forai_balance", 0.0))
-        holder_tier = balance_checker.evaluate_holder_tier(forai_balance)
-        created_at_iso = existing.get("created_at") or now_iso
-        tier_since = existing.get("tier_since") or now_iso
-        existing_badges = existing.get("badges") or []
-        badge_ids = badge_evaluator.evaluate_badges(holder_tier, created_at_iso, existing_badges, tier_since)
-        structured_badges = badge_evaluator.evaluate_structured_badges(
-            holder_tier=holder_tier,
-            created_at_iso=created_at_iso,
-            existing_badges=existing_badges,
-            tier_since_iso=tier_since,
-            mcp_connected=bool(config.robinhood_agentic.enabled)
-        )
-        enabled_features = existing.get("enabled_partner_features") or []
+        profile_data = await _assemble_profile_response(privy_user_id, user, existing)
+        await store.upsert_profile(profile_data)
+        waitlist_count = await store.get_waitlist_count()
 
-        profile_data = {
-            "id": privy_user_id,
-            "privy_user_id": privy_user_id,
-            "email": email,
-            "wallet_address": wallet_address,
-            "tier": holder_tier,
-            "holder_tier": holder_tier,
-            "balance": round(forai_balance, 4),
-            "forai_balance": round(forai_balance, 4),
-            "balance_last_checked_at": now_iso,
-            "tier_since": tier_since,
-            "wants_analysis_access": wants,
-            "partner_features": {
-                "facts_ai": "facts_ai" in enabled_features
-            },
-            "enabled_partner_features": enabled_features,
-            "badges": structured_badges,
-            "badge_ids": badge_ids,
-            "track_record_status": existing.get("track_record_status", "placeholder_active"),
-            "created_at": created_at_iso,
-            "updated_at": now_iso
-        }
-
-        saved = await store.upsert_profile(profile_data)
         if response:
             response.headers["Cache-Control"] = "no-cache"
-        return saved
+
+        return {
+            "success": True,
+            "on_waitlist": wants,
+            "waitlist_count": waitlist_count
+        }
 
     return router
