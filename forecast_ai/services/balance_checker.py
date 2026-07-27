@@ -67,7 +67,12 @@ class BalanceChecker:
                 "id": 1
             }
 
-            async with httpx.AsyncClient() as client:
+            req_headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Content-Type": "application/json"
+            }
+
+            async with httpx.AsyncClient(headers=req_headers) as client:
                 try:
                     resp = await client.post(self.config.rpc_url, json=payload, timeout=10.0)
                     if resp.status_code == 200:

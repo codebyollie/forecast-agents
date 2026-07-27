@@ -164,13 +164,13 @@ def test_activity_log_and_waitlist_endpoints():
     assert w_resp.status_code == 200
     assert w_resp.json()["success"] is True
     assert w_resp.json()["on_waitlist"] is True
-    assert w_resp.json()["waitlist_count"] >= 482
+    assert w_resp.json()["waitlist_count"] >= 1
 
     # 2. Verify public waitlist count endpoint GET /public/analyses-waitlist-count
     c_resp = client.get("/public/analyses-waitlist-count")
     assert c_resp.status_code == 200
     assert "waitlist_count" in c_resp.json()
-    assert c_resp.json()["waitlist_count"] >= 482
+    assert c_resp.json()["waitlist_count"] >= 1
 
     # 3. Toggle partner feature to trigger another activity event
     client.patch(

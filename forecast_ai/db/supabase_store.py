@@ -176,16 +176,15 @@ class SupabaseProfileStore:
 
     async def get_waitlist_count(self) -> int:
         """
-        Returns aggregate count of users who have registered interest in custom agent analysis access.
-        Seeded with baseline count 482 so social proof is live.
+        Returns aggregate count of users who have registered interest in custom agent analysis access from database.
         """
-        BASELINE_COUNT = 482
+        BASELINE_COUNT = 0
         in_mem_count = sum(1 for p in _IN_MEMORY_PROFILES.values() if p.get("wants_analysis_access") or p.get("on_waitlist"))
 
         if not self.is_configured:
             return BASELINE_COUNT + in_mem_count
 
-        endpoint = f"{self.url}/rest/v1/{self.table}?wants_analysis_access=eq.true&select=count"
+        endpoint = f"{self.url}/rest/v1/{self.table}?or=(wants_analysis_access.eq.true,on_waitlist.eq.true)&select=count"
         headers = {
             "apikey": self.key,
             "Authorization": f"Bearer {self.key}",
