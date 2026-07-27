@@ -46,8 +46,7 @@ class FactsAISource(BaseSource):
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "Content-Type": "application/json"
         }
         payload = {"query": clean_query}
 
@@ -79,16 +78,28 @@ class FactsAISource(BaseSource):
                         "answer": answer,
                         "citations": clean_citations
                     }
-                elif resp.status_code == 401:
-                    raise FactsAIError(401, "Invalid FactsAI API key (Unauthorized).")
-                elif resp.status_code == 402:
-                    raise FactsAIError(402, "Insufficient FactsAI credits (Payment Required).")
-                elif resp.status_code == 429:
-                    raise FactsAIError(429, "FactsAI rate limit exceeded (Too Many Requests).")
-                elif resp.status_code >= 500:
-                    raise FactsAIError(resp.status_code, f"FactsAI server error: {resp.text[:200]}")
                 else:
-                    raise FactsAIError(resp.status_code, f"FactsAI request failed: {resp.text[:200]}")
+                    err_detail = ""
+                    try:
+                        res_json = resp.json()
+                        if isinstance(res_json, dict):
+                            err_detail = str(res_json.get("error") or res_json.get("message") or "")
+                    except Exception:
+                        pass
+
+                    if not err_detail:
+                        err_detail = resp.text[:200]
+
+                    if resp.status_code == 401:
+                        raise FactsAIError(401, f"Unauthorized: {err_detail}")
+                    elif resp.status_code == 402:
+                        raise FactsAIError(402, f"Payment Required: {err_detail}")
+                    elif resp.status_code == 429:
+                        raise FactsAIError(429, f"Too Many Requests: {err_detail}")
+                    elif resp.status_code >= 500:
+                        raise FactsAIError(resp.status_code, f"Server Error: {err_detail}")
+                    else:
+                        raise FactsAIError(resp.status_code, f"Request Failed: {err_detail}")
 
             except FactsAIError:
                 raise
