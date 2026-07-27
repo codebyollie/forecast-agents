@@ -70,6 +70,15 @@ CURATED_TOPICS: List[CuratedTopic] = [
         source_venue="Polymarket",
         market_ticker="solana-top-4-market-cap"
     ),
+    CuratedTopic(
+        topic_id="us-presidential-election-2028",
+        question="Which party will win the 2028 US Presidential Election?",
+        category="politics",
+        tier="long",
+        refresh_interval_hours=6,
+        source_venue="Kalshi / Robinhood Predict",
+        market_ticker="KXPRESPARTY-2028-D"
+    ),
 ]
 
 def get_topic_by_id(topic_id: str) -> Optional[CuratedTopic]:
