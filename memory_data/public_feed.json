@@ -8,10 +8,10 @@
       "tier": "long",
       "refresh_interval_hours": 6,
       "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXFEDCUT-26",
+      "market_ticker": "KXRATECUT-26DEC31",
       "consensus_probability": 0.62,
-      "market_price": 0.5,
-      "price_delta": 0.12,
+      "market_price": 0.18,
+      "price_delta": 0.44,
       "consensus_confidence": 0.85,
       "explanation": "Weighted multi-agent consensus indicates 62% likelihood of a rate cut based on declining core inflation metrics and softening labor data.",
       "agent_breakdown": [
@@ -65,7 +65,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-27T16:14:46.829422+00:00"
+      "last_updated": "2026-07-28T08:03:18.115786+00:00"
     },
     "us-cpi-inflation": {
       "topic_id": "us-cpi-inflation",
@@ -74,10 +74,10 @@
       "tier": "long",
       "refresh_interval_hours": 6,
       "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXCPI-26",
+      "market_ticker": "KXCPICOMBO-26JULB-0202",
       "consensus_probability": 0.58,
-      "market_price": 0.5,
-      "price_delta": 0.08,
+      "market_price": 0.06,
+      "price_delta": 0.52,
       "consensus_confidence": 0.82,
       "explanation": "Consensus probability stands at 58% as shelter component disinflation continues to offset energy price volatility.",
       "agent_breakdown": [
@@ -131,7 +131,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-27T16:14:46.829422+00:00"
+      "last_updated": "2026-07-28T08:03:18.115786+00:00"
     },
     "btc-above-100k": {
       "topic_id": "btc-above-100k",
@@ -140,10 +140,10 @@
       "tier": "short",
       "refresh_interval_hours": 2,
       "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXBTC-100K",
+      "market_ticker": "KXBTCMAX150-25-26DEC31-149999.99",
       "consensus_probability": 0.66,
-      "market_price": 0.5,
-      "price_delta": 0.16,
+      "market_price": 0.045,
+      "price_delta": 0.615,
       "consensus_confidence": 0.88,
       "explanation": "Multi-agent swarm indicates a 66% probability driven by institutional exchange inflows and strong orderbook bid depth.",
       "agent_breakdown": [
@@ -197,7 +197,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-27T16:14:46.829422+00:00"
+      "last_updated": "2026-07-28T08:03:18.115786+00:00"
     },
     "eth-above-4k": {
       "topic_id": "eth-above-4k",
@@ -205,11 +205,11 @@
       "category": "crypto",
       "tier": "short",
       "refresh_interval_hours": 2,
-      "source_venue": "Polymarket",
-      "market_ticker": "ethereum-above-4000",
+      "source_venue": "Kalshi / Robinhood Predict",
+      "market_ticker": "KXETH-26JUL2805-T2694.99",
       "consensus_probability": 0.54,
-      "market_price": 0.5,
-      "price_delta": 0.04,
+      "market_price": 0.0,
+      "price_delta": 0.54,
       "consensus_confidence": 0.81,
       "explanation": "Ethereum consensus probability sits at 54% amid steady layer-2 gas consumption and validator staking growth.",
       "agent_breakdown": [
@@ -263,7 +263,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-27T16:14:46.829422+00:00"
+      "last_updated": "2026-07-28T08:03:18.115786+00:00"
     },
     "spacex-starship-orbital": {
       "topic_id": "spacex-starship-orbital",
@@ -272,10 +272,10 @@
       "tier": "short",
       "refresh_interval_hours": 2,
       "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXSTARSHIP-26",
+      "market_ticker": "STARSHIPMARS-29DEC31",
       "consensus_probability": 0.71,
-      "market_price": 0.5,
-      "price_delta": 0.21,
+      "market_price": 0.155,
+      "price_delta": 0.555,
       "consensus_confidence": 0.89,
       "explanation": "High consensus probability (71%) backed by FAA license progress and successful static fire testing at Starbase.",
       "agent_breakdown": [
@@ -329,7 +329,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-27T16:14:46.829422+00:00"
+      "last_updated": "2026-07-28T08:03:18.115786+00:00"
     },
     "sol-market-cap-rank": {
       "topic_id": "sol-market-cap-rank",
@@ -337,11 +337,11 @@
       "category": "crypto",
       "tier": "short",
       "refresh_interval_hours": 2,
-      "source_venue": "Polymarket",
-      "market_ticker": "solana-top-4-market-cap",
+      "source_venue": "Kalshi / Robinhood Predict",
+      "market_ticker": "KXPRESPARTY-2032-D",
       "consensus_probability": 0.78,
-      "market_price": 0.5,
-      "price_delta": 0.28,
+      "market_price": 0.455,
+      "price_delta": 0.325,
       "consensus_confidence": 0.91,
       "explanation": "Solana retains a strong 78% consensus probability due to dominant DEX volume and active developer activity.",
       "agent_breakdown": [
@@ -395,7 +395,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-27T16:14:46.829422+00:00"
+      "last_updated": "2026-07-28T08:03:18.115786+00:00"
     },
     "us-presidential-election-2028": {
       "topic_id": "us-presidential-election-2028",
@@ -406,8 +406,8 @@
       "source_venue": "Kalshi / Robinhood Predict",
       "market_ticker": "KXPRESPARTY-2028-D",
       "consensus_probability": 0.52,
-      "market_price": 0.5,
-      "price_delta": 0.02,
+      "market_price": 0.575,
+      "price_delta": -0.055,
       "consensus_confidence": 0.8,
       "explanation": "Primary polling consensus shows 52% probability for Democrats in 2028 based on early candidate approval ratings.",
       "agent_breakdown": [
@@ -461,7 +461,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-27T16:14:46.829422+00:00"
+      "last_updated": "2026-07-28T08:03:18.115786+00:00"
     }
   }
 }

@@ -23,7 +23,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="long",
         refresh_interval_hours=6,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXFEDCUT-26"
+        market_ticker="KXRATECUT-26DEC31"
     ),
     CuratedTopic(
         topic_id="us-cpi-inflation",
@@ -32,7 +32,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="long",
         refresh_interval_hours=6,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXCPI-26"
+        market_ticker="KXCPICOMBO-26JULB-0202"
     ),
     CuratedTopic(
         topic_id="btc-above-100k",
@@ -41,7 +41,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="short",
         refresh_interval_hours=2,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXBTC-100K"
+        market_ticker="KXBTCMAX150-25-26DEC31-149999.99"
     ),
     CuratedTopic(
         topic_id="eth-above-4k",
@@ -49,8 +49,8 @@ CURATED_TOPICS: List[CuratedTopic] = [
         category="crypto",
         tier="short",
         refresh_interval_hours=2,
-        source_venue="Polymarket",
-        market_ticker="ethereum-above-4000"
+        source_venue="Kalshi / Robinhood Predict",
+        market_ticker="KXETH-26JUL2805-T2694.99"
     ),
     CuratedTopic(
         topic_id="spacex-starship-orbital",
@@ -59,7 +59,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
         tier="short",
         refresh_interval_hours=2,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXSTARSHIP-26"
+        market_ticker="STARSHIPMARS-29DEC31"
     ),
     CuratedTopic(
         topic_id="sol-market-cap-rank",
@@ -67,8 +67,8 @@ CURATED_TOPICS: List[CuratedTopic] = [
         category="crypto",
         tier="short",
         refresh_interval_hours=2,
-        source_venue="Polymarket",
-        market_ticker="solana-top-4-market-cap"
+        source_venue="Kalshi / Robinhood Predict",
+        market_ticker="KXPRESPARTY-2032-D"
     ),
     CuratedTopic(
         topic_id="us-presidential-election-2028",

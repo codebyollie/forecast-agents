@@ -124,8 +124,8 @@ class PublicFeedRunner:
                 if m:
                     if m.yes_bid > 0 and m.yes_ask > 0:
                         return round((m.yes_bid + m.yes_ask) / 2.0, 4)
-                    elif m.last_price > 0:
-                        return round(m.last_price, 4)
+                    elif m.last_price is not None:
+                        return round(float(m.last_price), 4)
                 ob = await self.kalshi_client.fetch_orderbook(ticker)
                 if ob and ob.midpoint > 0:
                     return round(ob.midpoint, 4)
@@ -140,6 +140,17 @@ class PublicFeedRunner:
                 if m and m.raw_data:
                     outcome_prices = m.raw_data.get("outcomePrices")
                     if outcome_prices:
+                        if isinstance(outcome_prices, str):
+                            outcome_prices = json.loads(outcome_prices)
+                        if isinstance(outcome_prices, list) and len(outcome_prices) > 0:
+                            return round(float(outcome_prices[0]), 4)
+                
+                # Fallback to event by slug
+                ev = await self.gamma_client.fetch_event_by_slug(ticker)
+                if ev and ev.markets:
+                    m0 = ev.markets[0]
+                    if m0.raw_data:
+                        outcome_prices = m0.raw_data.get("outcomePrices")
                         if isinstance(outcome_prices, str):
                             outcome_prices = json.loads(outcome_prices)
                         if isinstance(outcome_prices, list) and len(outcome_prices) > 0:

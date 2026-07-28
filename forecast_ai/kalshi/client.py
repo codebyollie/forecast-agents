@@ -16,17 +16,34 @@ class KalshiClient:
         self.api_key = api_key
 
     def _headers(self) -> Dict[str, str]:
-        headers = {"Accept": "application/json"}
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        }
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         return headers
 
     def _parse_market(self, data: Dict[str, Any]) -> KalshiMarket:
-        yes_bid = float(data.get("yes_bid", 0) or 0) / 100.0 if data.get("yes_bid") and data.get("yes_bid") > 1 else float(data.get("yes_bid", 0) or 0)
-        yes_ask = float(data.get("yes_ask", 0) or 0) / 100.0 if data.get("yes_ask") and data.get("yes_ask") > 1 else float(data.get("yes_ask", 0) or 0)
-        no_bid = float(data.get("no_bid", 0) or 0) / 100.0 if data.get("no_bid") and data.get("no_bid") > 1 else float(data.get("no_bid", 0) or 0)
-        no_ask = float(data.get("no_ask", 0) or 0) / 100.0 if data.get("no_ask") and data.get("no_ask") > 1 else float(data.get("no_ask", 0) or 0)
-        last_price = float(data.get("last_price", 0) or 0) / 100.0 if data.get("last_price") and data.get("last_price") > 1 else float(data.get("last_price", 0.5) or 0.5)
+        def parse_val(cents_key: str, dollars_key: str, default_val: float = 0.0) -> float:
+            if data.get(dollars_key) is not None:
+                try:
+                    return float(data[dollars_key])
+                except (ValueError, TypeError):
+                    pass
+            if data.get(cents_key) is not None:
+                try:
+                    v = float(data[cents_key])
+                    return v / 100.0 if v > 1.0 else v
+                except (ValueError, TypeError):
+                    pass
+            return default_val
+
+        yes_bid = parse_val("yes_bid", "yes_bid_dollars", 0.0)
+        yes_ask = parse_val("yes_ask", "yes_ask_dollars", 0.0)
+        no_bid = parse_val("no_bid", "no_bid_dollars", 0.0)
+        no_ask = parse_val("no_ask", "no_ask_dollars", 0.0)
+        last_price = parse_val("last_price", "last_price_dollars", 0.50)
 
         return KalshiMarket(
             ticker=data.get("ticker", ""),
@@ -49,7 +66,7 @@ class KalshiClient:
 
     async def fetch_markets(self, limit: int = 20, status: str = "open") -> List[KalshiMarket]:
         """Fetch list of open markets from Kalshi."""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:
             try:
                 resp = await client.get(
                     f"{self.base_url}/markets",
@@ -66,7 +83,7 @@ class KalshiClient:
 
     async def fetch_market_by_ticker(self, ticker: str) -> Optional[KalshiMarket]:
         """Fetch a specific Kalshi market by ticker symbol."""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:
             try:
                 resp = await client.get(
                     f"{self.base_url}/markets/{ticker}",
@@ -82,7 +99,7 @@ class KalshiClient:
 
     async def fetch_orderbook(self, ticker: str) -> Optional[KalshiOrderbook]:
         """Fetch orderbook depth for a market ticker."""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=False) as client:
             try:
                 resp = await client.get(
                     f"{self.base_url}/markets/{ticker}/orderbook",
