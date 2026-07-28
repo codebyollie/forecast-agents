@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 # Fallback in-memory stores when Supabase env vars are missing
 _IN_MEMORY_PROFILES: Dict[str, Dict[str, Any]] = {}
 _IN_MEMORY_ACTIVITY: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+_IN_MEMORY_USER_ANALYSES: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+_IN_MEMORY_DAILY_USAGE: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
 
 class SupabaseProfileStore:
     def __init__(self, config: SupabaseConfig):
@@ -204,9 +206,135 @@ class SupabaseProfileStore:
 
         return BASELINE_COUNT + in_mem_count
 
+    async def get_daily_analysis_count(self, user_id: str, date_str: Optional[str] = None) -> int:
+        """Fetch count of custom market analyses run by user on specified date (defaults to today UTC)."""
+        if not date_str:
+            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        if not self.is_configured:
+            return _IN_MEMORY_DAILY_USAGE[user_id].get(date_str, 0)
+
+        endpoint = f"{self.url}/rest/v1/user_analysis_usage?user_id=eq.{user_id}&usage_date=eq.{date_str}"
+        headers = {
+            "apikey": self.key,
+            "Authorization": f"Bearer {self.key}",
+            "Accept": "application/json"
+        }
+
+        async with httpx.AsyncClient() as client:
+            try:
+                resp = await client.get(endpoint, headers=headers, timeout=10.0)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if isinstance(data, list) and len(data) > 0:
+                        return int(data[0].get("count", 0))
+            except Exception as e:
+                logger.error(f"[SupabaseStore] Failed to fetch daily analysis count for '{user_id}': {e}")
+
+        return _IN_MEMORY_DAILY_USAGE[user_id].get(date_str, 0)
+
+    async def increment_daily_analysis_count(self, user_id: str, date_str: Optional[str] = None) -> int:
+        """Increment current daily analysis count for user atomically."""
+        if not date_str:
+            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        current = await self.get_daily_analysis_count(user_id, date_str)
+        new_count = current + 1
+        _IN_MEMORY_DAILY_USAGE[user_id][date_str] = new_count
+
+        if not self.is_configured:
+            return new_count
+
+        endpoint = f"{self.url}/rest/v1/user_analysis_usage"
+        headers = {
+            "apikey": self.key,
+            "Authorization": f"Bearer {self.key}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates,return=representation"
+        }
+        payload = {
+            "user_id": user_id,
+            "usage_date": date_str,
+            "count": new_count,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }
+
+        async with httpx.AsyncClient() as client:
+            try:
+                resp = await client.post(endpoint, headers=headers, json=payload, timeout=10.0)
+                if resp.status_code in (200, 201):
+                    data = resp.json()
+                    if isinstance(data, list) and len(data) > 0:
+                        return int(data[0].get("count", new_count))
+            except Exception as e:
+                logger.error(f"[SupabaseStore] Failed to increment daily analysis count: {e}")
+
+        return new_count
+
+    async def save_user_analysis(self, user_id: str, analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Save a user-triggered forecast result into user_analyses table."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        record = dict(analysis)
+        record["user_id"] = user_id
+        record["created_at"] = record.get("created_at") or now_iso
+
+        _IN_MEMORY_USER_ANALYSES[user_id].insert(0, record)
+
+        if not self.is_configured:
+            return record
+
+        endpoint = f"{self.url}/rest/v1/user_analyses"
+        headers = {
+            "apikey": self.key,
+            "Authorization": f"Bearer {self.key}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+        }
+
+        async with httpx.AsyncClient() as client:
+            try:
+                resp = await client.post(endpoint, headers=headers, json=record, timeout=10.0)
+                if resp.status_code in (200, 201):
+                    data = resp.json()
+                    if isinstance(data, list) and len(data) > 0:
+                        return data[0]
+            except Exception as e:
+                logger.error(f"[SupabaseStore] Failed to save user analysis for '{user_id}': {e}")
+
+        return record
+
+    async def get_user_analyses(
+        self,
+        user_id: str,
+        limit: int = 20,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """Fetch past custom analyses for user, ordered newest first."""
+        if not self.is_configured:
+            return _IN_MEMORY_USER_ANALYSES[user_id][offset:offset+limit]
+
+        endpoint = f"{self.url}/rest/v1/user_analyses?user_id=eq.{user_id}&order=created_at.desc&limit={limit}&offset={offset}"
+        headers = {
+            "apikey": self.key,
+            "Authorization": f"Bearer {self.key}",
+            "Accept": "application/json"
+        }
+
+        async with httpx.AsyncClient() as client:
+            try:
+                resp = await client.get(endpoint, headers=headers, timeout=10.0)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if isinstance(data, list):
+                        return data
+            except Exception as e:
+                logger.error(f"[SupabaseStore] Failed to fetch user analyses for '{user_id}': {e}")
+
+        return _IN_MEMORY_USER_ANALYSES[user_id][offset:offset+limit]
+
 def get_supabase_sql_schema() -> str:
     """
-    Returns SQL schema definition for setting up `profiles` and `profile_activity` tables in Supabase.
+    Returns SQL schema definition for setting up database tables in Supabase.
     """
     return """
 -- SQL Schema for Supabase Postgres
@@ -236,14 +364,35 @@ CREATE TABLE IF NOT EXISTS public.profile_activity (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Migration queries for existing databases:
--- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tier_since TIMESTAMPTZ DEFAULT NOW();
--- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS wants_analysis_access BOOLEAN DEFAULT false;
--- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS enabled_partner_features JSONB DEFAULT '[]'::jsonb;
+CREATE TABLE IF NOT EXISTS public.user_analyses (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    market_id TEXT NOT NULL,
+    question TEXT NOT NULL,
+    category TEXT DEFAULT 'General',
+    venue TEXT,
+    consensus_probability NUMERIC,
+    consensus_confidence NUMERIC,
+    market_price_at_time NUMERIC,
+    explanation TEXT,
+    agent_breakdown JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_analysis_usage (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    usage_date DATE NOT NULL,
+    count INT DEFAULT 0,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT user_date_unique UNIQUE(user_id, usage_date)
+);
 
 -- Enable Row Level Security (RLS) on all public tables to eliminate warnings
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profile_activity ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_analyses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_analysis_usage ENABLE ROW LEVEL SECURITY;
 
 -- Allow service_role key full access
 DROP POLICY IF EXISTS "Service role full access on profiles" ON public.profiles;
@@ -251,4 +400,10 @@ CREATE POLICY "Service role full access on profiles" ON public.profiles FOR ALL 
 
 DROP POLICY IF EXISTS "Service role full access on profile_activity" ON public.profile_activity;
 CREATE POLICY "Service role full access on profile_activity" ON public.profile_activity FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Service role full access on user_analyses" ON public.user_analyses;
+CREATE POLICY "Service role full access on user_analyses" ON public.user_analyses FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Service role full access on user_analysis_usage" ON public.user_analysis_usage;
+CREATE POLICY "Service role full access on user_analysis_usage" ON public.user_analysis_usage FOR ALL TO service_role USING (true) WITH CHECK (true);
 """

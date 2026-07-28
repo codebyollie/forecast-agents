@@ -48,6 +48,11 @@ class ApiServer:
         profile_router = create_profile_router(self.config)
         self.app.include_router(profile_router)
 
+        # Mount Authenticated Custom Analyses Router (/markets/search & /analyses)
+        from .analysis_routes import create_analysis_router
+        analysis_router = create_analysis_router(self.config, self.pipeline)
+        self.app.include_router(analysis_router)
+
     async def start(self):
         """
         Starts the API server asynchronously and launches the public feed update loop.

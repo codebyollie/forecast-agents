@@ -92,10 +92,21 @@ class FactsAIConfig:
     coarse_refresh_interval_cycles: int = 2
 
 @dataclass
+class CustomAnalysisTierConfig:
+    free_daily_limit: int = 1
+    holder_daily_limit: int = 10
+    pro_daily_limit: int = 30
+    search_rate_limit_per_hour: int = 30
+    free_model_override: str = "gpt-4o-mini"
+    holder_model_override: str = "gpt-4o"
+    pro_model_override: str = "claude-3-5-sonnet"
+
+@dataclass
 class ProfileConfig:
     tier: HolderTierConfig = field(default_factory=HolderTierConfig)
     privy: PrivyAuthConfig = field(default_factory=PrivyAuthConfig)
     supabase: SupabaseConfig = field(default_factory=SupabaseConfig)
+    custom_analysis: CustomAnalysisTierConfig = field(default_factory=CustomAnalysisTierConfig)
     early_adopter_cutoff: str = "2026-09-01T00:00:00Z"
 
 @dataclass
