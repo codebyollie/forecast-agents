@@ -18,7 +18,7 @@ class CuratedTopic:
 CURATED_TOPICS: List[CuratedTopic] = [
     CuratedTopic(
         topic_id="fed-rate-q3-2026",
-        question="Will the US Federal Reserve reduce benchmark interest rates in Q3 2026?",
+        question="Will the US Federal Reserve cut interest rates before 2027?",
         category="macro",
         tier="long",
         refresh_interval_hours=6,
@@ -27,16 +27,16 @@ CURATED_TOPICS: List[CuratedTopic] = [
     ),
     CuratedTopic(
         topic_id="us-cpi-inflation",
-        question="Will US CPI Inflation YoY be under 2.8% at Q3 end?",
+        question="Will US Used Cars & Trucks CPI for July 2026 be above 180.00?",
         category="macro",
         tier="long",
         refresh_interval_hours=6,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXCPICOMBO-26JULB-0202"
+        market_ticker="KXUSEDCARCPI-26AUG12-T180.00"
     ),
     CuratedTopic(
         topic_id="btc-above-100k",
-        question="Will Bitcoin (BTC) trade above $100,000 before end of month?",
+        question="Will Bitcoin (BTC) trade above $150,000 before end of 2026?",
         category="crypto",
         tier="short",
         refresh_interval_hours=2,
@@ -45,7 +45,7 @@ CURATED_TOPICS: List[CuratedTopic] = [
     ),
     CuratedTopic(
         topic_id="eth-above-4k",
-        question="Will Ethereum (ETH) trade above $4,000 before end of month?",
+        question="Will Ethereum (ETH) trade above $2,700 at target date?",
         category="crypto",
         tier="short",
         refresh_interval_hours=2,
@@ -54,21 +54,21 @@ CURATED_TOPICS: List[CuratedTopic] = [
     ),
     CuratedTopic(
         topic_id="spacex-starship-orbital",
-        question="Will SpaceX complete a successful Starship orbital test launch this month?",
+        question="Will SpaceX land anything successfully on Mars before 2030?",
         category="tech",
         tier="short",
         refresh_interval_hours=2,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="STARSHIPMARS-29DEC31"
+        market_ticker="KXSPACEXMARS-30"
     ),
     CuratedTopic(
         topic_id="sol-market-cap-rank",
-        question="Will Solana (SOL) maintain a top 4 market cap ranking this month?",
-        category="crypto",
+        question="Will the US government take control of any AI company or project before 2030?",
+        category="tech",
         tier="short",
         refresh_interval_hours=2,
         source_venue="Kalshi / Robinhood Predict",
-        market_ticker="KXPRESPARTY-2032-D"
+        market_ticker="KXUSTAKEOVER-30"
     ),
     CuratedTopic(
         topic_id="us-presidential-election-2028",
