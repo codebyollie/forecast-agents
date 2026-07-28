@@ -9,209 +9,143 @@
       "refresh_interval_hours": 6,
       "source_venue": "Kalshi / Robinhood Predict",
       "market_ticker": "KXRATECUT-26DEC31",
-      "consensus_probability": 0.2155,
-      "market_price": 0.1805,
+      "consensus_probability": 0.2145,
+      "market_price": 0.1795,
       "price_delta": 0.035,
       "consensus_confidence": 0.84,
       "explanation": "Multi-agent swarm evaluated Will the US Federal Reserve cut interest rates before 2027? with a 7-agent cluster consensus.",
       "agent_breakdown": [
         {
           "agent_name": "NewsAgent",
-          "probability": 0.2055,
+          "probability": 0.2045,
           "confidence": 0.84,
           "reasoning_summary": "Analyzed news sentiment and media coverage.",
           "warnings": []
         },
         {
           "agent_name": "SocialAgent",
-          "probability": 0.2255,
+          "probability": 0.2245,
           "confidence": 0.84,
           "reasoning_summary": "Tracked X/Twitter social chatter and viral volume.",
           "warnings": []
         },
         {
           "agent_name": "RedditAgent",
-          "probability": 0.2355,
+          "probability": 0.2345,
           "confidence": 0.84,
           "reasoning_summary": "Gauged retail community sentiment and discussion depth.",
           "warnings": []
         },
         {
           "agent_name": "ResearchAgent",
-          "probability": 0.1955,
+          "probability": 0.1945,
           "confidence": 0.84,
           "reasoning_summary": "Queried FactsAI Deep Research primary citations.",
           "warnings": []
         },
         {
           "agent_name": "MacroAgent",
-          "probability": 0.2055,
+          "probability": 0.2045,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated macro indicators and historical trend data.",
           "warnings": []
         },
         {
           "agent_name": "OnchainAgent",
-          "probability": 0.2305,
+          "probability": 0.2295,
           "confidence": 0.84,
           "reasoning_summary": "Monitored token liquidity and wallet activity.",
           "warnings": []
         },
         {
           "agent_name": "MarketAgent",
-          "probability": 0.1805,
+          "probability": 0.1795,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated orderbook bid/ask spread and order depth.",
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-28T09:26:44.849096+00:00"
+      "last_updated": "2026-07-28T11:30:37.784544+00:00"
     },
     "us-cpi-inflation": {
       "topic_id": "us-cpi-inflation",
-      "question": "Will US Used Cars & Trucks CPI for July 2026 be above 180.00?",
+      "question": "Will US CPI YoY rise more than 1.0% in August 2026?",
       "category": "macro",
       "tier": "long",
       "refresh_interval_hours": 6,
       "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXUSEDCARCPI-26AUG12-T180.00",
-      "consensus_probability": 0.605,
-      "market_price": 0.57,
+      "market_ticker": "KXCPI-26AUG-T1.0",
+      "consensus_probability": 0.535,
+      "market_price": 0.5,
       "price_delta": 0.035,
       "consensus_confidence": 0.84,
-      "explanation": "Multi-agent swarm evaluated Will US Used Cars & Trucks CPI for July 2026 be above 180.00? with a 7-agent cluster consensus.",
+      "explanation": "Multi-agent swarm evaluated Will US CPI YoY rise more than 1.0% in August 2026? with a 7-agent cluster consensus.",
       "agent_breakdown": [
         {
           "agent_name": "NewsAgent",
-          "probability": 0.595,
+          "probability": 0.525,
           "confidence": 0.84,
           "reasoning_summary": "Analyzed news sentiment and media coverage.",
           "warnings": []
         },
         {
           "agent_name": "SocialAgent",
-          "probability": 0.615,
+          "probability": 0.545,
           "confidence": 0.84,
           "reasoning_summary": "Tracked X/Twitter social chatter and viral volume.",
           "warnings": []
         },
         {
           "agent_name": "RedditAgent",
-          "probability": 0.625,
+          "probability": 0.555,
           "confidence": 0.84,
           "reasoning_summary": "Gauged retail community sentiment and discussion depth.",
           "warnings": []
         },
         {
           "agent_name": "ResearchAgent",
-          "probability": 0.585,
+          "probability": 0.515,
           "confidence": 0.84,
           "reasoning_summary": "Queried FactsAI Deep Research primary citations.",
           "warnings": []
         },
         {
           "agent_name": "MacroAgent",
-          "probability": 0.595,
+          "probability": 0.525,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated macro indicators and historical trend data.",
           "warnings": []
         },
         {
           "agent_name": "OnchainAgent",
-          "probability": 0.62,
+          "probability": 0.55,
           "confidence": 0.84,
           "reasoning_summary": "Monitored token liquidity and wallet activity.",
           "warnings": []
         },
         {
           "agent_name": "MarketAgent",
-          "probability": 0.57,
+          "probability": 0.5,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated orderbook bid/ask spread and order depth.",
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-28T09:26:44.849096+00:00"
+      "last_updated": "2026-07-28T11:30:37.784544+00:00"
     },
     "btc-above-100k": {
       "topic_id": "btc-above-100k",
-      "question": "Will Bitcoin (BTC) trade above $150,000 before end of 2026?",
+      "question": "Will Bitcoin (BTC) trade above $72,299.99 on target date?",
       "category": "crypto",
       "tier": "short",
       "refresh_interval_hours": 2,
       "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXBTCMAX150-25-26DEC31-149999.99",
-      "consensus_probability": 0.08,
-      "market_price": 0.045,
-      "price_delta": 0.035,
-      "consensus_confidence": 0.84,
-      "explanation": "Multi-agent swarm evaluated Will Bitcoin (BTC) trade above $150,000 before end of 2026? with a 7-agent cluster consensus.",
-      "agent_breakdown": [
-        {
-          "agent_name": "NewsAgent",
-          "probability": 0.07,
-          "confidence": 0.84,
-          "reasoning_summary": "Analyzed news sentiment and media coverage.",
-          "warnings": []
-        },
-        {
-          "agent_name": "SocialAgent",
-          "probability": 0.09,
-          "confidence": 0.84,
-          "reasoning_summary": "Tracked X/Twitter social chatter and viral volume.",
-          "warnings": []
-        },
-        {
-          "agent_name": "RedditAgent",
-          "probability": 0.1,
-          "confidence": 0.84,
-          "reasoning_summary": "Gauged retail community sentiment and discussion depth.",
-          "warnings": []
-        },
-        {
-          "agent_name": "ResearchAgent",
-          "probability": 0.06,
-          "confidence": 0.84,
-          "reasoning_summary": "Queried FactsAI Deep Research primary citations.",
-          "warnings": []
-        },
-        {
-          "agent_name": "MacroAgent",
-          "probability": 0.07,
-          "confidence": 0.84,
-          "reasoning_summary": "Evaluated macro indicators and historical trend data.",
-          "warnings": []
-        },
-        {
-          "agent_name": "OnchainAgent",
-          "probability": 0.095,
-          "confidence": 0.84,
-          "reasoning_summary": "Monitored token liquidity and wallet activity.",
-          "warnings": []
-        },
-        {
-          "agent_name": "MarketAgent",
-          "probability": 0.045,
-          "confidence": 0.84,
-          "reasoning_summary": "Evaluated orderbook bid/ask spread and order depth.",
-          "warnings": []
-        }
-      ],
-      "last_updated": "2026-07-28T09:26:44.849096+00:00"
-    },
-    "eth-above-4k": {
-      "topic_id": "eth-above-4k",
-      "question": "Will Ethereum (ETH) trade above $2,700 at target date?",
-      "category": "crypto",
-      "tier": "short",
-      "refresh_interval_hours": 2,
-      "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXETH-26JUL2805-T2694.99",
+      "market_ticker": "KXBTC-26JUL3000-T72299.99",
       "consensus_probability": 0.035,
       "market_price": 0.0,
       "price_delta": 0.035,
       "consensus_confidence": 0.84,
-      "explanation": "Multi-agent swarm evaluated Will Ethereum (ETH) trade above $2,700 at target date? with a 7-agent cluster consensus.",
+      "explanation": "Multi-agent swarm evaluated Will Bitcoin (BTC) trade above $72,299.99 on target date? with a 7-agent cluster consensus.",
       "agent_breakdown": [
         {
           "agent_name": "NewsAgent",
@@ -263,7 +197,73 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-28T09:26:44.849096+00:00"
+      "last_updated": "2026-07-28T11:30:37.784544+00:00"
+    },
+    "eth-above-4k": {
+      "topic_id": "eth-above-4k",
+      "question": "Will Ethereum (ETH) trade above $2,594.99 on target date?",
+      "category": "crypto",
+      "tier": "short",
+      "refresh_interval_hours": 2,
+      "source_venue": "Kalshi / Robinhood Predict",
+      "market_ticker": "KXETH-26JUL3000-T2594.99",
+      "consensus_probability": 0.035,
+      "market_price": 0.0,
+      "price_delta": 0.035,
+      "consensus_confidence": 0.84,
+      "explanation": "Multi-agent swarm evaluated Will Ethereum (ETH) trade above $2,594.99 on target date? with a 7-agent cluster consensus.",
+      "agent_breakdown": [
+        {
+          "agent_name": "NewsAgent",
+          "probability": 0.025,
+          "confidence": 0.84,
+          "reasoning_summary": "Analyzed news sentiment and media coverage.",
+          "warnings": []
+        },
+        {
+          "agent_name": "SocialAgent",
+          "probability": 0.045,
+          "confidence": 0.84,
+          "reasoning_summary": "Tracked X/Twitter social chatter and viral volume.",
+          "warnings": []
+        },
+        {
+          "agent_name": "RedditAgent",
+          "probability": 0.055,
+          "confidence": 0.84,
+          "reasoning_summary": "Gauged retail community sentiment and discussion depth.",
+          "warnings": []
+        },
+        {
+          "agent_name": "ResearchAgent",
+          "probability": 0.015,
+          "confidence": 0.84,
+          "reasoning_summary": "Queried FactsAI Deep Research primary citations.",
+          "warnings": []
+        },
+        {
+          "agent_name": "MacroAgent",
+          "probability": 0.025,
+          "confidence": 0.84,
+          "reasoning_summary": "Evaluated macro indicators and historical trend data.",
+          "warnings": []
+        },
+        {
+          "agent_name": "OnchainAgent",
+          "probability": 0.05,
+          "confidence": 0.84,
+          "reasoning_summary": "Monitored token liquidity and wallet activity.",
+          "warnings": []
+        },
+        {
+          "agent_name": "MarketAgent",
+          "probability": 0.0,
+          "confidence": 0.84,
+          "reasoning_summary": "Evaluated orderbook bid/ask spread and order depth.",
+          "warnings": []
+        }
+      ],
+      "last_updated": "2026-07-28T11:30:37.784544+00:00"
     },
     "spacex-starship-orbital": {
       "topic_id": "spacex-starship-orbital",
@@ -273,129 +273,129 @@
       "refresh_interval_hours": 2,
       "source_venue": "Kalshi / Robinhood Predict",
       "market_ticker": "KXSPACEXMARS-30",
-      "consensus_probability": 0.285,
-      "market_price": 0.25,
+      "consensus_probability": 0.28,
+      "market_price": 0.245,
       "price_delta": 0.035,
       "consensus_confidence": 0.84,
       "explanation": "Multi-agent swarm evaluated Will SpaceX land anything successfully on Mars before 2030? with a 7-agent cluster consensus.",
       "agent_breakdown": [
         {
           "agent_name": "NewsAgent",
-          "probability": 0.275,
+          "probability": 0.27,
           "confidence": 0.84,
           "reasoning_summary": "Analyzed news sentiment and media coverage.",
           "warnings": []
         },
         {
           "agent_name": "SocialAgent",
-          "probability": 0.295,
+          "probability": 0.29,
           "confidence": 0.84,
           "reasoning_summary": "Tracked X/Twitter social chatter and viral volume.",
           "warnings": []
         },
         {
           "agent_name": "RedditAgent",
-          "probability": 0.305,
+          "probability": 0.3,
           "confidence": 0.84,
           "reasoning_summary": "Gauged retail community sentiment and discussion depth.",
           "warnings": []
         },
         {
           "agent_name": "ResearchAgent",
-          "probability": 0.265,
+          "probability": 0.26,
           "confidence": 0.84,
           "reasoning_summary": "Queried FactsAI Deep Research primary citations.",
           "warnings": []
         },
         {
           "agent_name": "MacroAgent",
-          "probability": 0.275,
+          "probability": 0.27,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated macro indicators and historical trend data.",
           "warnings": []
         },
         {
           "agent_name": "OnchainAgent",
-          "probability": 0.3,
+          "probability": 0.295,
           "confidence": 0.84,
           "reasoning_summary": "Monitored token liquidity and wallet activity.",
           "warnings": []
         },
         {
           "agent_name": "MarketAgent",
-          "probability": 0.25,
+          "probability": 0.245,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated orderbook bid/ask spread and order depth.",
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-28T09:26:44.849096+00:00"
+      "last_updated": "2026-07-28T11:30:37.784544+00:00"
     },
     "sol-market-cap-rank": {
       "topic_id": "sol-market-cap-rank",
-      "question": "Will the US government take control of any AI company or project before 2030?",
-      "category": "tech",
+      "question": "Will Solana (SOL) trade above $150 before end of 2026?",
+      "category": "crypto",
       "tier": "short",
       "refresh_interval_hours": 2,
       "source_venue": "Kalshi / Robinhood Predict",
-      "market_ticker": "KXUSTAKEOVER-30",
-      "consensus_probability": 0.38,
-      "market_price": 0.345,
+      "market_ticker": "KXSOLD26-27JAN0100-T149.99",
+      "consensus_probability": 0.185,
+      "market_price": 0.15,
       "price_delta": 0.035,
       "consensus_confidence": 0.84,
-      "explanation": "Multi-agent swarm evaluated Will the US government take control of any AI company or project before 2030? with a 7-agent cluster consensus.",
+      "explanation": "Multi-agent swarm evaluated Will Solana (SOL) trade above $150 before end of 2026? with a 7-agent cluster consensus.",
       "agent_breakdown": [
         {
           "agent_name": "NewsAgent",
-          "probability": 0.37,
+          "probability": 0.175,
           "confidence": 0.84,
           "reasoning_summary": "Analyzed news sentiment and media coverage.",
           "warnings": []
         },
         {
           "agent_name": "SocialAgent",
-          "probability": 0.39,
+          "probability": 0.195,
           "confidence": 0.84,
           "reasoning_summary": "Tracked X/Twitter social chatter and viral volume.",
           "warnings": []
         },
         {
           "agent_name": "RedditAgent",
-          "probability": 0.4,
+          "probability": 0.205,
           "confidence": 0.84,
           "reasoning_summary": "Gauged retail community sentiment and discussion depth.",
           "warnings": []
         },
         {
           "agent_name": "ResearchAgent",
-          "probability": 0.36,
+          "probability": 0.165,
           "confidence": 0.84,
           "reasoning_summary": "Queried FactsAI Deep Research primary citations.",
           "warnings": []
         },
         {
           "agent_name": "MacroAgent",
-          "probability": 0.37,
+          "probability": 0.175,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated macro indicators and historical trend data.",
           "warnings": []
         },
         {
           "agent_name": "OnchainAgent",
-          "probability": 0.395,
+          "probability": 0.2,
           "confidence": 0.84,
           "reasoning_summary": "Monitored token liquidity and wallet activity.",
           "warnings": []
         },
         {
           "agent_name": "MarketAgent",
-          "probability": 0.345,
+          "probability": 0.15,
           "confidence": 0.84,
           "reasoning_summary": "Evaluated orderbook bid/ask spread and order depth.",
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-28T09:26:44.849096+00:00"
+      "last_updated": "2026-07-28T11:30:37.784544+00:00"
     },
     "us-presidential-election-2028": {
       "topic_id": "us-presidential-election-2028",
@@ -461,7 +461,7 @@
           "warnings": []
         }
       ],
-      "last_updated": "2026-07-28T09:26:44.849096+00:00"
+      "last_updated": "2026-07-28T11:30:37.784544+00:00"
     }
   }
 }

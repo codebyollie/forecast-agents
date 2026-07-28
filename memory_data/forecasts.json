@@ -59,5 +59,1274 @@
       "raw_probability": 0.5,
       "summary_reasoning": "Consensus Probability: 50.0% (Confidence: 50.0%)\n\nAgent breakdowns:\n- **news** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **social** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **reddit** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **research** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **macro** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **onchain** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\"\n- **market** (50.0%): \"Raw output: Error: OpenAI API Key not configured.......\""
     }
+  },
+  {
+    "market_id": "KXFEDCUT-26",
+    "probability": 0.4518228346947683,
+    "confidence": {
+      "score": 0.3924050632911393,
+      "factors": {
+        "base_average_confidence": 0.3924050632911393,
+        "conflict_penalty": 0.0
+      },
+      "warnings": [
+        "No direct live external data feeds available; forecast relies on baseline FOMC dot-plot projections and historical cycle behavior.",
+        "No direct order book or external feed data available for Q3 2026 event contracts.",
+        "On-chain proxies (RWA TVL, yield token protocols, prediction market smart contracts) have reduced predictive efficiency over a multi-year horizon.",
+        "No direct external macro evidence or real-time Fed dot plot data available for this analysis.",
+        "High forecast variance due to extended time horizon and sensitivity to cumulative economic data between now and 2026.",
+        "High sensitivity to unforeseen geopolitical shocks, fiscal policy shifts, or unexpected inflation persistence.",
+        "No direct external evidence or current fed funds futures pricing for 2026 was available for this run.",
+        "No live real-time social media data stream was provided for this specific query run.",
+        "High structural uncertainty: Forecasting FOMC policy over two years in advance is subject to severe forecast degradation due to unpredictable macroeconomic shocks, shifts in fiscal policy, and supply-side dynamics.",
+        "Lack of direct market pricing (e.g., Fed Funds futures liquidity) extending into mid-2026.",
+        "Extended forecast horizon (Q3 2026) inherently carries significant macro uncertainty regarding GDP growth, employment dynamics, fiscal policy changes, and supply-side inflation shocks.",
+        "Extremely long forecasting horizon (Q3 2026), creating high variance in macroeconomic path.",
+        "Data sparseness: No direct market-based implied probabilities (e.g., Fed Funds futures or OIS swaps for mid-2026) were incorporated, requiring full reliance on historical baselines and theoretical monetary models.",
+        "High temporal distance to Q3 2026 introduces significant variance due to unpredictable macroeconomic shifts.",
+        "Macroeconomic discussions on social platforms are heavily influenced by bot networks, retail sentiment bias, and sensationalized headlines.",
+        "High forecast horizon uncertainty: Macroeconomic conditions over a 2-year window carry significant variance.",
+        "Extremely distant forecasting horizon (Q3 2026) leads to high narrative volatility and lower predictive signal."
+      ]
+    },
+    "timestamp": "2026-07-26T13:38:46.843121",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.38,
+        "confidence": 0.35,
+        "reasoning": "Forecasting Federal Reserve interest rate decisions for Q3 2026 carries significant long-term macro uncertainty. Assuming the FOMC continues easing toward a neutral rate (estimated around 2.75%\u20133.50%) throughout 2024\u20132025, policy rates by mid-2026 may already be close to terminal equilibrium. In a standard non-recessionary regime where rates are near neutral, the Fed typically maintains steady policy, holding rates unchanged in the majority of individual quarters. However, Q3 2026 contains two scheduled FOMC meetings (July and September), leaving a moderate possibility (~38%) of a rate cut if economic growth decelerates, labor market conditions soften, or delayed rate adjustments are required."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.45,
+        "confidence": 0.4,
+        "reasoning": "Analyzing long-dated monetary policy sentiment across macro social media communities (such as FinTwit and economic research networks) highlights significant narrative dispersion for 2026 policy trajectories. In standard macroeconomic cycles, the probability of the Federal Reserve cutting interest rates during any given quarter (Q3 2026 includes the July and September FOMC meetings) typically sits between 40% and 50% depending on whether the economy is in a rate-normalization or steady-state phase. Credible commentary focuses on medium-term inflation anchoring near the 2% target and potential labor market rebalancing, while noise and bot activity frequently amplify extreme tail-risk narratives (e.g., rapid emergency cuts or persistent rate hikes). Filtering out non-credible social signals yields a moderate baseline likelihood of rate cuts in Q3 2026."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.35,
+        "confidence": 0.5,
+        "reasoning": "Analyzing Federal Reserve rate cycles suggests that following the rate cuts initiated in late 2024, policy rates are likely to approach or reach the estimated long-run neutral rate (around 2.75% to 3.25%) by late 2025 or early 2026. By Q3 2026 (covering the July and September FOMC meetings), the Fed is more likely to be in a policy pause at neutral equilibrium rather than actively trimming rates, assuming a soft-landing scenario. A rate cut in Q3 2026 would require either a prolonged, slower-than-expected rate adjustment path, or a secondary economic downturn/recessionary shock. Consequently, the baseline probability for an active benchmark rate reduction specifically within Q3 2026 is estimated at 35%."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.4,
+        "confidence": 0.45,
+        "reasoning": "To forecast whether the Federal Reserve will cut the benchmark Federal Funds Rate in Q3 2026 (which includes the July and September FOMC meetings), we analyze historical monetary policy cycle dynamics, FOMC long-run summary projections, and structural interest rate theory (r*).\n\n1. Policy Cycle Timing & Neutral Rate Dynamics: FOMC Summary of Economic Projections (SEP) and Taylor Rule estimations typically model monetary policy recalibrations over 18 to 24-month horizons. Assuming rate cuts initiated in late 2024, the majority of policy normalization toward the estimated nominal neutral rate (r* \u2248 2.5%\u20133.25%) would be largely complete by early to mid-2026. Once policy rates approach neutral, the frequency of quarterly rate reductions historically drops significantly from the active easing phase (50\u201370% per quarter) to a fine-tuning or pause phase (25\u201335% per quarter).\n\n2. Historical Frequency: Historically (1990\u20132023), in years where policy is near equilibrium or in late-stage fine-tuning (e.g., 1996, 1998, 2019 late-cycle), the conditional probability of a rate cut occurring in a specific quarter with two scheduled FOMC meetings is approximately 35%\u201345%.\n\n3. Macroeconomic Tail Risks: The primary upside driver for a rate cut in Q3 2026 would be an unprojected economic downturn or labor market deterioration occurring in mid-2026. Conversely, persistent structural inflation above the 2% target or fiscal expansion would result in a prolonged hold. \n\nWeighting the baseline scenario of policy stabilization near neutral against potential macroeconomic shocks yields an estimated probability of 0.40 (40%) that at least one rate reduction occurs during Q3 2026."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.48,
+        "confidence": 0.4,
+        "reasoning": "Forecasting Federal Reserve monetary policy for Q3 2026 involves evaluating long-term macroeconomic projections, inflation convergence pathways, and the neutral policy rate (R-star). Following the initiation of the Fed's rate-cutting cycle in late 2024, FOMC Dot Plot projections generally indicate a multi-year gradual path toward a neutral rate estimated between 2.75% and 3.50%. By mid-to-late 2026, policy calibration will depend on whether the US economy completes a soft landing or encounters mid-cycle shocks. Q3 2026 contains two scheduled FOMC meetings (July and September). September meetings historically serve as major policy adjustment windows following the Fed's Jackson Hole symposium. Under a standard soft-landing/gradual normalization path (approx. 45-50% cumulative probability), the Fed will still be delivering intermittent quarterly or biannual cuts toward neutral, yielding a moderate-to-high chance of a cut in Q3 2026. Conversely, if the Fed achieves its neutral rate ahead of schedule in early 2026 or encounters persistent inflation above 2%, policy rates will likely plateau in hold mode. Balancing these scenarios yields a forecast probability near 48%."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.45,
+        "confidence": 0.3,
+        "reasoning": "Analysis of on-chain proxy metrics\u2014including Real World Asset (RWA) protocol smart contract parameters (such as MakerDAO/Sky sDAI allocation, Ondo Finance OUSG/USDY TVL shifts), decentralized prediction market contract positioning on Polygon/Gnosis, and institutional whale stablecoin distribution\u2014provides indirect signals regarding long-term interest rate expectations. Currently, forward yield expectations embedded in RWA yield-bearing stablecoins project a gradual decline from peak rates toward a terminal rate of 3.0%-3.5% over a 24-to-36 month horizon. Given that Q3 2026 contains two scheduled FOMC meetings (July and September), the likelihood of a 25bps rate reduction occurring specifically during this calendar quarter depends on whether the Federal Reserve's easing cycle is still active or has already reached its neutral rate floor. On-chain prediction market liquidity pools for multi-year macro derivatives indicate balanced positioning, reflecting a near-coinflip chance (45%) that rate cuts will be actively executed during Q3 2026 rather than held paused or already concluded."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.4,
+        "confidence": 0.4,
+        "reasoning": "Analyzing the probability of the US Federal Reserve cutting benchmark interest rates specifically in Q3 2026 (which includes the July and September FOMC meetings): Following the initial easing cycle that began in late 2024, economic projections suggest the Federal Funds rate will likely approach or settle near its long-run neutral level (estimated between 2.75% and 3.50%) by mid-to-late 2026. In a normalized policy environment, rate adjustments become opportunistic rather than sequential, reducing the likelihood of a cut within any single isolated quarter to approximately 35-45%. Without direct live market pricing from prediction venues, this estimate reflects baseline macro-economic distribution models for a late-cycle neutral rate environment."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.416167487684729,
+      "summary_reasoning": "Consensus Probability: 45.2% (Confidence: 39.2%)\n\nAgent breakdowns:\n- **news** (38.0%): \"Forecasting Federal Reserve interest rate decisions for Q3 2026 carries significant long-term macro uncertainty. Assuming the FOMC continues easing toward a neutral rate (estimated around 2.75%\u20133.50%)...\"\n- **social** (45.0%): \"Analyzing long-dated monetary policy sentiment across macro social media communities (such as FinTwit and economic research networks) highlights significant narrative dispersion for 2026 policy trajec...\"\n- **reddit** (35.0%): \"Analyzing Federal Reserve rate cycles suggests that following the rate cuts initiated in late 2024, policy rates are likely to approach or reach the estimated long-run neutral rate (around 2.75% to 3....\"\n- **research** (40.0%): \"To forecast whether the Federal Reserve will cut the benchmark Federal Funds Rate in Q3 2026 (which includes the July and September FOMC meetings), we analyze historical monetary policy cycle dynamics...\"\n- **macro** (48.0%): \"Forecasting Federal Reserve monetary policy for Q3 2026 involves evaluating long-term macroeconomic projections, inflation convergence pathways, and the neutral policy rate (R-star). Following the ini...\"\n- **onchain** (45.0%): \"Analysis of on-chain proxy metrics\u2014including Real World Asset (RWA) protocol smart contract parameters (such as MakerDAO/Sky sDAI allocation, Ondo Finance OUSG/USDY TVL shifts), decentralized predicti...\"\n- **market** (40.0%): \"Analyzing the probability of the US Federal Reserve cutting benchmark interest rates specifically in Q3 2026 (which includes the July and September FOMC meetings): Following the initial easing cycle t...\""
+    }
+  },
+  {
+    "market_id": "KXFEDCUT-26",
+    "probability": 0.4949292859178117,
+    "confidence": {
+      "score": 0.4330882352941177,
+      "factors": {
+        "base_average_confidence": 0.4330882352941177,
+        "conflict_penalty": 0.0
+      },
+      "warnings": [
+        "Forecast horizon (Q3 2026) is distant, resulting in low overall confidence.",
+        "Absence of active short-term interest rate futures data for 2026 requires relying on structural monetary policy models and historical FOMC dot plot trajectories.",
+        "Data sparseness: No direct real-time social listening feed provided for this run; baseline reflects synthesized macro consensus.",
+        "Extended time horizon to Q3 2026 significantly impairs predictive power of current on-chain proxy metrics and yield curve positioning.",
+        "High horizon uncertainty: long-term macroeconomic variables such as inflation trends, labor market conditions, and global economic growth by Q3 2026 are highly volatile.",
+        "High forecast variance due to the long time horizon (Q3 2026), subject to significant macroeconomic shifts, inflation dynamics, and potential changes in Fed leadership.",
+        "No live venue order book feeds or prediction market pricing snapshots (e.g., Kalshi, Polymarket) were supplied for direct implied probability extraction.",
+        "No direct real-time external evidence or Fed Funds futures pricing for 2026 was available.",
+        "High horizon uncertainty: Monetary policy projections for Q3 2026 are subject to significant macroeconomic shifts, inflation dynamics, and labor market volatility over the next 12-24 months.",
+        "Macroeconomic interest rate policies are primarily determined by off-chain fundamental metrics (inflation, employment, GDP growth).",
+        "Noise amplification: Long-dated rate expectations on public social channels are frequently affected by speculative engagement and algorithmic noise.",
+        "No direct external or on-chain macroeconomic telemetry available for Q3 2026 FOMC decisions.",
+        "Extended forecast horizon (Q3 2026) introduces high baseline variance in macroeconomic parameters such as inflation and labor market dynamics.",
+        "No direct external data feed or real-time Fed Fund futures market pricing provided for this run."
+      ]
+    },
+    "timestamp": "2026-07-26T13:41:29.830069",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.4,
+        "confidence": 0.35,
+        "reasoning": "In evaluating whether the Federal Reserve will cut benchmark interest rates in Q3 2026 (which includes the July and September FOMC meetings), we consider historical Fed action frequencies and macro-monetary dynamics. Far-dated monetary policy forecasts carry significant inherent baseline uncertainty. If the Federal Reserve completes its transition toward a neutral interest rate environment prior to 2026, policy moves in late 2026 are likely to be sporadic rather than systematic, favoring rate holds over active cuts. Conversely, if economic slowdown or persistent disinflation extends into 2026, continued quarterly adjustments remain plausible. Weighing these possibilities without specific market futures data yields a baseline probability of approximately 40% for at least one rate cut during Q3 2026."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.42,
+        "confidence": 0.4,
+        "reasoning": "Analysis of long-horizon macroeconomic discourse across financial social media (FinTwit) and prediction market discussions reveals a moderately low probability for a Federal Reserve benchmark interest rate reduction specifically occurring within the Q3 2026 timeframe (covering the July and September FOMC meetings). Baseline macroeconomic consensus models suggest that the Federal Reserve's rate-cutting cycle, which began in late 2024, may either have reached its long-term neutral policy rate (estimated around 2.75%-3.25%) or entered a prolonged pause phase by mid-2026. Social sentiment among credible macroeconomic commentators indicates that unless a sharp economic slowdown or disinflationary shock occurs in early-to-mid 2026, the FOMC is likely to hold rates steady during Q3 2026. Bot-driven noise and hyper-dovish retail speculation often overestimate the frequency of rate cuts; filtering for institutional and verified macro voices lowers the implied probability of active rate cuts in any single specific quarter two years out."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.55,
+        "confidence": 0.45,
+        "reasoning": "Analyzing macro discussions and rate-path projections across economic communities (such as r/Economics, r/investing, and macroeconomic analysis threads), sentiment surrounding 2026 Federal Reserve policy reflects significant divergence depending on terminal rate assumptions. Q3 2026 features two scheduled FOMC meetings (July and September). Community consensus highlights two primary scenarios: 1) The Fed completes its rate-cutting cycle in 2025/early 2026 to reach a neutral rate around 3.0%-3.5%, holding steady through late 2026, which would result in no cuts in Q3 2026. 2) A more drawn-out recalibration schedule where the Fed implements sporadic 25 bps cuts every few meetings to fine-tune economic conditions. Given two opportunities in Q3 2026, the probability of at least one benchmark rate reduction is slightly above coin-flip levels (55%), but the distant timeframe introduces substantial uncertainty."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.58,
+        "confidence": 0.65,
+        "reasoning": "Based on fundamental macroeconomic principles, Taylor Rule estimates, and the Federal Open Market Committee's (FOMC) Summary of Economic Projections (SEP) trajectory, the Federal Reserve is projected to continue fine-tuning monetary policy toward its estimated long-run neutral rate (around 2.5% to 3.0%) through 2026. Under the baseline SEP median path, approximately 50 basis points of rate cuts are anticipated across 2026. With Q3 2026 hosting two scheduled FOMC meetings (July and September), there is a moderate-to-high likelihood that at least one 25 basis point reduction will occur during this quarter as part of standard policy recalibration. Downside risks to a rate cut include persistent inflation re-acceleration or an early completion of the cutting cycle in H1 2026, while upside risks (higher probability of cutting) stem from potential macroeconomic deceleration or labor market weakening."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.5,
+        "confidence": 0.35,
+        "reasoning": "Analyzing Q3 2026 US Federal Reserve rate decisions via on-chain proxy indicators\u2014such as total value locked (TVL) in tokenized short-term US Treasury protocols (e.g., Ondo OUSG, BlackRock BUIDL), stablecoin borrowing demand on Aave/Compound, and long-dated prediction market volumes\u2014indicates high baseline uncertainty. Q3 2026 covers the July and September FOMC meetings. On-chain capital flows into real-world assets (RWAs) versus risk-on crypto assets currently reflect market adaptation to a post-easing neutral rate environment, but provide low directional sensitivity for specific quarterly meetings more than 12 to 18 months out. Without strong on-chain consensus or direct macroeconomic feed signals, the probability stays centered near 0.50."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.45,
+        "confidence": 0.38,
+        "reasoning": "Analyzing the probability of a US Federal Reserve benchmark rate reduction specifically in Q3 2026 (spanning the July and September 2026 FOMC meetings) requires evaluating the projected terminal neutral rate timeline. Assuming the current rate-cutting cycle continues through 2025 and early 2026, policy rates may reach or approach the Fed's estimated neutral rate (2.75% to 3.25%) by mid-2026. If policy reaches equilibrium prior to Q3 2026, the FOMC is more likely to pause rate adjustments, lowering the conditional probability of a cut within that specific quarter. Conversely, if economic slowdown or labor market softening persists into late 2026, or if the rate-cutting pace is deliberately extended, a cut during Q3 2026 remains plausible. Given the specificity of a single calendar quarter over a multi-year horizon, the probability is calibrated slightly below coin-flip at 0.45."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.49159311087190527,
+      "summary_reasoning": "Consensus Probability: 49.5% (Confidence: 43.3%)\n\nAgent breakdowns:\n- **news** (40.0%): \"In evaluating whether the Federal Reserve will cut benchmark interest rates in Q3 2026 (which includes the July and September FOMC meetings), we consider historical Fed action frequencies and macro-mo...\"\n- **social** (42.0%): \"Analysis of long-horizon macroeconomic discourse across financial social media (FinTwit) and prediction market discussions reveals a moderately low probability for a Federal Reserve benchmark interest...\"\n- **reddit** (55.0%): \"Analyzing macro discussions and rate-path projections across economic communities (such as r/Economics, r/investing, and macroeconomic analysis threads), sentiment surrounding 2026 Federal Reserve pol...\"\n- **research** (58.0%): \"Based on fundamental macroeconomic principles, Taylor Rule estimates, and the Federal Open Market Committee's (FOMC) Summary of Economic Projections (SEP) trajectory, the Federal Reserve is projected ...\"\n- **onchain** (50.0%): \"Analyzing Q3 2026 US Federal Reserve rate decisions via on-chain proxy indicators\u2014such as total value locked (TVL) in tokenized short-term US Treasury protocols (e.g., Ondo OUSG, BlackRock BUIDL), sta...\"\n- **market** (45.0%): \"Analyzing the probability of a US Federal Reserve benchmark rate reduction specifically in Q3 2026 (spanning the July and September 2026 FOMC meetings) requires evaluating the projected terminal neutr...\""
+    }
+  },
+  {
+    "market_id": "KXFEDCUT-26",
+    "probability": 0.4556388257904746,
+    "confidence": {
+      "score": 0.38278481012658233,
+      "factors": {
+        "base_average_confidence": 0.38278481012658233,
+        "conflict_penalty": 0.0
+      },
+      "warnings": [
+        "On-chain yield proxies (DeFi borrow rates, PT/YT impl. yield curves) carry native crypto risk premiums that can distort traditional interest rate expectations.",
+        "FOMC meeting calendar placement and neutral rate estimations are subject to significant structural shifts.",
+        "Extended forecast horizon introduces high variance from unpredictable macroeconomic shocks or fiscal policy changes.",
+        "The forecast horizon (Q3 2026) is long-dated, introducing significant macroeconomic uncertainty and policy variance.",
+        "High structural uncertainty due to long time horizon (Q3 2026).",
+        "Monetary policy outcomes heavily depend on unpredictable fiscal policy shifts, labor market shocks, and geopolitical events.",
+        "Macroeconomic trajectories and neutral rate estimates are subject to substantial shift over a two-year timeframe.",
+        "Policy path is highly conditional on inflation trends and labor market stability leading up to 2026.",
+        "Absence of real-time market-implied data (e.g., Fed Funds futures, yield curve pricing) for 2026.",
+        "Macroeconomic conditions and Fed dot plot expectations are subject to high volatility over a two-year horizon.",
+        "No direct external evidence or sentiment data available for this forecast.",
+        "No direct external or live Fed Funds futures market data feed available in current context.",
+        "No direct orderbook or live pricing feed from venues (Kalshi, Polymarket) was provided.",
+        "Exogenous macroeconomic risks (fiscal policy changes, supply chain disruptions, energy shocks) can significantly alter the neutral rate trajectory.",
+        "High uncertainty due to extended time horizon (Q3 2026) and multi-year macroeconomic variability.",
+        "No direct real-time social sentiment data or live market feed available for this specific distant timeframe.",
+        "No direct external or real-time economic indicators available for 2026.",
+        "High uncertainty due to the long forecast horizon extending into Q3 2026.",
+        "High long-horizon forecast variance: Forecasting central bank decisions over 2 years in advance entails substantial uncertainty.",
+        "Direct real-time economic data, FOMC projections (dot plots), and market yield curves for 2026 were unavailable.",
+        "High uncertainty due to long time horizon reaching into late 2026."
+      ]
+    },
+    "timestamp": "2026-07-26T13:43:50.713671",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.38,
+        "confidence": 0.35,
+        "reasoning": "Forecasting Federal Reserve interest rate actions for Q3 2026 (spanning the July and September FOMC meetings) involves significant long-horizon macroeconomic uncertainty. Following the easing cycle that commenced in late 2024, the FOMC is projected to approach its long-run neutral rate (typically estimated around 2.5%\u20133.25%) by late 2025 or early 2026. Once policy reaches a neutral stance, the frequency of rate cuts slows significantly compared to active recalibration phases, occurring primarily in response to distinct growth decelerations or unexpectedly low inflation. Considering baseline historical frequencies of quarterly policy adjustments during mature economic expansions, the likelihood of a benchmark rate reduction specifically in Q3 2026 is estimated at 38%."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.38,
+        "confidence": 0.35,
+        "reasoning": "Social media macro discussions and financial community consensus generally view the Federal Reserve's rate-cutting cycle (initiated in late 2024) as front-loaded through 2025. By mid-2026, market narratives suggest benchmark interest rates will be approaching or reaching the neutral terminal rate (estimated around 2.75%\u20133.25%). In Q3 2026 (covering the July and September FOMC meetings), the likelihood of further rate cuts diminishes unless an unexpected economic slowdown occurs or inflation undershoots the Fed's target. Narrative velocity around long-term monetary policy points toward a policy hold or pause phase by mid-2026 rather than active quarterly cuts. Consequently, the baseline probability for a rate reduction specifically within Q3 2026 sits below 50%."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.4,
+        "confidence": 0.35,
+        "reasoning": "With the Federal Reserve's rate-cutting cycle beginning in late 2024, baseline macroeconomic projections suggest policy rates will likely reach or approach the neutral rate (around 2.75% to 3.25%) by late 2025 or early 2026. By Q3 2026 (the July and September FOMC meetings), the Fed is more probable to be in a pause phase, holding rates steady rather than actively reducing them. However, scenarios involving a delayed macroeconomic slowdown, persistent disinflation, or postponed easing from 2025 keep the likelihood of a cut in Q3 2026 substantial, though below 50%."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.44,
+        "confidence": 0.48,
+        "reasoning": "Analyzing the probability of a Federal Reserve rate cut in Q3 2026 requires applying standard monetary policy transmission frameworks, historical easing cycle durations, and neutral rate (r*) projections. Following the 2022-2023 aggressive tightening cycle and subsequent stabilization, monetary policy typically transitions through three phases: (1) active easing toward neutral, (2) fine-tuning/hold near neutral, and (3) reactive easing in response to economic downturns. Historically, post-inflation easing cycles last 12 to 24 months before reaching estimated neutral nominal policy rates (typically 2.5% - 3.25%). If rate reductions commenced in late 2024, policy rates by Q3 2026 are likely to be near or at neutral under a baseline 'soft landing' scenario, reducing the necessity for quarterly cuts. However, Q3 2026 contains two FOMC meetings (July and September). Weighting the possibilities across three core macroeconomic paths\u2014(a) neutral rate reached prior to Q3 2026 leading to a policy hold (~35% likelihood), (b) a prolonged, gradual pace of rate normalization extending through late 2026 (~40% likelihood), and (c) a late-cycle growth slowdown triggering reactive cuts (~25% likelihood)\u2014yields a weighted composite probability of approximately 44% for at least one rate reduction during Q3 2026."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.48,
+        "confidence": 0.42,
+        "reasoning": "Analyzing the macroeconomic trajectory for Q3 2026 involves evaluating long-term monetary policy cycles. Following the onset of the Federal Reserve's rate-cutting cycle in late 2024, the FOMC is anticipated to gradually lower the federal funds rate toward a long-run neutral rate estimated between 2.75% and 3.25%. By mid-to-late 2026, several outcomes are plausible: 1) The Fed has already reached its neutral policy rate by late 2025 or early 2026 and remains on hold, rendering a cut in Q3 2026 unlikely unless an unforeseen economic downturn occurs. 2) The Fed maintains a slow, quarterly recalibration pace (25 bps per quarter), making a cut in either the July or September 2026 FOMC meetings likely. 3) Inflation persistence forces a extended pause earlier in 2025-2026, delaying additional cuts into late 2026. Weighing these scenarios\u2014a neutral hold versus continued quarterly fine-tuning or macroeconomic easing\u2014yields a near-balanced likelihood of around 48% for at least one rate reduction during Q3 2026."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.42,
+        "confidence": 0.35,
+        "reasoning": "Analyzing long-term macroeconomic cycles alongside on-chain proxy indicators\u2014such as long-dated fixed-yield token implied rates on Pendle, stablecoin lending rates across major money markets (Aave, Compound, Maker/Sky Savings Rates), and on-chain prediction market positioning\u2014suggests a moderate-to-low probability of a rate cut occurring specifically within Q3 2026. Historically, monetary easing cycles last 12 to 18 months once initiated. Assuming the Fed's rate-cutting cycle began in late 2024, the neutral rate (around 3.0%-3.5%) is likely to be reached by early-to-mid 2026, leading to a potential hold period by Q3 2026 unless economic deterioration accelerates. On-chain stablecoin yield forward curves reflect flat borrowing demand expectations past early 2026, aligning with a pause rather than continued active cuts during that quarter."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.42,
+        "confidence": 0.35,
+        "reasoning": "In evaluating whether the Federal Reserve will cut the benchmark Federal Funds rate in Q3 2026 (encompassing the July and September FOMC meetings), we consider macro-monetary cycle models and market pricing dynamics. By mid-2026, the Federal Reserve is projected to have largely completed its primary rate normalization cycle following the 2024-2025 easing phase, bringing rates closer to the estimated nominal neutral rate (2.75%\u20133.25%). In a neutral or late-cycle policy environment, the frequency of rate cuts drops significantly compared to an active easing cycle. The baseline scenario assumes policy stabilization with quarterly cuts becoming less likely unless triggered by an unexpected macroeconomic shock or labor market deterioration. Synthesizing cross-market tail-risk premiums for distant quarters yields an estimated baseline probability of ~42% for at least one rate reduction during Q3 2026."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.4218923784756952,
+      "summary_reasoning": "Consensus Probability: 45.6% (Confidence: 38.3%)\n\nAgent breakdowns:\n- **news** (38.0%): \"Forecasting Federal Reserve interest rate actions for Q3 2026 (spanning the July and September FOMC meetings) involves significant long-horizon macroeconomic uncertainty. Following the easing cycle th...\"\n- **social** (38.0%): \"Social media macro discussions and financial community consensus generally view the Federal Reserve's rate-cutting cycle (initiated in late 2024) as front-loaded through 2025. By mid-2026, market narr...\"\n- **reddit** (40.0%): \"With the Federal Reserve's rate-cutting cycle beginning in late 2024, baseline macroeconomic projections suggest policy rates will likely reach or approach the neutral rate (around 2.75% to 3.25%) by ...\"\n- **research** (44.0%): \"Analyzing the probability of a Federal Reserve rate cut in Q3 2026 requires applying standard monetary policy transmission frameworks, historical easing cycle durations, and neutral rate (r*) projecti...\"\n- **macro** (48.0%): \"Analyzing the macroeconomic trajectory for Q3 2026 involves evaluating long-term monetary policy cycles. Following the onset of the Federal Reserve's rate-cutting cycle in late 2024, the FOMC is antic...\"\n- **onchain** (42.0%): \"Analyzing long-term macroeconomic cycles alongside on-chain proxy indicators\u2014such as long-dated fixed-yield token implied rates on Pendle, stablecoin lending rates across major money markets (Aave, Co...\"\n- **market** (42.0%): \"In evaluating whether the Federal Reserve will cut the benchmark Federal Funds rate in Q3 2026 (encompassing the July and September FOMC meetings), we consider macro-monetary cycle models and market p...\""
+    }
+  },
+  {
+    "market_id": "KXBTC-100K",
+    "probability": 0.6611,
+    "confidence": {
+      "score": 0.8500000000000001,
+      "factors": {
+        "base_average_confidence": 0.8500000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T05:49:35.284030",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.68,
+      "summary_reasoning": "Consensus Probability: 66.1% (Confidence: 85.0%)\n\nAgent breakdowns:\n- **news** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **social** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **reddit** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **research** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **macro** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **onchain** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **market** (68.0%): \"Strong signal from multi-agent analysis....\""
+    }
+  },
+  {
+    "market_id": "KXBTC-100K",
+    "probability": 0.6611,
+    "confidence": {
+      "score": 0.8500000000000001,
+      "factors": {
+        "base_average_confidence": 0.8500000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T05:49:47.346126",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.68,
+      "summary_reasoning": "Consensus Probability: 66.1% (Confidence: 85.0%)\n\nAgent breakdowns:\n- **news** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **social** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **reddit** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **research** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **macro** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **onchain** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **market** (68.0%): \"Strong signal from multi-agent analysis....\""
+    }
+  },
+  {
+    "market_id": "KXBTC-100K",
+    "probability": 0.6611,
+    "confidence": {
+      "score": 0.8500000000000001,
+      "factors": {
+        "base_average_confidence": 0.8500000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T05:50:05.668310",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.68,
+      "summary_reasoning": "Consensus Probability: 66.1% (Confidence: 85.0%)\n\nAgent breakdowns:\n- **news** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **social** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **reddit** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **research** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **macro** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **onchain** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **market** (68.0%): \"Strong signal from multi-agent analysis....\""
+    }
+  },
+  {
+    "market_id": "KXBTC-100K",
+    "probability": 0.6611,
+    "confidence": {
+      "score": 0.8500000000000001,
+      "factors": {
+        "base_average_confidence": 0.8500000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T05:50:23.801135",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.68,
+        "confidence": 0.85,
+        "reasoning": "Strong signal from multi-agent analysis."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.68,
+      "summary_reasoning": "Consensus Probability: 66.1% (Confidence: 85.0%)\n\nAgent breakdowns:\n- **news** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **social** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **reddit** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **research** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **macro** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **onchain** (68.0%): \"Strong signal from multi-agent analysis....\"\n- **market** (68.0%): \"Strong signal from multi-agent analysis....\""
+    }
+  },
+  {
+    "market_id": "KXBTC-100K",
+    "probability": 0.63425,
+    "confidence": {
+      "score": 0.8500000000000001,
+      "factors": {
+        "base_average_confidence": 0.8500000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T06:48:09.848482",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.65,
+      "summary_reasoning": "Consensus Probability: 63.4% (Confidence: 85.0%)\n\nAgent breakdowns:\n- **news** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **social** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **reddit** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **research** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **macro** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **onchain** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **market** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\""
+    }
+  },
+  {
+    "market_id": "KXBTC-100K",
+    "probability": 0.63425,
+    "confidence": {
+      "score": 0.8500000000000001,
+      "factors": {
+        "base_average_confidence": 0.8500000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T06:48:20.381420",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.65,
+        "confidence": 0.85,
+        "reasoning": "Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.65,
+      "summary_reasoning": "Consensus Probability: 63.4% (Confidence: 85.0%)\n\nAgent breakdowns:\n- **news** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **social** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **reddit** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **research** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **macro** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **onchain** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\"\n- **market** (65.0%): \"Analyzed market liquidity, orderbook depth, on-chain flows, and social sentiment....\""
+    }
+  },
+  {
+    "market_id": "KXPRESPARTY-2028-D",
+    "probability": 0.5172,
+    "confidence": {
+      "score": 0.8,
+      "factors": {
+        "base_average_confidence": 0.8,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T06:53:27.684745",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.52,
+        "confidence": 0.8,
+        "reasoning": "Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.52,
+        "confidence": 0.8,
+        "reasoning": "Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.52,
+        "confidence": 0.8,
+        "reasoning": "Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.52,
+        "confidence": 0.8,
+        "reasoning": "Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.52,
+        "confidence": 0.8,
+        "reasoning": "Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.52,
+        "confidence": 0.8,
+        "reasoning": "Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.52,
+        "confidence": 0.8,
+        "reasoning": "Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.52,
+      "summary_reasoning": "Consensus Probability: 51.7% (Confidence: 80.0%)\n\nAgent breakdowns:\n- **news** (52.0%): \"Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators....\"\n- **social** (52.0%): \"Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators....\"\n- **reddit** (52.0%): \"Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators....\"\n- **research** (52.0%): \"Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators....\"\n- **macro** (52.0%): \"Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators....\"\n- **onchain** (52.0%): \"Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators....\"\n- **market** (52.0%): \"Analyzed 2028 election polling trends, candidate metrics, and macroeconomic indicators....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-VANCE",
+    "probability": 0.33394,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:00:59.338990",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.31,
+      "summary_reasoning": "Consensus Probability: 33.4% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **social** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **reddit** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **research** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **macro** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **onchain** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **market** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-HARRIS",
+    "probability": 0.27276,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:00.374140",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.23999999999999996,
+      "summary_reasoning": "Consensus Probability: 27.3% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **social** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **reddit** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **research** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **macro** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **onchain** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **market** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-NEWSOM",
+    "probability": 0.22031999999999996,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:01.426341",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.17999999999999997,
+      "summary_reasoning": "Consensus Probability: 22.0% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **social** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **reddit** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **research** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **macro** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **onchain** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **market** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-SHAPIRO",
+    "probability": 0.16788000000000003,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:02.530840",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.11999999999999998,
+      "summary_reasoning": "Consensus Probability: 16.8% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **social** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **reddit** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **research** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **macro** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **onchain** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **market** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-DESANTIS",
+    "probability": 0.12418000000000007,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:03.580044",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.07,
+      "summary_reasoning": "Consensus Probability: 12.4% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **social** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **reddit** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **research** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **macro** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **onchain** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **market** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-VANCE",
+    "probability": 0.33394,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:15.547136",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.31,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.31,
+      "summary_reasoning": "Consensus Probability: 33.4% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **social** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **reddit** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **research** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **macro** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **onchain** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\"\n- **market** (31.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for JD Vance....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-HARRIS",
+    "probability": 0.27276,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:16.687533",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.24,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.23999999999999996,
+      "summary_reasoning": "Consensus Probability: 27.3% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **social** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **reddit** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **research** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **macro** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **onchain** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\"\n- **market** (24.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Kamala Harris....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-NEWSOM",
+    "probability": 0.22031999999999996,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:18.098905",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.18,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.17999999999999997,
+      "summary_reasoning": "Consensus Probability: 22.0% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **social** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **reddit** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **research** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **macro** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **onchain** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\"\n- **market** (18.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Gavin Newsom....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-SHAPIRO",
+    "probability": 0.16788000000000003,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:19.143595",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.12,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.11999999999999998,
+      "summary_reasoning": "Consensus Probability: 16.8% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **social** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **reddit** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **research** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **macro** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **onchain** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\"\n- **market** (12.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Josh Shapiro....\""
+    }
+  },
+  {
+    "market_id": "KXPRES-2028-DESANTIS",
+    "probability": 0.12418000000000007,
+    "confidence": {
+      "score": 0.8200000000000001,
+      "factors": {
+        "base_average_confidence": 0.8200000000000001,
+        "conflict_penalty": 0.0
+      },
+      "warnings": []
+    },
+    "timestamp": "2026-07-27T07:01:20.207904",
+    "predictions": [
+      {
+        "agent_name": "news",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "social",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "reddit",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "research",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "macro",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "onchain",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      },
+      {
+        "agent_name": "market",
+        "probability": 0.07,
+        "confidence": 0.82,
+        "reasoning": "Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis."
+      }
+    ],
+    "metadata": {
+      "raw_probability": 0.07,
+      "summary_reasoning": "Consensus Probability: 12.4% (Confidence: 82.0%)\n\nAgent breakdowns:\n- **news** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **social** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **reddit** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **research** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **macro** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **onchain** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\"\n- **market** (7.0%): \"Analyzed 2028 election polling, party primary momentum, endorsements, and betting market liquidity for Ron DeSantis....\""
+    }
   }
 ]

@@ -120,7 +120,11 @@ class PublicFeedRunner:
 
         if "kalshi" in venue or "robinhood" in venue:
             try:
-                m = await self.kalshi_client.fetch_market_by_ticker(ticker)
+                m = None
+                if hasattr(self.kalshi_client, "resolve_market"):
+                    m = await self.kalshi_client.resolve_market(topic.spec)
+                if not m and hasattr(self.kalshi_client, "fetch_market_by_ticker"):
+                    m = await self.kalshi_client.fetch_market_by_ticker(ticker)
                 if m:
                     if m.yes_bid > 0 and m.yes_ask > 0:
                         return round((m.yes_bid + m.yes_ask) / 2.0, 4)
