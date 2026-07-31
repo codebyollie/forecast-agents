@@ -2,7 +2,7 @@
 Anomaly Detection Engine.
 """
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from ..models.evidence import Evidence
 
 class AnomalyDetector:
