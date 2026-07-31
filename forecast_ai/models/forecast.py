@@ -24,3 +24,23 @@ class ForecastResult:
     individual_predictions: List[Prediction] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.utcnow)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def consensus_probability(self) -> float:
+        return self.probability
+
+    @property
+    def consensus_confidence(self) -> float:
+        if isinstance(self.confidence, (int, float)):
+            return float(self.confidence)
+        if hasattr(self.confidence, "score"):
+            return float(self.confidence.score)
+        return 0.5
+    
+    @property
+    def explanation(self) -> str:
+        if hasattr(self.reasoning_trace, "aggregation_steps") and self.reasoning_trace.aggregation_steps:
+            return " ".join(self.reasoning_trace.aggregation_steps)
+        if self.individual_predictions:
+            return self.individual_predictions[0].reasoning
+        return "7-Agent consensus prediction generated."

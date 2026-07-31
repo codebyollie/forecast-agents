@@ -2,10 +2,11 @@
 RSS Feed Data Source.
 """
 
+import asyncio
 from typing import List, Optional
 import xml.etree.ElementTree as ET
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import BaseSource
 from ..models.evidence import Evidence
 
