@@ -53,6 +53,11 @@ class ApiServer:
         analysis_router = create_analysis_router(self.config, self.pipeline)
         self.app.include_router(analysis_router)
 
+        # Mount Owner Admin Router (/admin/featured-market)
+        from .admin_routes import create_admin_router
+        admin_router = create_admin_router(self.config, self.pipeline)
+        self.app.include_router(admin_router)
+
     async def start(self):
         """
         Starts the API server asynchronously and launches the public feed update loop.

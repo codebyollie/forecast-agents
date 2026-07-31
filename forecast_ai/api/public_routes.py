@@ -67,16 +67,42 @@ def create_public_router(public_runner: PublicFeedRunner, config: Optional[Forec
             )
         return res
 
-    @router.get("/analyses-waitlist-count")
-    async def get_analyses_waitlist_count(request: Request):
+    from ..services.featured_market import FeaturedMarketService
+    featured_service = FeaturedMarketService(supabase_config=config.profile.supabase if config else None)
+
+    @router.get("/featured-market")
+    async def get_featured_market(request: Request) -> Dict[str, Any]:
         """
-        GET /public/analyses-waitlist-count
-        Returns aggregate count of users who registered interest for custom agent market analysis access.
-        Public, no authentication required.
+        GET /public/featured-market
+        Public read-only endpoint for Live Dashboard.
+        Returns owner-selected featured market forecast with 0 re-computation.
         """
         client_ip = request.client.host if request.client else "unknown"
         _check_rate_limit(client_ip)
-        count = await store.get_waitlist_count() if store else 42
+
+        data = featured_service.get_stored_featured_market()
+        if not data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No featured market is currently set."
+            )
+        return data
+
+    @router.get("/waitlist-count")
+    @router.get("/analyses-waitlist-count")
+    async def get_waitlist_count(request: Request) -> Dict[str, Any]:
+        """
+        GET /public/waitlist-count & GET /public/analyses-waitlist-count
+        Returns aggregate count of users on custom analysis waitlist.
+        """
+        client_ip = request.client.host if request.client else "unknown"
+        _check_rate_limit(client_ip)
+
+        if store:
+            count = await store.get_waitlist_count()
+        else:
+            count = 0
+
         return {"count": count, "waitlist_count": count}
 
     return router
