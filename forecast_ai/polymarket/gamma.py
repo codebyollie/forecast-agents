@@ -75,8 +75,16 @@ class GammaClient:
             raw_data=data
         )
 
+    def _get_client(self) -> httpx.AsyncClient:
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        }
+        transport = httpx.AsyncHTTPTransport(verify=False)
+        return httpx.AsyncClient(transport=transport, headers=headers, timeout=10.0)
+
     async def fetch_market(self, market_id: str) -> Optional[PolymarketMarket]:
-        async with httpx.AsyncClient() as client:
+        async with self._get_client() as client:
             try:
                 resp = await client.get(f"{self.base_url}/markets/{market_id}")
                 if resp.status_code == 200:
@@ -86,23 +94,30 @@ class GammaClient:
         return None
 
     async def fetch_market_by_slug(self, slug: str) -> Optional[PolymarketMarket]:
-        # Fetching markets filter by slug
-        async with httpx.AsyncClient() as client:
+        async with self._get_client() as client:
             try:
-                resp = await client.get(f"{self.base_url}/markets", params={"slug": slug})
+                resp = await client.get(f"{self.base_url}/events", params={"slug": slug})
                 if resp.status_code == 200:
                     data = resp.json()
                     if isinstance(data, list) and len(data) > 0:
-                        return self._parse_market(data[0])
+                        ev = self._parse_event(data[0])
+                        if ev.markets:
+                            return ev.markets[0]
+                
+                resp_m = await client.get(f"{self.base_url}/markets", params={"slug": slug})
+                if resp_m.status_code == 200:
+                    data_m = resp_m.json()
+                    if isinstance(data_m, list) and len(data_m) > 0:
+                        return self._parse_market(data_m[0])
             except Exception:
                 pass
         return None
 
     async def list_markets(self, active: bool = True, limit: int = 20, offset: int = 0) -> List[PolymarketMarket]:
-        async with httpx.AsyncClient() as client:
+        async with self._get_client() as client:
             try:
                 params = {
-                    "active": "true" if active else "false",
+                    "closed": "false" if active else "true",
                     "limit": limit,
                     "offset": offset
                 }
@@ -116,7 +131,7 @@ class GammaClient:
         return []
 
     async def fetch_event(self, event_id: str) -> Optional[PolymarketEvent]:
-        async with httpx.AsyncClient() as client:
+        async with self._get_client() as client:
             try:
                 resp = await client.get(f"{self.base_url}/events/{event_id}")
                 if resp.status_code == 200:
@@ -126,7 +141,7 @@ class GammaClient:
         return None
 
     async def fetch_event_by_slug(self, slug: str) -> Optional[PolymarketEvent]:
-        async with httpx.AsyncClient() as client:
+        async with self._get_client() as client:
             try:
                 resp = await client.get(f"{self.base_url}/events", params={"slug": slug})
                 if resp.status_code == 200:
@@ -138,10 +153,10 @@ class GammaClient:
         return None
 
     async def list_events(self, active: bool = True, limit: int = 20, offset: int = 0) -> List[PolymarketEvent]:
-        async with httpx.AsyncClient() as client:
+        async with self._get_client() as client:
             try:
                 params = {
-                    "active": "true" if active else "false",
+                    "closed": "false" if active else "true",
                     "limit": limit,
                     "offset": offset
                 }
@@ -155,7 +170,7 @@ class GammaClient:
         return []
 
     async def search(self, query: str) -> List[Dict[str, Any]]:
-        async with httpx.AsyncClient() as client:
+        async with self._get_client() as client:
             try:
                 resp = await client.get(f"{self.base_url}/public-search", params={"q": query})
                 if resp.status_code == 200:

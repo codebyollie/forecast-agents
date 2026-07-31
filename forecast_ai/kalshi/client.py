@@ -72,13 +72,16 @@ class KalshiClient:
             raw_data=data
         )
 
-    async def fetch_markets(self, limit: int = 20, status: str = "open") -> List[KalshiMarket]:
+    async def fetch_markets(self, limit: int = 20, status: str = "open", series_ticker: Optional[str] = None) -> List[KalshiMarket]:
         """Fetch list of open markets from Kalshi."""
         async with httpx.AsyncClient(verify=False) as client:
             try:
+                params = {"limit": limit, "status": status}
+                if series_ticker:
+                    params["series_ticker"] = series_ticker
                 resp = await client.get(
                     f"{self.base_url}/markets",
-                    params={"limit": limit, "status": status},
+                    params=params,
                     headers=self._headers()
                 )
                 if resp.status_code == 200:
@@ -104,6 +107,10 @@ class KalshiClient:
             except Exception:
                 pass
         return None
+
+    async def fetch_market(self, ticker: str) -> Optional[KalshiMarket]:
+        """Alias for fetch_market_by_ticker."""
+        return await self.fetch_market_by_ticker(ticker)
 
     async def resolve_market(self, spec: Any) -> Optional[KalshiMarket]:
         """

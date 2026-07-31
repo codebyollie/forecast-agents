@@ -43,13 +43,14 @@ def test_admin_featured_market_success_and_public_get(client):
         "question": "Will Bitcoin trade above $100,000?",
         "venue": "Kalshi (mirrors Robinhood Predict)"
     }
-    # 1. Owner updates featured market
-    patch_resp = client.patch(
-        "/admin/featured-market",
-        json=payload,
-        headers={"x-admin-secret": "test_admin_secret_999"}
-    )
-    assert patch_resp.status_code == 200
+    with patch("forecast_ai.services.market_search.MarketSearchService.get_live_price", new=AsyncMock(return_value=0.22)):
+        # 1. Owner updates featured market
+        patch_resp = client.patch(
+            "/admin/featured-market",
+            json=payload,
+            headers={"x-admin-secret": "test_admin_secret_999"}
+        )
+        assert patch_resp.status_code == 200
     patch_data = patch_resp.json()
     assert patch_data["market_id"] == "KXBTC-100K"
     assert patch_data["model_used"] == "gpt-5.6-luna"

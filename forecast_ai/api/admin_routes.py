@@ -74,14 +74,19 @@ def create_admin_router(config: ForecastConfig, pipeline: ForecastPipeline) -> A
             )
 
             live_price = await search_service.get_live_price(req.market_id, req.venue)
+            if live_price is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Could not find a live market price for market '{req.market_id}' on venue '{req.venue}'. Check market_id/ticker."
+                )
 
-            # Format agent breakdown
+            # Format agent breakdown (full untruncated reasoning)
             agent_breakdown = [
                 {
                     "agent_name": p.agent_name,
                     "probability": round(p.probability, 4),
                     "confidence": round(p.confidence.score, 4),
-                    "reasoning_summary": p.reasoning[:180] + "..." if len(p.reasoning) > 180 else p.reasoning,
+                    "reasoning_summary": p.reasoning,
                     "warnings": p.confidence.warnings
                 } for p in result.individual_predictions
             ]
@@ -93,7 +98,7 @@ def create_admin_router(config: ForecastConfig, pipeline: ForecastPipeline) -> A
                 "consensus_probability": round(result.consensus_probability, 4),
                 "consensus_confidence": round(result.consensus_confidence, 4),
                 "market_price": live_price,
-                "explanation": result.explanation[:250] + "..." if len(result.explanation) > 250 else result.explanation,
+                "explanation": result.explanation,
                 "agent_breakdown": agent_breakdown,
                 "model_used": "gpt-5.6-luna"
             }
@@ -102,6 +107,8 @@ def create_admin_router(config: ForecastConfig, pipeline: ForecastPipeline) -> A
             logger.info(f"[AdminRoutes] Featured market analysis completed and saved successfully.")
             return saved_payload
 
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"[AdminRoutes] Featured market pipeline execution failed: {e}")
             raise HTTPException(

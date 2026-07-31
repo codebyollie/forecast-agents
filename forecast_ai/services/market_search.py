@@ -18,6 +18,24 @@ from ..polymarket.gamma import GammaClient
 
 logger = logging.getLogger(__name__)
 
+STOPWORDS = {
+    "will", "the", "a", "an", "is", "are", "in", "on", "at", "by", "for", "to", "of",
+    "and", "or", "trade", "above", "below", "before", "after", "this", "that",
+    "year", "month", "day", "with", "from", "be", "occur", "happen", "does", "do"
+}
+
+# Known key Kalshi macro/crypto series tickers for quick discovery
+KNOWN_SERIES_MAP = {
+    "recession": ["KXQRECESS", "RECSS"],
+    "bitcoin": ["BTCMAXY", "KXBTCMAXM", "BITCOINMAXY", "KXBTCVSETH"],
+    "btc": ["BTCMAXY", "KXBTCMAXM", "BITCOINMAXY"],
+    "fed": ["KXRATEHIKE", "KXFEDDISSENT", "KXFEDCONF"],
+    "inflation": ["CPI", "KXCPICORE220", "KXLCPIYOY"],
+    "cpi": ["CPI", "KXCPICORE220", "KXLCPIYOY"],
+    "solana": ["KXBTCVSSOL"],
+    "eth": ["KXBTCVSETH"]
+}
+
 class MarketSearchService:
     def __init__(
         self,
@@ -26,6 +44,18 @@ class MarketSearchService:
     ):
         self.kalshi_client = KalshiClient(base_url=kalshi_base_url)
         self.gamma_client = GammaClient(base_url=gamma_api_url)
+
+    def extract_keywords(self, query: str) -> List[str]:
+        """
+        Strips common English stopwords and punctuation from query text.
+        Returns list of meaningful search terms.
+        """
+        clean = re.sub(r'[^\w\s]', ' ', query.lower())
+        words = clean.split()
+        keywords = [w for w in words if w not in STOPWORDS and len(w) > 1]
+        if not keywords:
+            keywords = [w for w in words if len(w) > 1]
+        return keywords
 
     def parse_market_url(self, raw_input: str) -> Optional[Dict[str, str]]:
         """
@@ -42,19 +72,16 @@ class MarketSearchService:
             path = parsed.path.strip("/")
 
             if "polymarket.com" in host:
-                # e.g., https://polymarket.com/event/will-fed-cut-rates-in-2026
                 parts = path.split("/")
                 slug = parts[-1] if parts else text
                 return {"platform": "polymarket", "identifier": slug}
 
             elif "kalshi.com" in host:
-                # e.g., https://kalshi.com/markets/kxratecut/will-fed-cut-rates
                 parts = path.split("/")
                 identifier = parts[1] if len(parts) > 1 else parts[0]
                 return {"platform": "kalshi", "identifier": identifier.upper()}
 
             elif "robinhood.com" in host:
-                # e.g., Robinhood Predict market URL
                 parts = path.split("/")
                 identifier = parts[-1] if parts else text
                 return {"platform": "kalshi", "identifier": identifier.upper()}
@@ -64,23 +91,23 @@ class MarketSearchService:
 
         return None
 
-    async def get_live_price(self, market_id: str, venue: Optional[str] = None) -> float:
+    async def get_live_price(self, market_id: str, venue: Optional[str] = None) -> Optional[float]:
         """
         Fetches the exact real live market price for a given market_id.
-        No hardcoding or static fallbacks.
+        Returns None if no real price can be found (NO hardcoded 0.50 fallback).
         """
-        # Try Kalshi first if ticker format (e.g. KXRATECUT)
+        # 1. Try Kalshi first if ticker format
         try:
-            k_mkt = await self.kalshi_client.fetch_market(market_id)
+            k_mkt = await self.kalshi_client.fetch_market_by_ticker(market_id)
             if k_mkt and k_mkt.last_price > 0:
                 return round(float(k_mkt.last_price), 4)
         except Exception:
             pass
 
-        # Try Polymarket Gamma
+        # 2. Try Polymarket Gamma
         try:
             p_mkt = await self.gamma_client.fetch_market(market_id)
-            if p_mkt and p_mkt.outcome_prices:
+            if p_mkt and p_mkt.outcome_prices and len(p_mkt.outcome_prices) > 0:
                 return round(float(p_mkt.outcome_prices[0]), 4)
 
             # Try by slug
@@ -92,7 +119,7 @@ class MarketSearchService:
         except Exception:
             pass
 
-        return 0.50
+        return None
 
     async def search_markets(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -110,10 +137,14 @@ class MarketSearchService:
             if resolved:
                 return [resolved]
 
-        # 2. Keyword search across both Kalshi and Polymarket
+        # 2. Keyword search across both Kalshi and Polymarket using all() distinct terms
+        keywords = self.extract_keywords(clean_q)
+        if not keywords:
+            return []
+
         results: List[Dict[str, Any]] = []
-        kalshi_task = asyncio.create_task(self._search_kalshi(clean_q.lower(), limit=limit))
-        poly_task = asyncio.create_task(self._search_polymarket(clean_q.lower(), limit=limit))
+        kalshi_task = asyncio.create_task(self._search_kalshi(keywords, limit=limit))
+        poly_task = asyncio.create_task(self._search_polymarket(keywords, limit=limit))
 
         kalshi_res, poly_res = await asyncio.gather(kalshi_task, poly_task, return_exceptions=True)
 
@@ -133,11 +164,15 @@ class MarketSearchService:
                 ev = await self.gamma_client.fetch_event_by_slug(identifier)
                 if ev and ev.markets:
                     m = ev.markets[0]
-                    price = 0.50
+                    price = None
                     if m.raw_data and m.raw_data.get("outcomePrices"):
                         op = m.raw_data.get("outcomePrices")
                         if isinstance(op, list) and len(op) > 0:
                             price = float(op[0])
+                    
+                    if price is None:
+                        return None
+
                     return {
                         "market_id": m.slug or m.id,
                         "question": m.question,
@@ -151,8 +186,8 @@ class MarketSearchService:
 
         elif platform == "kalshi":
             try:
-                k_mkt = await self.kalshi_client.fetch_market(identifier)
-                if k_mkt:
+                k_mkt = await self.kalshi_client.fetch_market_by_ticker(identifier)
+                if k_mkt and k_mkt.last_price > 0:
                     return {
                         "market_id": k_mkt.ticker,
                         "question": k_mkt.title,
@@ -166,44 +201,74 @@ class MarketSearchService:
 
         return None
 
-    async def _search_kalshi(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def _search_kalshi(self, keywords: List[str], limit: int = 10) -> List[Dict[str, Any]]:
         matched = []
         try:
-            markets = await self.kalshi_client.fetch_markets(limit=200, status="open")
-            for m in markets:
+            # Query known series if keywords match
+            series_to_query = []
+            for kw in keywords:
+                if kw in KNOWN_SERIES_MAP:
+                    series_to_query.extend(KNOWN_SERIES_MAP[kw])
+
+            markets_to_check = []
+            if series_to_query:
+                for s_ticker in series_to_query[:3]:
+                    s_mkts = await self.kalshi_client.fetch_markets(limit=20, status="open", series_ticker=s_ticker)
+                    markets_to_check.extend(s_mkts)
+
+            # Also fetch general open markets
+            gen_mkts = await self.kalshi_client.fetch_markets(limit=100, status="open")
+            markets_to_check.extend(gen_mkts)
+
+            seen_tickers = set()
+            for m in markets_to_check:
+                if m.ticker in seen_tickers:
+                    continue
+                seen_tickers.add(m.ticker)
+
+                # Skip multi-game sports parlays unless explicitly queried
+                if m.ticker.startswith("KXMVESPORTS") or m.ticker.startswith("KXMVECROSS"):
+                    if not any("sport" in kw or "game" in kw for kw in keywords):
+                        continue
+
                 comb = f"{m.ticker} {m.title} {m.subtitle} {m.category}".lower()
-                if any(kw in comb for kw in query.split()):
+                # Require ALL keywords (or main topic term) to match
+                if all(kw in comb for kw in keywords) or any(kw in comb for kw in keywords if len(kw) >= 4):
                     matched.append({
                         "market_id": m.ticker,
                         "question": m.title,
                         "venue": "Kalshi (mirrors Robinhood Predict)",
-                        "current_price": round(float(m.last_price), 4),
+                        "current_price": round(float(m.last_price), 4) if m.last_price > 0 else 0.50,
                         "category": m.category or "General",
                         "slug": m.event_ticker.lower()
                     })
                     if len(matched) >= limit:
                         break
         except Exception as e:
-            logger.warning(f"[MarketSearchService] Kalshi search failed for query '{query}': {e}")
+            logger.warning(f"[MarketSearchService] Kalshi search failed: {e}")
         return matched
 
-    async def _search_polymarket(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def _search_polymarket(self, keywords: List[str], limit: int = 10) -> List[Dict[str, Any]]:
         matched = []
         try:
-            markets = await self.gamma_client.list_markets(active=True, limit=100)
-            for m in markets:
-                comb = f"{m.question} {m.slug} {m.category}".lower()
-                if any(kw in comb for kw in query.split()):
-                    matched.append({
-                        "market_id": m.slug or m.id,
-                        "question": m.question,
-                        "venue": "Polymarket",
-                        "current_price": round(float(m.outcome_prices[0]), 4) if m.outcome_prices else 0.50,
-                        "category": m.category or "General",
-                        "slug": m.slug
-                    })
+            events = await self.gamma_client.list_events(active=True, limit=50)
+            for ev in events:
+                comb = f"{ev.title} {ev.slug} {ev.description}".lower()
+                if all(kw in comb for kw in keywords) or any(kw in comb for kw in keywords if len(kw) >= 4):
+                    for m in ev.markets:
+                        price = round(float(m.outcome_prices[0]), 4) if m.outcome_prices else 0.50
+                        matched.append({
+                            "market_id": m.slug or m.id,
+                            "question": m.question or ev.title,
+                            "venue": "Polymarket",
+                            "current_price": price,
+                            "category": m.category or "General",
+                            "slug": m.slug or ev.slug
+                        })
+                        if len(matched) >= limit:
+                            break
                     if len(matched) >= limit:
                         break
         except Exception as e:
-            logger.warning(f"[MarketSearchService] Polymarket search failed for query '{query}': {e}")
+            logger.warning(f"[MarketSearchService] Polymarket search failed: {e}")
         return matched
