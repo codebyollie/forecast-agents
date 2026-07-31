@@ -61,13 +61,25 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
     async def _get_user_tier(privy_user_id: str, user_claims: Dict[str, Any]) -> str:
         """Helper to resolve current holder tier for user."""
         existing = await store.get_profile(privy_user_id) or {}
+        
+        # 1. Check pre-verified tier stored in DB profile to avoid slow RPC calls
+        db_tier = existing.get("tier") or existing.get("holder_tier")
+        if db_tier in ("Free", "Holder", "Pro Holder", "Pro"):
+            if db_tier == "Pro":
+                return "Pro Holder"
+            return db_tier
+
+        # 2. Fallback to dynamic checking if profile is not synced yet
         primary_wallet = user_claims.get("wallet_address") or existing.get("wallet_address") or ""
         wallets_list = user_claims.get("wallet_addresses") or ([primary_wallet] if primary_wallet else [])
         
         forai_balance = 0.0
         if wallets_list:
-            forai_balance = await balance_checker.fetch_onchain_balance(wallets_list)
-        elif existing.get("forai_balance"):
+            try:
+                forai_balance = await balance_checker.fetch_onchain_balance(wallets_list)
+            except Exception:
+                pass
+        if forai_balance == 0.0 and existing.get("forai_balance"):
             forai_balance = float(existing["forai_balance"])
 
         return balance_checker.evaluate_holder_tier(forai_balance)

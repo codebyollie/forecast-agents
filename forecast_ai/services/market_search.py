@@ -272,20 +272,30 @@ class MarketSearchService:
                     continue
                 seen_tickers.add(m.ticker)
 
+                # Skip closed or inactive markets
+                if m.status not in ("open", "active"):
+                    continue
+
                 # Skip multi-game sports parlays unless explicitly queried
                 if m.ticker.startswith("KXMVESPORTS") or m.ticker.startswith("KXMVECROSS"):
                     if not any("sport" in kw or "game" in kw for kw in keywords):
                         continue
 
                 comb = f"{m.ticker} {m.title} {m.subtitle} {m.category}".lower()
-                # Strict match: require ALL extracted keywords to match (NO loose OR-fallback)
+                # Strict match: require ALL extracted keywords to match
                 if all(kw in comb for kw in keywords):
+                    price = None
                     if m.last_price is not None and m.last_price > 0:
+                        price = float(m.last_price)
+                    elif m.yes_bid > 0 and m.yes_ask > 0:
+                        price = (m.yes_bid + m.yes_ask) / 2.0
+
+                    if price is not None and price > 0:
                         matched.append({
                             "market_id": m.ticker,
                             "question": m.title,
                             "venue": "Kalshi (mirrors Robinhood Predict)",
-                            "current_price": round(float(m.last_price), 4),
+                            "current_price": round(price, 4),
                             "category": m.category or "General",
                             "slug": m.event_ticker.lower()
                         })
@@ -311,6 +321,9 @@ class MarketSearchService:
                 # Strict match: require ALL extracted keywords to match
                 if all(kw in comb for kw in keywords):
                     for m in ev.markets:
+                        # Exclude closed or inactive markets
+                        if m.closed or not m.active:
+                            continue
                         if m.outcome_prices and len(m.outcome_prices) > 0:
                             try:
                                 price = round(float(m.outcome_prices[0]), 4)
