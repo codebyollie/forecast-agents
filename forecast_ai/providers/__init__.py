@@ -8,12 +8,17 @@ from .ollama import OllamaProvider
 from .openrouter import OpenRouterProvider
 from ..config import ForecastConfig
 
+from ..services.spend_guard import SpendGuard, SpendCapExceededError
+
 logger = logging.getLogger(__name__)
 
 class ProviderManager:
     def __init__(self, config: ForecastConfig):
         self.config = config
         self.providers: Dict[str, BaseProvider] = {}
+        daily_budget = getattr(config.server, "daily_llm_budget_usd", 10.0)
+        monthly_budget = getattr(config.server, "public_feed_monthly_budget_usd", 50.0)
+        self.spend_guard = SpendGuard(daily_cap_usd=daily_budget, monthly_cap_usd=monthly_budget)
         self._init_providers()
 
     def _init_providers(self):
@@ -93,6 +98,15 @@ class ProviderManager:
         for idx, provider_name in enumerate(candidates):
             provider = self.providers[provider_name]
             try:
+                # Check SpendGuard circuit breaker before generation
+                if hasattr(self, "spend_guard") and self.spend_guard:
+                    model_name = getattr(provider, "model_id", "default_model")
+                    self.spend_guard.check_and_record_call(
+                        provider=provider_name,
+                        model_id=model_name,
+                        agent_name=agent_name
+                    )
+
                 if idx > 0:
                     logger.warning(
                         f"[ProviderManager] Falling back to provider '{provider_name}' "
@@ -107,6 +121,8 @@ class ProviderManager:
                 if idx > 0:
                     logger.info(f"[ProviderManager] Fallback provider '{provider_name}' succeeded.")
                 return res
+            except SpendCapExceededError as sce:
+                raise ProviderError("circuit_breaker", str(sce))
             except ProviderError as pe:
                 err_msg = f"Provider '{provider_name}' failed: {pe.message}"
                 logger.warning(f"[ProviderManager] {err_msg}")

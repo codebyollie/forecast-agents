@@ -71,26 +71,7 @@ class ApiServer:
         server = uvicorn.Server(config)
         self._server_task = asyncio.create_task(server.serve())
 
-        # Launch background public feed update loop
-        self._feed_task = asyncio.create_task(self._run_public_feed_loop())
-
-    async def _run_public_feed_loop(self):
-        """
-        Background loop that refreshes due public feed topics on startup
-        and periodically every 15 minutes.
-        """
-        logger.info("[ApiServer] Starting Public Feed background runner loop...")
-        await asyncio.sleep(2.0)  # Short delay for server bind
-        while True:
-            try:
-                await self.public_runner.refresh_all_due_topics()
-            except Exception as e:
-                logger.error(f"[ApiServer] Error in public feed update loop: {e}")
-            await asyncio.sleep(900)  # Check every 15 minutes
-
     def stop(self):
-        if self._feed_task:
-            self._feed_task.cancel()
         if self._server_task:
             self._server_task.cancel()
             logger.info("API Server stopped.")

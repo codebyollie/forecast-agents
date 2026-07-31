@@ -110,6 +110,12 @@ class ProfileConfig:
     early_adopter_cutoff: str = "2026-09-01T00:00:00Z"
 
 @dataclass
+class SourcesConfig:
+    news_api_key: str = ""
+    twitter_bearer_token: str = ""
+    polygonscan_key: str = ""
+
+@dataclass
 class ForecastConfig:
     providers: Dict[str, ProviderConfig] = field(default_factory=lambda: {
         "openai": ProviderConfig(provider="openai", model_id="gpt-4o"),
@@ -122,6 +128,7 @@ class ForecastConfig:
     kalshi: KalshiConfig = field(default_factory=KalshiConfig)
     robinhood_agentic: RobinhoodAgenticConfig = field(default_factory=RobinhoodAgenticConfig)
     facts_ai: FactsAIConfig = field(default_factory=FactsAIConfig)
+    sources: SourcesConfig = field(default_factory=SourcesConfig)
     agents: Dict[str, AgentSettings] = field(default_factory=lambda: {
         "news": AgentSettings(enabled=True, weight=1.2),
         "social": AgentSettings(enabled=True, weight=0.8),

@@ -46,7 +46,8 @@ class FactsAISource(BaseSource):
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "FactsAI-Client/1.0"
         }
         payload = {"query": clean_query}
 

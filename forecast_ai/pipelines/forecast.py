@@ -70,8 +70,19 @@ class ForecastPipeline:
         active_agents = list(self.agents.values())
         predictions = []
 
+        agent_source_map = {
+            "news": ["news", "rss", "facts_ai"],
+            "social": ["twitter", "social", "reddit", "rss"],
+            "reddit": ["reddit", "social"],
+            "research": ["facts_ai", "arxiv", "research"],
+            "macro": ["macro", "cme", "fred", "news", "rss"],
+            "onchain": ["blockchain", "onchain", "polygonscan"],
+            "market": ["kalshi", "polymarket", "market", "robinhood"]
+        }
+
         async def _query_agent(agent):
-            agent_evidence = [e for e in evidence if e.source_name in (agent.name, "polymarket", "kalshi", "rss", "news")]
+            allowed = agent_source_map.get(agent.name.lower(), [agent.name.lower()])
+            agent_evidence = [e for e in evidence if any(s in e.source_name.lower() for s in allowed)]
             if not agent_evidence:
                 agent_evidence = evidence
             try:

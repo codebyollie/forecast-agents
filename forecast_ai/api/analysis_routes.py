@@ -171,13 +171,16 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
             consensus_prob = round(result.consensus_probability, 4)
             consensus_conf = round(result.consensus_confidence, 4)
 
+            # Fetch real live market price for market_id
+            live_mkt_price = await search_service.get_live_price(req.market_id, req.venue)
+
             analysis_record = {
                 "market_id": req.market_id,
                 "question": req.question,
-                "venue": req.venue or "Kalshi / Robinhood Predict",
+                "venue": req.venue or "Kalshi (mirrors Robinhood Predict)",
                 "consensus_probability": consensus_prob,
                 "consensus_confidence": consensus_conf,
-                "market_price_at_time": 0.50,
+                "market_price_at_time": live_mkt_price,
                 "explanation": result.explanation[:200] + "..." if len(result.explanation) > 200 else result.explanation,
                 "agent_breakdown": agent_breakdown,
                 "tier_used": tier,
