@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import routes
 from .public_routes import create_public_router
 from ..config import ForecastConfig
+from ..config_store import ConfigStore
 from ..pipelines.forecast import ForecastPipeline
 from ..pipelines.public_feed import PublicFeedRunner
 
@@ -82,7 +83,9 @@ class ApiServer:
             logger.info("API Server stopped.")
 
 # Default top-level ASGI application instance for Uvicorn / Gunicorn / Railway / Render
-_default_config = ForecastConfig()
+# IMPORTANT: must use ConfigStore().load_config() — NOT ForecastConfig() directly —
+# so that Railway/Render environment variables (OPENAI_API_KEY etc.) are applied.
+_default_config = ConfigStore().load_config()
 _default_pipeline = ForecastPipeline(_default_config)
 _default_server = ApiServer(_default_config, _default_pipeline)
 app = _default_server.app
