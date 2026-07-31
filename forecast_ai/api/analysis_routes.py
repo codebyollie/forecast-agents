@@ -85,13 +85,14 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
 
     @router.get("/markets/search")
     async def search_markets(
-        q: str = Query(..., min_length=1, description="Query text to search across prediction markets"),
+        q: Optional[str] = Query(None, description="Query text to search across prediction markets"),
         limit: int = Query(10, ge=1, le=50),
         user: Dict[str, Any] = Depends(get_current_privy_user)
     ) -> List[Dict[str, Any]]:
         """
         GET /markets/search?q=<query>
         Searches open prediction markets on Kalshi & Polymarket matching the query text.
+        If q is omitted or empty, returns popular active open contracts.
         Auth required. Rate-limited to 30 searches/hour per user.
         """
         privy_user_id = user["privy_user_id"]

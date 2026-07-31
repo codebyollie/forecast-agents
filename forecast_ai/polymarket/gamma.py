@@ -177,6 +177,26 @@ class GammaClient:
                     data = resp.json()
                     if isinstance(data, list):
                         return data
+                    elif isinstance(data, dict):
+                        return data.get("events", [])
             except Exception:
                 pass
         return []
+
+    async def search_events(self, query: str) -> List[PolymarketEvent]:
+        async with self._get_client() as client:
+            try:
+                resp = await client.get(f"{self.base_url}/public-search", params={"q": query})
+                if resp.status_code == 200:
+                    data = resp.json()
+                    raw_events = []
+                    if isinstance(data, dict):
+                        raw_events = data.get("events", [])
+                    elif isinstance(data, list):
+                        raw_events = data
+                    
+                    return [self._parse_event(e) for e in raw_events if isinstance(e, dict)]
+            except Exception as e:
+                logger.warning(f"[GammaClient] public-search events failed for query '{query}': {e}")
+        return []
+

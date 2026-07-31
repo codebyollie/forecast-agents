@@ -52,6 +52,67 @@ class ProviderManager:
                     model_id=p_cfg.model_id
                 )
 
+    def _map_model_for_provider(self, provider_name: str, model_override: str) -> str:
+        p_name = provider_name.lower()
+        m_override = model_override.lower()
+        
+        # Fictional meta model maps to best available for each provider
+        if "luna" in m_override or "gpt-5.6" in m_override:
+            if p_name == "openai":
+                return "gpt-4o"
+            elif p_name == "anthropic":
+                return "claude-3-5-sonnet-latest"
+            elif p_name == "gemini":
+                return "gemini-1.5-flash"
+            elif p_name == "openrouter":
+                return "meta-llama/llama-3.1-405b"
+            elif p_name == "ollama":
+                return "llama3"
+
+        # OpenAI specific models
+        if "gpt-4o-mini" in m_override:
+            if p_name == "openai":
+                return "gpt-4o-mini"
+            elif p_name == "anthropic":
+                return "claude-3-5-haiku-latest"
+            elif p_name == "gemini":
+                return "gemini-1.5-flash"
+            elif p_name == "openrouter":
+                return "meta-llama/llama-3.1-8b-instruct"
+                
+        if "gpt-4o" in m_override or "gpt-4" in m_override:
+            if p_name == "openai":
+                return "gpt-4o"
+            elif p_name == "anthropic":
+                return "claude-3-5-sonnet-latest"
+            elif p_name == "gemini":
+                return "gemini-1.5-flash"
+            elif p_name == "openrouter":
+                return "meta-llama/llama-3.1-405b"
+
+        # Anthropic specific models
+        if "claude-3-5-sonnet" in m_override:
+            if p_name == "openai":
+                return "gpt-4o"
+            elif p_name == "anthropic":
+                return "claude-3-5-sonnet-latest"
+            elif p_name == "gemini":
+                return "gemini-1.5-flash"
+            elif p_name == "openrouter":
+                return "meta-llama/llama-3.1-405b"
+
+        if "claude" in m_override:
+            if p_name == "openai":
+                return "gpt-4o-mini"
+            elif p_name == "anthropic":
+                return "claude-3-5-haiku-latest"
+            elif p_name == "gemini":
+                return "gemini-1.5-flash"
+            elif p_name == "openrouter":
+                return "meta-llama/llama-3.1-8b-instruct"
+
+        return model_override
+
     def get_provider(self, name: str) -> BaseProvider:
         if name not in self.providers:
             default = self.config.default_provider
@@ -105,9 +166,14 @@ class ProviderManager:
         for idx, provider_name in enumerate(candidates):
             provider = self.providers[provider_name]
             try:
+                # Map model_override (e.g. fictional gpt-5.6-luna) to provider's native identifier
+                resolved_override = None
+                if model_override is not None:
+                    resolved_override = self._map_model_for_provider(provider_name, model_override)
+
                 # Check SpendGuard circuit breaker before generation
                 if hasattr(self, "spend_guard") and self.spend_guard:
-                    model_name = model_override or getattr(provider, "model_id", "default_model")
+                    model_name = resolved_override or getattr(provider, "model_id", "default_model")
                     self.spend_guard.check_and_record_call(
                         provider=provider_name,
                         model_id=model_name,
@@ -125,8 +191,8 @@ class ProviderManager:
                     "temperature": temperature,
                     "max_tokens": max_tokens
                 }
-                if model_override is not None:
-                    gen_kwargs["model_override"] = model_override
+                if resolved_override is not None:
+                    gen_kwargs["model_override"] = resolved_override
 
                 res = await provider.generate(**gen_kwargs)
                 if idx > 0:

@@ -124,14 +124,57 @@ class MarketSearchService:
 
         return None
 
-    async def search_markets(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_markets(self, query: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Search open prediction markets across Kalshi and Polymarket matching query text or URL.
+        If query is empty/None, returns a list of top active/open markets on both platforms.
         Returns normalized list: [{market_id, question, venue, current_price, category, slug}]
         """
+        if not query or not query.strip():
+            # Return active/popular open markets from both venues
+            results = []
+            try:
+                # 1. Fetch top 10 general open markets from Kalshi
+                k_mkts = await self.kalshi_client.fetch_markets(limit=15, status="open")
+                for m in k_mkts:
+                    if m.last_price is not None and m.last_price > 0:
+                        results.append({
+                            "market_id": m.ticker,
+                            "question": m.title,
+                            "venue": "Kalshi (mirrors Robinhood Predict)",
+                            "current_price": round(float(m.last_price), 4),
+                            "category": m.category or "General",
+                            "slug": m.event_ticker.lower()
+                        })
+            except Exception as e:
+                logger.warning(f"[MarketSearchService] Failed to load active Kalshi markets: {e}")
+
+            try:
+                # 2. Fetch top active events from Polymarket Gamma
+                p_events = await self.gamma_client.list_events(active=True, limit=15)
+                for ev in p_events:
+                    for m in ev.markets:
+                        if m.outcome_prices and len(m.outcome_prices) > 0:
+                            try:
+                                price = round(float(m.outcome_prices[0]), 4)
+                                if price > 0:
+                                    results.append({
+                                        "market_id": m.slug or m.id,
+                                        "question": m.question or ev.title,
+                                        "venue": "Polymarket",
+                                        "current_price": price,
+                                        "category": m.category or "General",
+                                        "slug": m.slug or ev.slug
+                                    })
+                                    break # Only take one market per event for diversity
+                            except Exception:
+                                pass
+            except Exception as e:
+                logger.warning(f"[MarketSearchService] Failed to load active Polymarket events: {e}")
+
+            return results[:limit]
+
         clean_q = query.strip()
-        if not clean_q:
-            return []
 
         # 1. URL resolution if input is a URL
         url_match = self.parse_market_url(clean_q)
@@ -255,10 +298,17 @@ class MarketSearchService:
     async def _search_polymarket(self, keywords: List[str], limit: int = 10) -> List[Dict[str, Any]]:
         matched = []
         try:
-            events = await self.gamma_client.list_events(active=True, limit=50)
+            # Query Polymarket public-search using keywords joined by space
+            query_str = " ".join(keywords)
+            events = await self.gamma_client.search_events(query_str)
+            
+            # Fallback to list_events if public search returned nothing or failed
+            if not events:
+                events = await self.gamma_client.list_events(active=True, limit=50)
+
             for ev in events:
                 comb = f"{ev.title} {ev.slug} {ev.description}".lower()
-                # Strict match: require ALL extracted keywords to match (NO loose OR-fallback)
+                # Strict match: require ALL extracted keywords to match
                 if all(kw in comb for kw in keywords):
                     for m in ev.markets:
                         if m.outcome_prices and len(m.outcome_prices) > 0:
