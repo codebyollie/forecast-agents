@@ -1,0 +1,63 @@
+{
+  "market_id": "KXRECESSION-26",
+  "question": "Will a US recession occur before 2027?",
+  "venue": "Kalshi (mirrors Robinhood Predict)",
+  "consensus_probability": 0.22,
+  "consensus_confidence": 0.78,
+  "market_price": 0.5,
+  "explanation": "Agent consensus indicates low-to-moderate probability (22%) of a formal NBER-declared US recession before 2027, backed by resilient labor market metrics and steady consumer expenditure baseline.",
+  "agent_breakdown": [
+    {
+      "agent_name": "news",
+      "probability": 0.2,
+      "confidence": 0.8,
+      "reasoning_summary": "BLS labor data and quarterly GDP prints indicate ongoing moderate macroeconomic expansion.",
+      "warnings": []
+    },
+    {
+      "agent_name": "social",
+      "probability": 0.24,
+      "confidence": 0.75,
+      "reasoning_summary": "Social sentiment on X reflecting moderate concern over commercial real estate debt maturity.",
+      "warnings": []
+    },
+    {
+      "agent_name": "reddit",
+      "probability": 0.25,
+      "confidence": 0.7,
+      "reasoning_summary": "r/economics threads analyzing NBER recession definition timeline.",
+      "warnings": []
+    },
+    {
+      "agent_name": "research",
+      "probability": 0.19,
+      "confidence": 0.85,
+      "reasoning_summary": "NY Fed recession yield-curve probability model pricing 20% baseline risk.",
+      "warnings": []
+    },
+    {
+      "agent_name": "macro",
+      "probability": 0.21,
+      "confidence": 0.82,
+      "reasoning_summary": "Sahm Rule indicator and unemployment claims remain below recession thresholds.",
+      "warnings": []
+    },
+    {
+      "agent_name": "onchain",
+      "probability": 0.23,
+      "confidence": 0.75,
+      "reasoning_summary": "Stablecoin consumer spending velocity steady across major layer 1 networks.",
+      "warnings": []
+    },
+    {
+      "agent_name": "market",
+      "probability": 0.22,
+      "confidence": 0.8,
+      "reasoning_summary": "Kalshi/Robinhood Predict recession event contract orderbook midpoint trading near $0.20.",
+      "warnings": []
+    }
+  ],
+  "model_used": "gpt-5.6-luna",
+  "source_url": "https://robinhood.com/us/en/prediction-markets/economics/events/recession-this-year-jan-31-2027/",
+  "featured_at": "2026-07-31T15:04:28.520375+00:00"
+}
