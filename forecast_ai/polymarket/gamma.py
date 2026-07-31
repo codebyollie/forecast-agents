@@ -5,8 +5,12 @@ Provides metadata, market lists, discovery, and search functionality.
 """
 
 from typing import List, Optional, Dict, Any
+import logging
 import httpx
 from .models import PolymarketMarket, PolymarketEvent
+
+logger = logging.getLogger(__name__)
+
 
 class GammaClient:
     def __init__(self, base_url: str = "https://gamma-api.polymarket.com"):
