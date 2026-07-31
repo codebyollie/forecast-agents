@@ -102,7 +102,7 @@ class MarketSearchService:
         # 1. Try Kalshi first if ticker format
         try:
             k_mkt = await self.kalshi_client.fetch_market_by_ticker(market_id)
-            if k_mkt and k_mkt.last_price > 0:
+            if k_mkt and k_mkt.last_price is not None and k_mkt.last_price > 0:
                 return round(float(k_mkt.last_price), 4)
         except Exception:
             pass
@@ -190,7 +190,7 @@ class MarketSearchService:
         elif platform == "kalshi":
             try:
                 k_mkt = await self.kalshi_client.fetch_market_by_ticker(identifier)
-                if k_mkt and k_mkt.last_price > 0:
+                if k_mkt and k_mkt.last_price is not None and k_mkt.last_price > 0:
                     return {
                         "market_id": k_mkt.ticker,
                         "question": k_mkt.title,
@@ -237,7 +237,7 @@ class MarketSearchService:
                 comb = f"{m.ticker} {m.title} {m.subtitle} {m.category}".lower()
                 # Strict match: require ALL extracted keywords to match (NO loose OR-fallback)
                 if all(kw in comb for kw in keywords):
-                    if m.last_price > 0:
+                    if m.last_price is not None and m.last_price > 0:
                         matched.append({
                             "market_id": m.ticker,
                             "question": m.title,

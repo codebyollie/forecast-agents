@@ -19,10 +19,10 @@ class KalshiSource(BaseSource):
         try:
             markets = await self.client.fetch_markets(limit=limit)
             for m in markets:
-                # Basic matching or summary
+                price_str = f"${m.last_price:.2f}" if m.last_price is not None else "N/A"
                 content = (
                     f"Kalshi/Robinhood Predict Market [{m.ticker}]: {m.title}. "
-                    f"Yes Bid/Ask: ${m.yes_bid:.2f}/${m.yes_ask:.2f}, Last Price: ${m.last_price:.2f}, Volume: {m.volume}"
+                    f"Yes Bid/Ask: ${m.yes_bid:.2f}/${m.yes_ask:.2f}, Last Price: {price_str}, Volume: {m.volume}"
                 )
                 ev = Evidence(
                     source_name="kalshi",

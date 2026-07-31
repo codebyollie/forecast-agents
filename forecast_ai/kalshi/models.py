@@ -18,7 +18,7 @@ class KalshiOrderbook:
     no_bids: List[KalshiBookLevel] = field(default_factory=list)
     no_asks: List[KalshiBookLevel] = field(default_factory=list)
     spread: float = 0.0
-    midpoint: float = 0.5
+    midpoint: Optional[float] = None
     raw_data: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
@@ -33,7 +33,7 @@ class KalshiMarket:
     yes_ask: float = 0.0
     no_bid: float = 0.0
     no_ask: float = 0.0
-    last_price: float = 0.5
+    last_price: Optional[float] = None
     volume: float = 0.0
     open_interest: float = 0.0
     expiration_time: str = ""
@@ -41,12 +41,12 @@ class KalshiMarket:
     raw_data: Dict[str, Any] = field(default_factory=dict)
 
     @property
-    def midpoint_price(self) -> float:
+    def midpoint_price(self) -> Optional[float]:
         if self.yes_bid > 0 and self.yes_ask > 0:
             return round((self.yes_bid + self.yes_ask) / 2.0, 4)
-        if self.last_price > 0:
+        if self.last_price is not None and self.last_price > 0:
             return self.last_price
-        return 0.5
+        return None
 
 @dataclass
 class KalshiSeries:

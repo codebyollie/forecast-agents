@@ -10,8 +10,8 @@ class AnomalyDetector:
         self,
         bids: List[Any],
         asks: List[Any],
-        last_price: float,
-        volume_24h: float
+        last_price: Optional[float] = None,
+        volume_24h: float = 0.0
     ) -> List[str]:
         warnings = []
         # If bids/asks are empty
@@ -28,7 +28,7 @@ class AnomalyDetector:
                 warnings.append(f"Spread anomaly: Large bid-ask spread of {spread:.2f}.")
 
         # Check pricing limits
-        if last_price < 0.02 or last_price > 0.98:
+        if last_price is not None and (last_price < 0.02 or last_price > 0.98):
             warnings.append(f"Extreme pricing: Market pricing implies near-certainty ({last_price:.2f}).")
 
         return warnings

@@ -47,11 +47,25 @@ class KalshiClient:
                     pass
             return default_val
 
+        def parse_opt_val(cents_key: str, dollars_key: str) -> Optional[float]:
+            if data.get(dollars_key) is not None:
+                try:
+                    return float(data[dollars_key])
+                except (ValueError, TypeError):
+                    pass
+            if data.get(cents_key) is not None:
+                try:
+                    v = float(data[cents_key])
+                    return v / 100.0 if v > 1.0 else v
+                except (ValueError, TypeError):
+                    pass
+            return None
+
         yes_bid = parse_val("yes_bid", "yes_bid_dollars", 0.0)
         yes_ask = parse_val("yes_ask", "yes_ask_dollars", 0.0)
         no_bid = parse_val("no_bid", "no_bid_dollars", 0.0)
         no_ask = parse_val("no_ask", "no_ask_dollars", 0.0)
-        last_price = parse_val("last_price", "last_price_dollars", 0.0)
+        last_price = parse_opt_val("last_price", "last_price_dollars")
 
         return KalshiMarket(
             ticker=data.get("ticker", ""),
@@ -198,7 +212,7 @@ class KalshiClient:
                     ]
 
                     spread = 0.0
-                    midpoint = 0.5
+                    midpoint = None
                     if yes_bids and yes_asks:
                         spread = abs(yes_asks[0].price - yes_bids[0].price)
                         midpoint = round((yes_bids[0].price + yes_asks[0].price) / 2.0, 4)

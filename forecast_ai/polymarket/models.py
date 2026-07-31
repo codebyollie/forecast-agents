@@ -22,6 +22,20 @@ class PolymarketMarket:
     event_id: str = ""
     raw_data: Dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def outcome_prices(self) -> List[float]:
+        if self.raw_data and self.raw_data.get("outcomePrices"):
+            try:
+                op = self.raw_data["outcomePrices"]
+                if isinstance(op, str):
+                    import json
+                    op = json.loads(op)
+                if isinstance(op, list):
+                    return [float(p) for p in op]
+            except Exception:
+                pass
+        return []
+
 @dataclass
 class PolymarketEvent:
     id: str
@@ -41,6 +55,6 @@ class OrderBookSummary:
     token_id: str
     bids: List[BookLevel] = field(default_factory=list)
     asks: List[BookLevel] = field(default_factory=list)
-    last_trade_price: float = 0.0
+    last_trade_price: Optional[float] = None
     spread: float = 0.0
     raw_data: Dict[str, Any] = field(default_factory=dict)
