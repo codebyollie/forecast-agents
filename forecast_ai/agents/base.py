@@ -36,7 +36,7 @@ class ForecastAgent(ABC):
         """
         pass
 
-    async def forecast(self, question: str, evidence: List[Evidence], is_public_feed: bool = False) -> Prediction:
+    async def forecast(self, question: str, evidence: List[Evidence], is_public_feed: bool = False, model_override: Optional[str] = None) -> Prediction:
         """
         Run the agent prediction flow using LLM.
         """
@@ -119,21 +119,23 @@ Return ONLY valid JSON. Do not include markdown wraps or additional conversation
         if self.name in self.config.agents:
             temperature = self.config.agents[self.name].temperature
 
+        gen_kwargs = {
+            "system_prompt": system_instruction,
+            "user_prompt": user_prompt,
+            "temperature": temperature
+        }
+        if model_override is not None:
+            gen_kwargs["model_override"] = model_override
+
         if self.provider_manager:
             raw_response = await self.provider_manager.generate_with_fallback(
                 primary_name=self.primary_provider_name,
-                system_prompt=system_instruction,
-                user_prompt=user_prompt,
-                temperature=temperature,
                 agent_name=self.name,
-                is_public_feed=is_public_feed
+                is_public_feed=is_public_feed,
+                **gen_kwargs
             )
         else:
-            raw_response = await self.provider.generate(
-                system_prompt=system_instruction,
-                user_prompt=user_prompt,
-                temperature=temperature
-            )
+            raw_response = await self.provider.generate(**gen_kwargs)
 
         # Parse JSON output
         probability = 0.5
@@ -169,11 +171,20 @@ Return ONLY valid JSON. Do not include markdown wraps or additional conversation
                 except Exception:
                     pass
 
-            reason_match = re.search(r'"reasoning"\s*:\s*"([^"]+)"', raw_response)
+            reason_match = (
+                re.search(r'"reasoning"\s*:\s*"((?:[^"\\]|\\.)*)"', raw_response, re.DOTALL) or
+                re.search(r'"reasoning"\s*:\s*"(.*?)"\s*,\s*"(?:warnings|confidence|probability)', raw_response, re.DOTALL)
+            )
             if reason_match:
-                reasoning = reason_match.group(1)
+                raw_reason = reason_match.group(1)
+                reasoning = (
+                    raw_reason.replace(r'\"', '"')
+                              .replace(r'\\', '\\')
+                              .replace(r'\n', '\n')
+                              .replace(r'\t', '\t')
+                )
             else:
-                reasoning = f"Raw output: {raw_response[:200]}..."
+                reasoning = f"Raw output: {raw_response[:500]}..."
 
         confidence = ConfidenceScore(score=confidence_val, warnings=warnings)
         

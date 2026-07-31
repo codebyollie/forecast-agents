@@ -16,12 +16,14 @@ class GeminiProvider(BaseProvider):
         system_prompt: str,
         user_prompt: str,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        model_override: Optional[str] = None
     ) -> str:
         if not self.api_key:
             raise ProviderError("gemini", "Gemini API Key not configured.")
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_id}:generateContent?key={self.api_key}"
+        target_model = model_override or self.model_id
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:generateContent?key={self.api_key}"
         
         payload = {
             "contents": [

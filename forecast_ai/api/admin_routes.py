@@ -70,7 +70,8 @@ def create_admin_router(config: ForecastConfig, pipeline: ForecastPipeline) -> A
             result = await pipeline.run_forecast(
                 question=req.question,
                 market_id=req.market_id,
-                is_public_feed=False
+                is_public_feed=False,
+                model_override="gpt-5.6-luna"
             )
 
             live_price = await search_service.get_live_price(req.market_id, req.venue)

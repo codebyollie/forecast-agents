@@ -16,12 +16,14 @@ class OllamaProvider(BaseProvider):
         system_prompt: str,
         user_prompt: str,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        model_override: Optional[str] = None
     ) -> str:
         url = f"{self.api_base}/api/chat"
         
+        target_model = model_override or self.model_id
         payload = {
-            "model": self.model_id,
+            "model": target_model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}

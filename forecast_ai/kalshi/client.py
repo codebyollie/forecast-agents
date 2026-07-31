@@ -51,7 +51,7 @@ class KalshiClient:
         yes_ask = parse_val("yes_ask", "yes_ask_dollars", 0.0)
         no_bid = parse_val("no_bid", "no_bid_dollars", 0.0)
         no_ask = parse_val("no_ask", "no_ask_dollars", 0.0)
-        last_price = parse_val("last_price", "last_price_dollars", 0.50)
+        last_price = parse_val("last_price", "last_price_dollars", 0.0)
 
         return KalshiMarket(
             ticker=data.get("ticker", ""),

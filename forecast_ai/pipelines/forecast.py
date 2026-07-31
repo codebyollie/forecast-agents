@@ -58,7 +58,8 @@ class ForecastPipeline:
         self,
         question: str,
         market_id: str = "custom_market",
-        is_public_feed: bool = False
+        is_public_feed: bool = False,
+        model_override: Optional[str] = None
     ) -> ForecastResult:
         """
         Orchestrates full forecasting process.
@@ -86,7 +87,7 @@ class ForecastPipeline:
             if not agent_evidence:
                 agent_evidence = evidence
             try:
-                return await agent.forecast(question, agent_evidence, is_public_feed=is_public_feed)
+                return await agent.forecast(question, agent_evidence, is_public_feed=is_public_feed, model_override=model_override)
             except ProviderError as pe:
                 logger.error(f"[ForecastPipeline] Agent '{agent.name}' failed after provider fallbacks: {pe}")
                 return None
@@ -104,8 +105,11 @@ class ForecastPipeline:
         # 3. Apply Consensus Engine
         reputations = self.memory_store.get_agent_reputations()
         result = await self.consensus_engine.aggregate_predictions(market_id, predictions, reputations)
+        
+        # 4. Attach model_used metadata reflecting reality
+        result.metadata["model_used"] = model_override or getattr(self.config.llm, "default_model", "gpt-5.6-luna")
 
-        # 4. Save to Memory (skip saving private forecast store if public feed, handled separately)
+        # 5. Save to Memory (skip saving private forecast store if public feed, handled separately)
         if not is_public_feed:
             self.memory_store.save_forecast(result)
 

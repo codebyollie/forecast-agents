@@ -20,7 +20,8 @@ class BaseProvider(ABC):
         system_prompt: str,
         user_prompt: str,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        model_override: Optional[str] = None
     ) -> str:
         """
         Generate completion for a given system and user prompt.

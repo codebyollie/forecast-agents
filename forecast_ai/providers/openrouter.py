@@ -17,7 +17,8 @@ class OpenRouterProvider(BaseProvider):
         system_prompt: str,
         user_prompt: str,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        model_override: Optional[str] = None
     ) -> str:
         if not self.api_key:
             raise ProviderError("openrouter", "OpenRouter API Key not configured.")
@@ -29,8 +30,9 @@ class OpenRouterProvider(BaseProvider):
             "Content-Type": "application/json"
         }
         
+        target_model = model_override or self.model_id
         payload = {
-            "model": self.model_id,
+            "model": target_model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}

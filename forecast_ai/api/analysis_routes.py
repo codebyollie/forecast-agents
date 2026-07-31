@@ -73,14 +73,15 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
         return balance_checker.evaluate_holder_tier(forai_balance)
 
     def _get_tier_limits(tier: str) -> tuple[int, str]:
-        """Returns (daily_limit, model_override) for given tier."""
+        """Returns (daily_limit, model_override) for given tier. Currently using gpt-5.6-luna for all tiers."""
         tier_cfg = config.profile.custom_analysis
+        luna_model = "gpt-5.6-luna"
         if tier == "Pro":
-            return tier_cfg.pro_daily_limit, tier_cfg.pro_model_override
+            return tier_cfg.pro_daily_limit, luna_model
         elif tier == "Holder":
-            return tier_cfg.holder_daily_limit, tier_cfg.holder_model_override
+            return tier_cfg.holder_daily_limit, luna_model
         else:
-            return tier_cfg.free_daily_limit, tier_cfg.free_model_override
+            return tier_cfg.free_daily_limit, luna_model
 
     @router.get("/markets/search")
     async def search_markets(
@@ -151,19 +152,20 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
             result = await pipeline.run_forecast(
                 question=req.question,
                 market_id=req.market_id,
-                is_public_feed=False
+                is_public_feed=False,
+                model_override=model_override
             )
 
             # Atomically increment usage
             await store.increment_daily_analysis_count(privy_user_id, today_str)
 
-            # Format agent breakdown
+            # Format agent breakdown (full untruncated reasoning)
             agent_breakdown = [
                 {
                     "agent_name": p.agent_name,
                     "probability": round(p.probability, 4),
                     "confidence": round(p.confidence.score, 4),
-                    "reasoning_summary": p.reasoning[:180] + "..." if len(p.reasoning) > 180 else p.reasoning,
+                    "reasoning_summary": p.reasoning,
                     "warnings": p.confidence.warnings
                 } for p in result.individual_predictions
             ]
@@ -181,7 +183,7 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
                 "consensus_probability": consensus_prob,
                 "consensus_confidence": consensus_conf,
                 "market_price_at_time": live_mkt_price,
-                "explanation": result.explanation[:200] + "..." if len(result.explanation) > 200 else result.explanation,
+                "explanation": result.explanation,
                 "agent_breakdown": agent_breakdown,
                 "tier_used": tier,
                 "model_used": model_override

@@ -212,11 +212,11 @@ class PublicFeedRunner:
                     f"Retaining last-known-good market_price: {market_price}"
                 )
             else:
-                market_price = 0.50
-                logger.warning(
+                logger.error(
                     f"[PublicFeedRunner] Live market price fetch failed for '{topic.topic_id}' ({topic.market_ticker}) "
-                    f"with no previous record. Defaulting to 0.50."
+                    f"with no previous record. Cannot process topic without real market price."
                 )
+                return False
 
             consensus_prob = round(result.consensus_probability, 4)
             price_delta = round(consensus_prob - market_price, 4)

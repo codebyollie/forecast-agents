@@ -68,7 +68,8 @@ class ProviderManager:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         agent_name: Optional[str] = None,
-        is_public_feed: bool = False
+        is_public_feed: bool = False,
+        model_override: Optional[str] = None
     ) -> str:
         """
         Attempts generation with primary_name provider first.
@@ -100,7 +101,7 @@ class ProviderManager:
             try:
                 # Check SpendGuard circuit breaker before generation
                 if hasattr(self, "spend_guard") and self.spend_guard:
-                    model_name = getattr(provider, "model_id", "default_model")
+                    model_name = model_override or getattr(provider, "model_id", "default_model")
                     self.spend_guard.check_and_record_call(
                         provider=provider_name,
                         model_id=model_name,
@@ -112,12 +113,16 @@ class ProviderManager:
                         f"[ProviderManager] Falling back to provider '{provider_name}' "
                         f"for agent='{agent_name or 'global'}' after previous failures: {errors}"
                     )
-                res = await provider.generate(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    temperature=temperature,
-                    max_tokens=max_tokens
-                )
+                gen_kwargs = {
+                    "system_prompt": system_prompt,
+                    "user_prompt": user_prompt,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens
+                }
+                if model_override is not None:
+                    gen_kwargs["model_override"] = model_override
+
+                res = await provider.generate(**gen_kwargs)
                 if idx > 0:
                     logger.info(f"[ProviderManager] Fallback provider '{provider_name}' succeeded.")
                 return res

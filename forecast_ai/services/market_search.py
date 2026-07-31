@@ -3,6 +3,9 @@ Cross-Venue Market Search & URL Resolution Service for Forecast AI.
 
 Queries open prediction markets on Kalshi and Polymarket matching a user query string or pasted URL,
 returning a normalized list of market objects with live prices and honest venue tags.
+
+# DO NOT ADD A HARDCODED 0.50 (OR ANY OTHER FABRICATED) PRICE FALLBACK HERE — this has been a recurring bug.
+# If a real price cannot be found, fail loudly, return None, or omit the item.
 """
 
 from __future__ import annotations
@@ -232,18 +235,19 @@ class MarketSearchService:
                         continue
 
                 comb = f"{m.ticker} {m.title} {m.subtitle} {m.category}".lower()
-                # Require ALL keywords (or main topic term) to match
-                if all(kw in comb for kw in keywords) or any(kw in comb for kw in keywords if len(kw) >= 4):
-                    matched.append({
-                        "market_id": m.ticker,
-                        "question": m.title,
-                        "venue": "Kalshi (mirrors Robinhood Predict)",
-                        "current_price": round(float(m.last_price), 4) if m.last_price > 0 else 0.50,
-                        "category": m.category or "General",
-                        "slug": m.event_ticker.lower()
-                    })
-                    if len(matched) >= limit:
-                        break
+                # Strict match: require ALL extracted keywords to match (NO loose OR-fallback)
+                if all(kw in comb for kw in keywords):
+                    if m.last_price > 0:
+                        matched.append({
+                            "market_id": m.ticker,
+                            "question": m.title,
+                            "venue": "Kalshi (mirrors Robinhood Predict)",
+                            "current_price": round(float(m.last_price), 4),
+                            "category": m.category or "General",
+                            "slug": m.event_ticker.lower()
+                        })
+                        if len(matched) >= limit:
+                            break
         except Exception as e:
             logger.warning(f"[MarketSearchService] Kalshi search failed: {e}")
         return matched
@@ -254,19 +258,25 @@ class MarketSearchService:
             events = await self.gamma_client.list_events(active=True, limit=50)
             for ev in events:
                 comb = f"{ev.title} {ev.slug} {ev.description}".lower()
-                if all(kw in comb for kw in keywords) or any(kw in comb for kw in keywords if len(kw) >= 4):
+                # Strict match: require ALL extracted keywords to match (NO loose OR-fallback)
+                if all(kw in comb for kw in keywords):
                     for m in ev.markets:
-                        price = round(float(m.outcome_prices[0]), 4) if m.outcome_prices else 0.50
-                        matched.append({
-                            "market_id": m.slug or m.id,
-                            "question": m.question or ev.title,
-                            "venue": "Polymarket",
-                            "current_price": price,
-                            "category": m.category or "General",
-                            "slug": m.slug or ev.slug
-                        })
-                        if len(matched) >= limit:
-                            break
+                        if m.outcome_prices and len(m.outcome_prices) > 0:
+                            try:
+                                price = round(float(m.outcome_prices[0]), 4)
+                                if price > 0:
+                                    matched.append({
+                                        "market_id": m.slug or m.id,
+                                        "question": m.question or ev.title,
+                                        "venue": "Polymarket",
+                                        "current_price": price,
+                                        "category": m.category or "General",
+                                        "slug": m.slug or ev.slug
+                                    })
+                                    if len(matched) >= limit:
+                                        break
+                            except (ValueError, TypeError):
+                                pass
                     if len(matched) >= limit:
                         break
         except Exception as e:

@@ -17,7 +17,8 @@ class AnthropicProvider(BaseProvider):
         system_prompt: str,
         user_prompt: str,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        model_override: Optional[str] = None
     ) -> str:
         if not self.api_key:
             raise ProviderError("anthropic", "Anthropic API Key not configured.")
@@ -28,8 +29,9 @@ class AnthropicProvider(BaseProvider):
             "content-type": "application/json"
         }
         
+        target_model = model_override or self.model_id
         payload = {
-            "model": self.model_id,
+            "model": target_model,
             "system": system_prompt,
             "messages": [
                 {"role": "user", "content": user_prompt}
