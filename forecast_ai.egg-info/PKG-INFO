@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: forecast-ai
+Version: 0.1.0
+Summary: Open-Source Multi-Agent Intelligence Infrastructure for Prediction Markets
+Requires-Python: >=3.10
+License-File: LICENSE
+Requires-Dist: click>=8.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]
+Requires-Dist: httpx
+Requires-Dist: tiktoken
+Requires-Dist: pydantic>=2.0
+Provides-Extra: ws
+Requires-Dist: websockets; extra == "ws"
+Provides-Extra: onchain
+Requires-Dist: eth-account; extra == "onchain"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-asyncio; extra == "dev"
+Dynamic: license-file
