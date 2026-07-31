@@ -80,3 +80,9 @@ class ApiServer:
         if self._server_task:
             self._server_task.cancel()
             logger.info("API Server stopped.")
+
+# Default top-level ASGI application instance for Uvicorn / Gunicorn / Railway / Render
+_default_config = ForecastConfig()
+_default_pipeline = ForecastPipeline(_default_config)
+_default_server = ApiServer(_default_config, _default_pipeline)
+app = _default_server.app
