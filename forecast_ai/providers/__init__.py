@@ -86,7 +86,10 @@ class ProviderManager:
         )
 
         # Filter candidates: dedupe, exclude primary_name, exclude 'ollama' if public feed
-        candidates: List[str] = [primary_name]
+        # Only include primary if it's actually initialized
+        candidates: List[str] = []
+        if primary_name in self.providers:
+            candidates.append(primary_name)
         for name in configured_fallbacks:
             if name == primary_name:
                 continue
@@ -94,6 +97,9 @@ class ProviderManager:
                 continue
             if name not in candidates and name in self.providers:
                 candidates.append(name)
+
+        if not candidates:
+            raise ProviderError("none", f"No configured providers available (requested primary: '{primary_name}')")
 
         errors: List[str] = []
         for idx, provider_name in enumerate(candidates):

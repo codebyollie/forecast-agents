@@ -107,7 +107,7 @@ class ForecastPipeline:
         result = await self.consensus_engine.aggregate_predictions(market_id, predictions, reputations)
         
         # 4. Attach model_used metadata reflecting reality
-        result.metadata["model_used"] = model_override or getattr(self.config.llm, "default_model", "gpt-5.6-luna")
+        result.metadata["model_used"] = model_override or getattr(self.config, "default_model", "gpt-4o")
 
         # 5. Save to Memory (skip saving private forecast store if public feed, handled separately)
         if not is_public_feed:

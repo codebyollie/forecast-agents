@@ -43,7 +43,9 @@ class ClobClient:
                 resp = await client.get(f"{self.base_url}/prices/midpoint", params={"token_id": token_id})
                 if resp.status_code == 200:
                     data = resp.json()
-                    return float(data.get("midpoint", 0.5))
+                    midpoint = data.get("midpoint")
+                    if midpoint is not None:
+                        return float(midpoint)
             except Exception:
                 pass
         return None
@@ -54,7 +56,9 @@ class ClobClient:
                 resp = await client.get(f"{self.base_url}/prices/last", params={"token_id": token_id})
                 if resp.status_code == 200:
                     data = resp.json()
-                    return float(data.get("price", 0.5))
+                    price = data.get("price")
+                    if price is not None:
+                        return float(price)
             except Exception:
                 pass
         return None

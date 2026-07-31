@@ -131,7 +131,7 @@ class PublicFeedRunner:
                     elif m.last_price is not None:
                         return round(float(m.last_price), 4)
                 ob = await self.kalshi_client.fetch_orderbook(ticker)
-                if ob and ob.midpoint > 0:
+                if ob and ob.midpoint is not None and ob.midpoint > 0:
                     return round(ob.midpoint, 4)
             except Exception as e:
                 logger.warning(f"[PublicFeedRunner] Kalshi live market price fetch failed for '{ticker}': {e}")
