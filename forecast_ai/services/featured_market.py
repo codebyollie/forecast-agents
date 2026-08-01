@@ -51,7 +51,7 @@ class FeaturedMarketService:
                         data = resp.json()
                         if isinstance(data, list) and len(data) > 0:
                             payload = data[0].get("payload")
-                            if isinstance(payload, dict) and payload.get("question"):
+                            if isinstance(payload, dict) and payload.get("question") and payload.get("agent_breakdown"):
                                 return payload
             except Exception as e:
                 logger.warning(f"[FeaturedMarketService] Failed to read Supabase featured_market: {e}")
