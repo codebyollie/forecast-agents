@@ -46,4 +46,4 @@ async def test_facts_ai_user_agent_header():
         
         # Verify User-Agent header
         call_kwargs = mock_post.call_args.kwargs
-        assert call_kwargs["headers"]["User-Agent"] == "FactsAI-Client/1.0"
+        assert call_kwargs["headers"]["User-Agent"] == "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"

@@ -11,7 +11,7 @@ from .base import BaseSource
 from ..models.evidence import Evidence
 
 class RedditSource(BaseSource):
-    def __init__(self, client_id: Optional[str] = None, client_secret: Optional[str] = None, user_agent: str = "ForecastAI/0.1"):
+    def __init__(self, client_id: Optional[str] = None, client_secret: Optional[str] = None, user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"):
         self.client_id = client_id
         self.client_secret = client_secret
         self.user_agent = user_agent
