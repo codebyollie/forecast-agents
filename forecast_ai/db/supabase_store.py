@@ -314,7 +314,11 @@ class SupabaseProfileStore:
             "market_id": analysis.get("market_id", "custom_market"),
             "question": analysis.get("question", ""),
             "venue": analysis.get("venue") or "Kalshi (mirrors Robinhood Predict)",
-            "payload": analysis,
+            "consensus_probability": analysis.get("consensus_probability"),
+            "consensus_confidence": analysis.get("consensus_confidence"),
+            "market_price_at_time": analysis.get("market_price_at_time"),
+            "explanation": analysis.get("explanation", ""),
+            "agent_breakdown": analysis.get("agent_breakdown", []),
             "created_at": record.get("created_at") or now_iso
         }
 
@@ -354,12 +358,21 @@ class SupabaseProfileStore:
                         if isinstance(data, list):
                             unpacked_list = []
                             for row in data:
-                                payload = row.get("payload")
-                                if isinstance(payload, dict):
-                                    item = dict(payload)
-                                    item["id"] = row.get("id")
-                                    item["created_at"] = row.get("created_at")
-                                    unpacked_list.append(item)
+                                # Re-assemble the analysis record from individual database columns
+                                item = {
+                                    "id": row.get("id"),
+                                    "user_id": row.get("user_id"),
+                                    "market_id": row.get("market_id"),
+                                    "question": row.get("question"),
+                                    "venue": row.get("venue"),
+                                    "consensus_probability": row.get("consensus_probability"),
+                                    "consensus_confidence": row.get("consensus_confidence"),
+                                    "market_price_at_time": row.get("market_price_at_time"),
+                                    "explanation": row.get("explanation"),
+                                    "agent_breakdown": row.get("agent_breakdown"),
+                                    "created_at": row.get("created_at")
+                                }
+                                unpacked_list.append(item)
                             return unpacked_list
                     else:
                         logger.error(f"[SupabaseStore] Failed to fetch user analyses from Supabase. Status: {resp.status_code}, Response: {resp.text}")
