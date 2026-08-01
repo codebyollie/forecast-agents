@@ -60,36 +60,48 @@ class ForecastAgent(ABC):
         active_evidence = list(evidence or [])
         prediction_citations: List[Dict[str, str]] = []
 
-        # Wire FactsAI for Research, Macro, and News Agents - ALWAYS enabled for testing
-        facts_key = getattr(self.config.facts_ai, "api_key", "") or os.getenv("FACTS_AI_API_KEY", "") or os.getenv("FACTSAI_API_KEY", "") or "facts_ai_public_access"
-        facts_enabled = True
+        # ── Web Research block ──────────────────────────────────────────────
+        # Priority:  1. FactsAI  (Research / Macro / News)
+        #            2. OpenAI Web Search  (fallback for above + primary for Social / Reddit)
+        facts_key = (
+            getattr(self.config.facts_ai, "api_key", "")
+            or os.getenv("FACTS_AI_API_KEY", "")
+            or os.getenv("FACTSAI_API_KEY", "")
+        )
+        openai_key = (
+            getattr(self.config.providers.get("openai", object()), "api_key", "")
+            or os.getenv("OPENAI_API_KEY", "")
+        )
         facts_ai_error = None
+        agent_name = self.name.lower()
 
-        if self.name.lower() in ("research", "macro", "news") and facts_enabled:
+        # ── 1. FactsAI for Research / Macro / News ─────────────────────────
+        facts_used = False
+        if agent_name in ("research", "macro", "news") and facts_key:
             try:
                 from ..sources.facts_ai import FactsAISource
                 facts_source = FactsAISource(
-                    api_key=facts_key or "facts_ai_public_access",
+                    api_key=facts_key,
                     api_url=self.config.facts_ai.api_url,
-                    query_max_length=self.config.facts_ai.query_max_length
+                    query_max_length=self.config.facts_ai.query_max_length,
                 )
                 res = await facts_source.fetch_deep_research(question)
-                import logging
-                logging.getLogger(__name__).info(
-                    f"[{self.name}] FactsAI API returned data successfully. Answer length: {len(res.get('answer', ''))}, Citations: {len(res.get('citations', []))}"
+                import logging as _logging
+                _logging.getLogger(__name__).info(
+                    f"[{self.name}] FactsAI OK. Answer: {len(res.get('answer',''))} chars, "
+                    f"Citations: {len(res.get('citations', []))}"
                 )
                 if res.get("answer"):
                     active_evidence.append(Evidence(
                         source_name="FactsAI Deep Research",
                         content=res["answer"],
                         relevance_score=0.95,
-                        title=f"FactsAI Synthesis for: {question[:60]}",
-                        url="https://factsai.org"
+                        title=f"FactsAI Synthesis: {question[:60]}",
+                        url="https://factsai.org",
                     ))
-                
                 for c in res.get("citations", []):
                     title = c.get("title") or "Cited Source"
-                    url = c.get("url") or ""
+                    url   = c.get("url") or ""
                     if url or title:
                         prediction_citations.append({"title": title, "url": url})
                         active_evidence.append(Evidence(
@@ -97,15 +109,74 @@ class ForecastAgent(ABC):
                             content=f"FactsAI Verified Source: {title}",
                             relevance_score=0.90,
                             title=title,
-                            url=url
+                            url=url,
                         ))
+                facts_used = True
             except Exception as e:
-                # Fall back gracefully to standard reasoning without failing the whole forecast
-                import logging
-                logging.getLogger(__name__).warning(
-                    f"[{self.name}] FactsAI call notice: {e}. Proceeding with standard evidence."
+                import logging as _logging
+                _logging.getLogger(__name__).warning(
+                    f"[{self.name}] FactsAI failed ({e}). Falling back to OpenAI Web Search."
                 )
-                facts_ai_error = f"FactsAI call notice: {e}"
+                facts_ai_error = f"FactsAI unavailable: {e}"
+
+        # ── 2. OpenAI Web Search ────────────────────────────────────────────
+        # Runs as FALLBACK for Research/Macro/News (when FactsAI failed)
+        # Runs as PRIMARY for Social (Twitter/X) and Reddit agents
+        web_search_query = None
+        if agent_name in ("research", "macro", "news") and not facts_used:
+            web_search_query = question
+        elif agent_name == "social":
+            web_search_query = (
+                f'Twitter X social media discussion sentiment about: "{question[:300]}"'
+            )
+        elif agent_name == "reddit":
+            web_search_query = (
+                f'Reddit community discussion arguments about: "{question[:300]}"'
+            )
+
+        if web_search_query and openai_key:
+            try:
+                from ..sources.web_search import WebSearchSource
+                ws = WebSearchSource(api_key=openai_key)
+                ws_res = await ws.search(web_search_query)
+                import logging as _logging
+                _logging.getLogger(__name__).info(
+                    f"[{self.name}] Web Search OK. Answer: {len(ws_res.get('answer',''))} chars, "
+                    f"Citations: {len(ws_res.get('citations', []))}"
+                )
+                source_label = (
+                    "Web Search (FactsAI fallback)" if agent_name in ("research", "macro", "news")
+                    else f"Web Search ({agent_name.capitalize()})"
+                )
+                if ws_res.get("answer"):
+                    active_evidence.append(Evidence(
+                        source_name=source_label,
+                        content=ws_res["answer"],
+                        relevance_score=0.92,
+                        title=f"Web Research: {question[:60]}",
+                        url="https://openai.com",
+                    ))
+                for c in ws_res.get("citations", []):
+                    title = c.get("title") or "Web Source"
+                    url   = c.get("url") or ""
+                    if url or title:
+                        prediction_citations.append({"title": title, "url": url})
+                        active_evidence.append(Evidence(
+                            source_name="Web Citation",
+                            content=f"Cited: {title}",
+                            relevance_score=0.87,
+                            title=title,
+                            url=url,
+                        ))
+                # Clear FactsAI error since we recovered via web search
+                facts_ai_error = None
+            except Exception as e:
+                import logging as _logging
+                _logging.getLogger(__name__).warning(
+                    f"[{self.name}] Web Search also failed: {e}."
+                )
+                if not facts_ai_error:
+                    facts_ai_error = f"Web search failed: {e}"
 
         # Format evidence context
         evidence_context = f"CURRENT DATE: {today_date_str}\n"
