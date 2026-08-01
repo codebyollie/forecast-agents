@@ -85,10 +85,10 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
         return balance_checker.evaluate_holder_tier(forai_balance)
 
     def _get_tier_limits(tier: str) -> tuple[int, str]:
-        """Returns (daily_limit, model_override) for given tier. Currently using gpt-5.6-luna for all tiers."""
+        """Returns (daily_limit, model_override) for given tier. Uses gpt-5.6-luna for all tiers."""
         tier_cfg = config.profile.custom_analysis
         luna_model = "gpt-5.6-luna"
-        if tier == "Pro":
+        if tier in ("Pro", "Pro Holder"):
             return tier_cfg.pro_daily_limit, luna_model
         elif tier == "Holder":
             return tier_cfg.holder_daily_limit, luna_model

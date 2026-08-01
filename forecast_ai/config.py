@@ -65,7 +65,7 @@ class ServerConfig:
 class HolderTierConfig:
     token_contract_address: str = "0xcc9c1ec224c3824ae5ea699ec72ef5fad4165e49"
     rpc_url: str = "https://rpc.mainnet.chain.robinhood.com"
-    holder_threshold: float = 200000.0        # >= 200,000 $FORAI -> Holder
+    holder_threshold: float = 100000.0        # >= 100,000 $FORAI -> Holder (lowered for testing)
     pro_holder_threshold: float = 1000000.0   # >= 1,000,000 $FORAI -> Pro Holder
     balance_cache_ttl_seconds: int = 300      # Cache balance checks for 5 minutes
     long_term_holder_days: int = 30           # Days required to earn Long-Term Holder badge
@@ -93,9 +93,9 @@ class FactsAIConfig:
 
 @dataclass
 class CustomAnalysisTierConfig:
-    free_daily_limit: int = 1
-    holder_daily_limit: int = 10
-    pro_daily_limit: int = 30
+    free_daily_limit: int = 10      # Testing phase: 10/day for all users
+    holder_daily_limit: int = 20    # Holders (≥100k $FORAI): 20/day
+    pro_daily_limit: int = 20       # Pro Holders (≥1M $FORAI): 20/day
     search_rate_limit_per_hour: int = 30
     free_model_override: str = "gpt-4o-mini"
     holder_model_override: str = "gpt-4o"

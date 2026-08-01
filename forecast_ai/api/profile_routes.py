@@ -151,7 +151,17 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
             "badge_ids": badge_ids,
             "track_record_status": existing.get("track_record_status", "placeholder_active"),
             "created_at": created_at_iso,
-            "updated_at": now_iso
+            "updated_at": now_iso,
+            # Analyses quota — computed from tier so frontend can display correct pill
+            "analyses_limit": (
+                config.profile.custom_analysis.pro_daily_limit if holder_tier in ("Pro", "Pro Holder")
+                else config.profile.custom_analysis.holder_daily_limit if holder_tier == "Holder"
+                else config.profile.custom_analysis.free_daily_limit
+            ),
+            "analyses_used_today": await store.get_daily_analysis_count(
+                privy_user_id,
+                datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            ),
         }
 
     @router.get("/me")

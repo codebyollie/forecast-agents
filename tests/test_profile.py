@@ -30,8 +30,9 @@ def test_balance_checker_tier_mapping():
     checker = BalanceChecker(cfg.profile.tier)
 
     assert checker.evaluate_holder_tier(0.0) == "Free"
-    assert checker.evaluate_holder_tier(150000.0) == "Free"
-    assert checker.evaluate_holder_tier(200000.0) == "Holder"
+    assert checker.evaluate_holder_tier(50000.0) == "Free"       # below 100k → Free
+    assert checker.evaluate_holder_tier(100000.0) == "Holder"    # new threshold: 100k → Holder
+    assert checker.evaluate_holder_tier(150000.0) == "Holder"    # was Free before, now Holder
     assert checker.evaluate_holder_tier(500000.0) == "Holder"
     assert checker.evaluate_holder_tier(1000000.0) == "Pro Holder"
     assert checker.evaluate_holder_tier(5000000.0) == "Pro Holder"
