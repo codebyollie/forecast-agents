@@ -14,8 +14,15 @@ def mock_pipeline():
     mock_prediction.consensus_probability = 0.65
     mock_prediction.consensus_confidence = 0.80
     mock_prediction.explanation = "Live Dashboard GPT-5.6 Luna analysis."
-    mock_prediction.individual_predictions = []
     
+    mock_agent_pred = MagicMock()
+    mock_agent_pred.agent_name = "news"
+    mock_agent_pred.probability = 0.65
+    mock_agent_pred.confidence.score = 0.8
+    mock_agent_pred.reasoning = "Test reasoning"
+    mock_agent_pred.confidence.warnings = []
+    
+    mock_prediction.individual_predictions = [mock_agent_pred]
     pipeline.run_forecast = AsyncMock(return_value=mock_prediction)
     return pipeline
 
@@ -24,9 +31,20 @@ def client(mock_pipeline, tmp_path):
     config = ForecastConfig()
     config.server.admin_secret = "test_admin_secret_999"
     
-    server = ApiServer(config, mock_pipeline)
-    app = server.app
-    return TestClient(app)
+    # Redirect featured market file path in tests to avoid overwriting workspace files
+    temp_file = str(tmp_path / "featured_market.json")
+    from forecast_ai.services.featured_market import FeaturedMarketService
+    original_init = FeaturedMarketService.__init__
+    
+    def mock_init(self, *args, **kwargs):
+        kwargs["file_path"] = temp_file
+        original_init(self, *args, **kwargs)
+        
+    with patch("forecast_ai.services.market_search.MarketSearchService.get_live_price", new=AsyncMock(return_value=0.22)), \
+         patch("forecast_ai.services.featured_market.FeaturedMarketService.__init__", mock_init):
+        server = ApiServer(config, mock_pipeline)
+        app = server.app
+        yield TestClient(app)
 
 def test_admin_featured_market_auth_failure(client):
     payload = {

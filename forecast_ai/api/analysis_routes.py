@@ -64,7 +64,7 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
         
         # 1. Check pre-verified tier stored in DB profile to avoid slow RPC calls
         db_tier = existing.get("tier") or existing.get("holder_tier")
-        if db_tier in ("Free", "Holder", "Pro Holder", "Pro"):
+        if db_tier in ("Holder", "Pro Holder", "Pro"):
             if db_tier == "Pro":
                 return "Pro Holder"
             return db_tier

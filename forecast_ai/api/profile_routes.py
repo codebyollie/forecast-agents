@@ -82,8 +82,11 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
         # Query on-chain $FORAI token balance across linked wallets
         forai_balance = 0.0
         if wallets_list:
-            forai_balance = await balance_checker.fetch_onchain_balance(wallets_list)
-        elif existing.get("forai_balance"):
+            try:
+                forai_balance = await balance_checker.fetch_onchain_balance(wallets_list)
+            except Exception:
+                pass
+        if forai_balance == 0.0 and existing.get("forai_balance"):
             forai_balance = float(existing["forai_balance"])
 
         holder_tier = balance_checker.evaluate_holder_tier(forai_balance)
