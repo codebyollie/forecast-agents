@@ -73,7 +73,10 @@ class ForecastAgent(ABC):
                     query_max_length=self.config.facts_ai.query_max_length
                 )
                 res = await facts_source.fetch_deep_research(question)
-                
+                import logging
+                logging.getLogger(__name__).info(
+                    f"[{self.name}] FactsAI API returned data successfully. Answer length: {len(res.get('answer', ''))}, Citations: {len(res.get('citations', []))}"
+                )
                 if res.get("answer"):
                     active_evidence.append(Evidence(
                         source_name="FactsAI Deep Research",
