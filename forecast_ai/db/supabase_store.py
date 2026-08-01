@@ -79,6 +79,15 @@ class SupabaseProfileStore:
         if not self.is_configured:
             return _IN_MEMORY_PROFILES[privy_user_id]
 
+        # Extract only columns that exist in the database table to prevent Postgrest 400 Bad Request
+        db_fields = {
+            "privy_user_id", "email", "wallet_address", "holder_tier", "forai_balance",
+            "balance_last_checked_at", "tier_since", "wants_analysis_access", "on_waitlist",
+            "badges", "enabled_partner_features", "notification_preferences",
+            "track_record_status", "created_at", "updated_at"
+        }
+        db_profile = {k: v for k, v in profile.items() if k in db_fields}
+
         # Specifying on_conflict explicitly is required in newer Postgrest/Supabase versions
         endpoint = f"{self.url}/rest/v1/{self.table}?on_conflict=privy_user_id"
         headers = {
@@ -90,7 +99,7 @@ class SupabaseProfileStore:
 
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.post(endpoint, headers=headers, json=profile, timeout=10.0)
+                resp = await client.post(endpoint, headers=headers, json=db_profile, timeout=10.0)
                 if resp.status_code in (200, 201):
                     data = resp.json()
                     if isinstance(data, list) and len(data) > 0:
