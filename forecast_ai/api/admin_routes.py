@@ -88,7 +88,8 @@ def create_admin_router(config: ForecastConfig, pipeline: ForecastPipeline) -> A
                     "probability": round(p.probability, 4),
                     "confidence": round(p.confidence.score, 4),
                     "reasoning_summary": p.reasoning,
-                    "warnings": p.confidence.warnings
+                    "warnings": p.confidence.warnings,
+                    "citations": p.citations
                 } for p in result.individual_predictions
             ]
 

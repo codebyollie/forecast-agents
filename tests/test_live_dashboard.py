@@ -21,6 +21,7 @@ def mock_pipeline():
     mock_agent_pred.confidence.score = 0.8
     mock_agent_pred.reasoning = "Test reasoning"
     mock_agent_pred.confidence.warnings = []
+    mock_agent_pred.citations = []
     
     mock_prediction.individual_predictions = [mock_agent_pred]
     pipeline.run_forecast = AsyncMock(return_value=mock_prediction)

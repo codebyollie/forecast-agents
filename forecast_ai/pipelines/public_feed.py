@@ -194,7 +194,8 @@ class PublicFeedRunner:
                     "probability": round(pred.probability, 4),
                     "confidence": round(pred.confidence.score, 4),
                     "reasoning_summary": self._summarize_reasoning(pred.reasoning),
-                    "warnings": pred.confidence.warnings
+                    "warnings": pred.confidence.warnings,
+                    "citations": pred.citations
                 })
 
             # Fetch real live market price from venue client
