@@ -40,18 +40,35 @@ class ForecastAgent(ABC):
         """
         Run the agent prediction flow using LLM.
         """
-        system_instruction = self.get_system_instruction()
+        import os
+        from datetime import datetime, timezone
         
+        now_utc = datetime.now(timezone.utc)
+        today_date_str = now_utc.strftime("%B %d, %Y")
+        current_year = now_utc.year
+
+        raw_system_instruction = self.get_system_instruction()
+        system_instruction = (
+            f"{raw_system_instruction}\n\n"
+            f"CRITICAL TEMPORAL CONTEXT:\n"
+            f"- Today's current real-world date is: {today_date_str} (Year {current_year}).\n"
+            f"- All market resolution questions, target dates, and historical timelines MUST be evaluated relative to {current_year}.\n"
+            f"- Do NOT assume past years (such as 2024 or 2025) are the current year."
+        )
+
         # Clone evidence list so we can append agent-specific evidence safely
         active_evidence = list(evidence or [])
         prediction_citations: List[Dict[str, str]] = []
 
-        # Wire FactsAI for Research and Macro Agents if enabled
-        if self.name.lower() in ("research", "macro") and self.config.facts_ai.enabled and self.config.facts_ai.api_key:
+        # Wire FactsAI for Research, Macro, and News Agents if configured or API key present
+        facts_key = getattr(self.config.facts_ai, "api_key", "") or os.getenv("FACTS_AI_API_KEY", "") or os.getenv("FACTSAI_API_KEY", "")
+        facts_enabled = getattr(self.config.facts_ai, "enabled", False) or bool(facts_key)
+
+        if self.name.lower() in ("research", "macro", "news") and facts_enabled:
             try:
                 from ..sources.facts_ai import FactsAISource
                 facts_source = FactsAISource(
-                    api_key=self.config.facts_ai.api_key,
+                    api_key=facts_key or "facts_ai_public_access",
                     api_url=self.config.facts_ai.api_url,
                     query_max_length=self.config.facts_ai.query_max_length
                 )
@@ -82,13 +99,13 @@ class ForecastAgent(ABC):
                 # Fall back gracefully to standard reasoning without failing the whole forecast
                 import logging
                 logging.getLogger(__name__).warning(
-                    f"[{self.name}] FactsAI call failed: {e}. Falling back to standard evidence."
+                    f"[{self.name}] FactsAI call notice: {e}. Proceeding with standard evidence."
                 )
 
         # Format evidence context
-        evidence_context = ""
+        evidence_context = f"CURRENT DATE: {today_date_str}\n"
         if active_evidence:
-            evidence_context = "AVAILABLE EVIDENCE:\n"
+            evidence_context += "AVAILABLE EVIDENCE:\n"
             for i, ev in enumerate(active_evidence):
                 evidence_context += f"[{i+1}] Source: {ev.source_name} | Date: {ev.timestamp} | Relevance: {ev.relevance_score:.2f}\n"
                 if ev.title:
@@ -98,10 +115,11 @@ class ForecastAgent(ABC):
                     evidence_context += f"Link: {ev.url}\n"
                 evidence_context += "-" * 40 + "\n"
         else:
-            evidence_context = "NO DIRECT EXTERNAL EVIDENCE AVAILABLE FOR THIS ANALYSIS.\n"
+            evidence_context += "NO DIRECT EXTERNAL EVIDENCE AVAILABLE FOR THIS ANALYSIS.\n"
 
         user_prompt = f"""
 MARKET QUESTION: "{question}"
+CURRENT YEAR: {current_year} (Today is {today_date_str})
 
 {evidence_context}
 

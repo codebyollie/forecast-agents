@@ -36,16 +36,7 @@ class FeaturedMarketService:
         Reads stored featured market forecast payload.
         Returns dict if present, None if no featured market is set.
         """
-        # Try reading persistent JSON file first
-        try:
-            if self.file_path.exists():
-                content = self.file_path.read_text(encoding="utf-8")
-                if content.strip():
-                    return json.loads(content)
-        except Exception as e:
-            logger.warning(f"[FeaturedMarketService] Failed to read file store: {e}")
-
-        # Try reading Supabase if configured
+        # 1. Try reading Supabase first if configured (primary source of truth)
         if self.supabase_config and self.supabase_config.url and self.supabase_config.key:
             endpoint = f"{self.supabase_config.url.rstrip('/')}/rest/v1/featured_market?id=eq.1"
             headers = {
@@ -60,10 +51,19 @@ class FeaturedMarketService:
                         data = resp.json()
                         if isinstance(data, list) and len(data) > 0:
                             payload = data[0].get("payload")
-                            if isinstance(payload, dict):
+                            if isinstance(payload, dict) and payload.get("question"):
                                 return payload
             except Exception as e:
                 logger.warning(f"[FeaturedMarketService] Failed to read Supabase featured_market: {e}")
+
+        # 2. Fall back to reading persistent JSON file
+        try:
+            if self.file_path.exists():
+                content = self.file_path.read_text(encoding="utf-8")
+                if content.strip():
+                    return json.loads(content)
+        except Exception as e:
+            logger.warning(f"[FeaturedMarketService] Failed to read file store: {e}")
 
         return None
 

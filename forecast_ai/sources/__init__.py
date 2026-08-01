@@ -31,8 +31,13 @@ class SourceManager:
             "blockchain": BlockchainSource(polygonscan_key=polygonscan_key),
             "kalshi": KalshiSource(api_base_url=config.kalshi.api_base_url),
         }
-        facts_ai_key = getattr(config.facts_ai, "api_key", "") or os.getenv("FACTSAI_API_KEY", "")
-        facts_ai_enabled = getattr(config.facts_ai, "enabled", False) or (os.getenv("FACTSAI_ENABLED", "false").lower() == "true")
+        facts_ai_key = getattr(config.facts_ai, "api_key", "") or os.getenv("FACTSAI_API_KEY", "") or os.getenv("FACTS_AI_API_KEY", "")
+        facts_ai_enabled = (
+            getattr(config.facts_ai, "enabled", False)
+            or (os.getenv("FACTSAI_ENABLED", "false").lower() in ("true", "yes", "1", "on"))
+            or (os.getenv("FACTS_AI_ENABLED", "false").lower() in ("true", "yes", "1", "on"))
+            or bool(facts_ai_key)
+        )
         
         if facts_ai_enabled and facts_ai_key:
             self.sources["facts_ai"] = FactsAISource(

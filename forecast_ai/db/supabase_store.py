@@ -272,13 +272,30 @@ class SupabaseProfileStore:
         return new_count
 
     async def save_user_analysis(self, user_id: str, analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Save a user-triggered forecast result into user_analyses table."""
+        """Save a user-triggered forecast result into user_analyses table and local persistent backup."""
         now_iso = datetime.now(timezone.utc).isoformat()
         record = dict(analysis)
         record["user_id"] = user_id
         record["created_at"] = record.get("created_at") or now_iso
 
         _IN_MEMORY_USER_ANALYSES[user_id].insert(0, record)
+
+        # Persist to local JSON file as durable backup
+        try:
+            backup_path = Path("memory_data/user_analyses.json")
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
+            existing_data = {}
+            if backup_path.exists() and backup_path.stat().st_size > 0:
+                try:
+                    existing_data = json.loads(backup_path.read_text(encoding="utf-8"))
+                except Exception:
+                    existing_data = {}
+            user_items = existing_data.get(user_id, [])
+            user_items.insert(0, record)
+            existing_data[user_id] = user_items[:100]
+            backup_path.write_text(json.dumps(existing_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"[SupabaseStore] Failed to write local user_analyses backup: {e}")
 
         if not self.is_configured:
             return record
@@ -310,27 +327,37 @@ class SupabaseProfileStore:
         offset: int = 0
     ) -> List[Dict[str, Any]]:
         """Fetch past custom analyses for user, ordered newest first."""
-        if not self.is_configured:
-            return _IN_MEMORY_USER_ANALYSES[user_id][offset:offset+limit]
+        # Check Supabase first if configured
+        if self.is_configured:
+            endpoint = f"{self.url}/rest/v1/user_analyses?user_id=eq.{user_id}&order=created_at.desc&limit={limit}&offset={offset}"
+            headers = {
+                "apikey": self.key,
+                "Authorization": f"Bearer {self.key}",
+                "Accept": "application/json"
+            }
 
-        endpoint = f"{self.url}/rest/v1/user_analyses?user_id=eq.{user_id}&order=created_at.desc&limit={limit}&offset={offset}"
-        headers = {
-            "apikey": self.key,
-            "Authorization": f"Bearer {self.key}",
-            "Accept": "application/json"
-        }
+            async with httpx.AsyncClient() as client:
+                try:
+                    resp = await client.get(endpoint, headers=headers, timeout=10.0)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if isinstance(data, list) and len(data) > 0:
+                            return data
+                except Exception as e:
+                    logger.error(f"[SupabaseStore] Failed to fetch user analyses for '{user_id}': {e}")
 
-        async with httpx.AsyncClient() as client:
-            try:
-                resp = await client.get(endpoint, headers=headers, timeout=10.0)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if isinstance(data, list):
-                        return data
-            except Exception as e:
-                logger.error(f"[SupabaseStore] Failed to fetch user analyses for '{user_id}': {e}")
+        # Fall back to in-memory + file backup
+        file_items = []
+        try:
+            backup_path = Path("memory_data/user_analyses.json")
+            if backup_path.exists() and backup_path.stat().st_size > 0:
+                data = json.loads(backup_path.read_text(encoding="utf-8"))
+                file_items = data.get(user_id, [])
+        except Exception:
+            pass
 
-        return _IN_MEMORY_USER_ANALYSES[user_id][offset:offset+limit]
+        combined = _IN_MEMORY_USER_ANALYSES[user_id] or file_items
+        return combined[offset:offset+limit]
 
 def get_supabase_sql_schema() -> str:
     """
