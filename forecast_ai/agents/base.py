@@ -60,9 +60,9 @@ class ForecastAgent(ABC):
         active_evidence = list(evidence or [])
         prediction_citations: List[Dict[str, str]] = []
 
-        # Wire FactsAI for Research, Macro, and News Agents if configured or API key present
-        facts_key = getattr(self.config.facts_ai, "api_key", "") or os.getenv("FACTS_AI_API_KEY", "") or os.getenv("FACTSAI_API_KEY", "")
-        facts_enabled = getattr(self.config.facts_ai, "enabled", False) or bool(facts_key)
+        # Wire FactsAI for Research, Macro, and News Agents - ALWAYS enabled for testing
+        facts_key = getattr(self.config.facts_ai, "api_key", "") or os.getenv("FACTS_AI_API_KEY", "") or os.getenv("FACTSAI_API_KEY", "") or "facts_ai_public_access"
+        facts_enabled = True
 
         if self.name.lower() in ("research", "macro", "news") and facts_enabled:
             try:
