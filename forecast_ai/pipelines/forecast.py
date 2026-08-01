@@ -59,7 +59,8 @@ class ForecastPipeline:
         question: str,
         market_id: str = "custom_market",
         is_public_feed: bool = False,
-        model_override: Optional[str] = None
+        model_override: Optional[str] = None,
+        facts_key: Optional[str] = None
     ) -> ForecastResult:
         """
         Orchestrates full forecasting process.
@@ -87,7 +88,7 @@ class ForecastPipeline:
             if not agent_evidence:
                 agent_evidence = evidence
             try:
-                return await agent.forecast(question, agent_evidence, is_public_feed=is_public_feed, model_override=model_override)
+                return await agent.forecast(question, agent_evidence, is_public_feed=is_public_feed, model_override=model_override, facts_key=facts_key)
             except ProviderError as pe:
                 logger.error(f"[ForecastPipeline] Agent '{agent.name}' failed after provider fallbacks: {pe}")
                 return None

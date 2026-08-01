@@ -322,8 +322,10 @@ class SupabaseProfileStore:
                 resp = await client.post(endpoint, headers=headers, json=db_record, timeout=10.0)
                 if resp.status_code in (200, 201):
                     return record
+                else:
+                    logger.error(f"[SupabaseStore] Failed to save user analysis to Supabase. Status: {resp.status_code}, Response: {resp.text}")
             except Exception as e:
-                logger.error(f"[SupabaseStore] Failed to save user analysis for '{user_id}': {e}")
+                logger.error(f"[SupabaseStore] Exception saving user analysis for '{user_id}' to Supabase: {e}")
 
         return record
 
@@ -358,8 +360,10 @@ class SupabaseProfileStore:
                                     item["created_at"] = row.get("created_at")
                                     unpacked_list.append(item)
                             return unpacked_list
+                    else:
+                        logger.error(f"[SupabaseStore] Failed to fetch user analyses from Supabase. Status: {resp.status_code}, Response: {resp.text}")
                 except Exception as e:
-                    logger.error(f"[SupabaseStore] Failed to fetch user analyses for '{user_id}': {e}")
+                    logger.error(f"[SupabaseStore] Exception fetching user analyses for '{user_id}' from Supabase: {e}")
 
         # Fall back to in-memory + file backup
         file_items = []

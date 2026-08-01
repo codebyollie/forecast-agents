@@ -147,6 +147,10 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
         Auth required & tier-gated.
         """
         privy_user_id = user["privy_user_id"]
+        existing = await store.get_profile(privy_user_id) or {}
+        partner_features = existing.get("partner_features") or {}
+        user_facts_key = partner_features.get("facts_ai_key") or partner_features.get("factsai_api_key")
+
         tier = await _get_user_tier(privy_user_id, user)
         daily_limit, model_override = _get_tier_limits(tier)
 
@@ -166,7 +170,8 @@ def create_analysis_router(config: ForecastConfig, pipeline: ForecastPipeline) -
                 question=req.question,
                 market_id=req.market_id,
                 is_public_feed=False,
-                model_override=model_override
+                model_override=model_override,
+                facts_key=user_facts_key
             )
 
             # Atomically increment usage

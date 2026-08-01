@@ -36,7 +36,7 @@ class ForecastAgent(ABC):
         """
         pass
 
-    async def forecast(self, question: str, evidence: List[Evidence], is_public_feed: bool = False, model_override: Optional[str] = None) -> Prediction:
+    async def forecast(self, question: str, evidence: List[Evidence], is_public_feed: bool = False, model_override: Optional[str] = None, facts_key: Optional[str] = None) -> Prediction:
         """
         Run the agent prediction flow using LLM.
         """
@@ -64,7 +64,8 @@ class ForecastAgent(ABC):
         # Priority:  1. FactsAI  (Research / Macro / News)
         #            2. OpenAI Web Search  (fallback for above + primary for Social / Reddit)
         facts_key = (
-            getattr(self.config.facts_ai, "api_key", "")
+            facts_key
+            or getattr(self.config.facts_ai, "api_key", "")
             or os.getenv("FACTS_AI_API_KEY", "")
             or os.getenv("FACTSAI_API_KEY", "")
         )
