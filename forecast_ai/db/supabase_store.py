@@ -308,13 +308,20 @@ class SupabaseProfileStore:
             "Prefer": "return=representation"
         }
 
+        db_record = {
+            "user_id": user_id,
+            "market_id": analysis.get("market_id", "custom_market"),
+            "question": analysis.get("question", ""),
+            "venue": analysis.get("venue") or "Kalshi (mirrors Robinhood Predict)",
+            "payload": analysis,
+            "created_at": record.get("created_at") or now_iso
+        }
+
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.post(endpoint, headers=headers, json=record, timeout=10.0)
+                resp = await client.post(endpoint, headers=headers, json=db_record, timeout=10.0)
                 if resp.status_code in (200, 201):
-                    data = resp.json()
-                    if isinstance(data, list) and len(data) > 0:
-                        return data[0]
+                    return record
             except Exception as e:
                 logger.error(f"[SupabaseStore] Failed to save user analysis for '{user_id}': {e}")
 
@@ -341,8 +348,16 @@ class SupabaseProfileStore:
                     resp = await client.get(endpoint, headers=headers, timeout=10.0)
                     if resp.status_code == 200:
                         data = resp.json()
-                        if isinstance(data, list) and len(data) > 0:
-                            return data
+                        if isinstance(data, list):
+                            unpacked_list = []
+                            for row in data:
+                                payload = row.get("payload")
+                                if isinstance(payload, dict):
+                                    item = dict(payload)
+                                    item["id"] = row.get("id")
+                                    item["created_at"] = row.get("created_at")
+                                    unpacked_list.append(item)
+                            return unpacked_list
                 except Exception as e:
                     logger.error(f"[SupabaseStore] Failed to fetch user analyses for '{user_id}': {e}")
 
