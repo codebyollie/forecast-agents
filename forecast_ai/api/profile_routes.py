@@ -326,7 +326,7 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
     @router.get("/diagnose")
     async def diagnose_supabase():
         """
-        Diagnoses the Supabase connection and table structures.
+        Diagnoses the Supabase connection and table structures by running write and read tests.
         """
         import os
         import httpx
@@ -338,36 +338,82 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
             "supabase_key_configured": bool(key),
             "supabase_url_preview": f"{url[:15]}...{url[-10:]}" if url else None,
             "is_configured_flag": store.is_configured,
-            "profiles_table_test": {},
-            "user_analyses_table_test": {}
+            "profiles_table_read": {},
+            "user_analyses_table_read": {},
+            "profiles_table_write_test": {},
+            "user_analyses_table_write_test": {}
         }
         
         if url and key:
             headers = {
                 "apikey": key,
                 "Authorization": f"Bearer {key}",
-                "Accept": "application/json"
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates,return=representation"
             }
             async with httpx.AsyncClient() as client:
-                # Test profiles
+                # 1. Test profiles read
                 try:
                     p_resp = await client.get(f"{url}/rest/v1/profiles?limit=1", headers=headers, timeout=5.0)
-                    info["profiles_table_test"] = {
+                    info["profiles_table_read"] = {
                         "status_code": p_resp.status_code,
                         "response_body_preview": p_resp.text[:300]
                     }
                 except Exception as e:
-                    info["profiles_table_test"] = {"error": str(e)}
+                    info["profiles_table_read"] = {"error": str(e)}
                 
-                # Test user_analyses
+                # 2. Test user_analyses read
                 try:
                     ua_resp = await client.get(f"{url}/rest/v1/user_analyses?limit=1", headers=headers, timeout=5.0)
-                    info["user_analyses_table_test"] = {
+                    info["user_analyses_table_read"] = {
                         "status_code": ua_resp.status_code,
                         "response_body_preview": ua_resp.text[:300]
                     }
                 except Exception as e:
-                    info["user_analyses_table_test"] = {"error": str(e)}
+                    info["user_analyses_table_read"] = {"error": str(e)}
+
+                # 3. Test profiles write
+                mock_profile = {
+                    "privy_user_id": "test_diagnose_user_999",
+                    "email": "diagnose@test.com",
+                    "holder_tier": "Free",
+                    "forai_balance": 0
+                }
+                try:
+                    pw_resp = await client.post(
+                        f"{url}/rest/v1/profiles?on_conflict=privy_user_id",
+                        headers=headers,
+                        json=mock_profile,
+                        timeout=5.0
+                    )
+                    info["profiles_table_write_test"] = {
+                        "status_code": pw_resp.status_code,
+                        "response_body": pw_resp.text[:500]
+                    }
+                except Exception as e:
+                    info["profiles_table_write_test"] = {"error": str(e)}
+
+                # 4. Test user_analyses write
+                mock_analysis = {
+                    "user_id": "test_diagnose_user_999",
+                    "market_id": "test_market",
+                    "question": "Will we solve this bug?",
+                    "consensus_probability": 0.99,
+                    "explanation": "Diagnostic test run."
+                }
+                try:
+                    uaw_resp = await client.post(
+                        f"{url}/rest/v1/user_analyses",
+                        headers=headers,
+                        json=mock_analysis,
+                        timeout=5.0
+                    )
+                    info["user_analyses_table_write_test"] = {
+                        "status_code": uaw_resp.status_code,
+                        "response_body": uaw_resp.text[:500]
+                    }
+                except Exception as e:
+                    info["user_analyses_table_write_test"] = {"error": str(e)}
                     
         return info
 
