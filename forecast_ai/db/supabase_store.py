@@ -79,7 +79,8 @@ class SupabaseProfileStore:
         if not self.is_configured:
             return _IN_MEMORY_PROFILES[privy_user_id]
 
-        endpoint = f"{self.url}/rest/v1/{self.table}"
+        # Specifying on_conflict explicitly is required in newer Postgrest/Supabase versions
+        endpoint = f"{self.url}/rest/v1/{self.table}?on_conflict=privy_user_id"
         headers = {
             "apikey": self.key,
             "Authorization": f"Bearer {self.key}",

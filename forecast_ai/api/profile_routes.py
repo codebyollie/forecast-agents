@@ -323,4 +323,52 @@ def create_profile_router(config: ForecastConfig) -> APIRouter:
             "waitlist_count": waitlist_count
         }
 
+    @router.get("/diagnose")
+    async def diagnose_supabase():
+        """
+        Diagnoses the Supabase connection and table structures.
+        """
+        import os
+        import httpx
+        url = os.environ.get("SUPABASE_URL", "")
+        key = os.environ.get("SUPABASE_KEY", "")
+        
+        info = {
+            "supabase_url_configured": bool(url),
+            "supabase_key_configured": bool(key),
+            "supabase_url_preview": f"{url[:15]}...{url[-10:]}" if url else None,
+            "is_configured_flag": store.is_configured,
+            "profiles_table_test": {},
+            "user_analyses_table_test": {}
+        }
+        
+        if url and key:
+            headers = {
+                "apikey": key,
+                "Authorization": f"Bearer {key}",
+                "Accept": "application/json"
+            }
+            async with httpx.AsyncClient() as client:
+                # Test profiles
+                try:
+                    p_resp = await client.get(f"{url}/rest/v1/profiles?limit=1", headers=headers, timeout=5.0)
+                    info["profiles_table_test"] = {
+                        "status_code": p_resp.status_code,
+                        "response_body_preview": p_resp.text[:300]
+                    }
+                except Exception as e:
+                    info["profiles_table_test"] = {"error": str(e)}
+                
+                # Test user_analyses
+                try:
+                    ua_resp = await client.get(f"{url}/rest/v1/user_analyses?limit=1", headers=headers, timeout=5.0)
+                    info["user_analyses_table_test"] = {
+                        "status_code": ua_resp.status_code,
+                        "response_body_preview": ua_resp.text[:300]
+                    }
+                except Exception as e:
+                    info["user_analyses_table_test"] = {"error": str(e)}
+                    
+        return info
+
     return router
