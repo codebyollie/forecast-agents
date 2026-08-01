@@ -63,6 +63,7 @@ class ForecastAgent(ABC):
         # Wire FactsAI for Research, Macro, and News Agents - ALWAYS enabled for testing
         facts_key = getattr(self.config.facts_ai, "api_key", "") or os.getenv("FACTS_AI_API_KEY", "") or os.getenv("FACTSAI_API_KEY", "") or "facts_ai_public_access"
         facts_enabled = True
+        facts_ai_error = None
 
         if self.name.lower() in ("research", "macro", "news") and facts_enabled:
             try:
@@ -104,6 +105,7 @@ class ForecastAgent(ABC):
                 logging.getLogger(__name__).warning(
                     f"[{self.name}] FactsAI call notice: {e}. Proceeding with standard evidence."
                 )
+                facts_ai_error = f"FactsAI call notice: {e}"
 
         # Format evidence context
         evidence_context = f"CURRENT DATE: {today_date_str}\n"
@@ -163,6 +165,8 @@ Return ONLY valid JSON. Do not include markdown wraps or additional conversation
         confidence_val = 0.5
         reasoning = "Failed to parse agent reasoning."
         warnings = []
+        if facts_ai_error:
+            warnings.append(facts_ai_error)
 
         try:
             # Clean markdown code block wraps if present
@@ -175,7 +179,7 @@ Return ONLY valid JSON. Do not include markdown wraps or additional conversation
             probability = float(data.get("probability", 0.5))
             confidence_val = float(data.get("confidence", 0.5))
             reasoning = str(data.get("reasoning", ""))
-            warnings = list(data.get("warnings", []))
+            warnings.extend(list(data.get("warnings", [])))
         except Exception:
             # Fallback regex parsing if JSON fails
             prob_match = re.search(r'"probability"\s*:\s*(0\.\d+|1\.0|0|1)', raw_response)
