@@ -125,36 +125,6 @@ class ConfigStore:
         if os.environ.get("DEFAULT_PROVIDER"):
             config.default_provider = os.environ["DEFAULT_PROVIDER"]
 
-        # Profile, Privy, Supabase & Holder Tier overrides
-        if os.environ.get("PRIVY_APP_ID"):
-            config.profile.privy.app_id = os.environ["PRIVY_APP_ID"]
-        if os.environ.get("PRIVY_APP_SECRET"):
-            config.profile.privy.app_secret = os.environ["PRIVY_APP_SECRET"]
-        if os.environ.get("PRIVY_JWKS_URL"):
-            config.profile.privy.jwks_url = os.environ["PRIVY_JWKS_URL"]
-
-        if os.environ.get("SUPABASE_URL"):
-            config.profile.supabase.url = os.environ["SUPABASE_URL"]
-        supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY")
-        if supabase_key:
-            config.profile.supabase.key = supabase_key
-
-        if os.environ.get("FORAI_TOKEN_CONTRACT"):
-            config.profile.tier.token_contract_address = os.environ["FORAI_TOKEN_CONTRACT"]
-        if os.environ.get("ROBINHOOD_CHAIN_RPC"):
-            config.profile.tier.rpc_url = os.environ["ROBINHOOD_CHAIN_RPC"]
-
-        if os.environ.get("HOLDER_THRESHOLD"):
-            try:
-                config.profile.tier.holder_threshold = float(os.environ["HOLDER_THRESHOLD"])
-            except ValueError:
-                pass
-        if os.environ.get("PRO_HOLDER_THRESHOLD"):
-            try:
-                config.profile.tier.pro_holder_threshold = float(os.environ["PRO_HOLDER_THRESHOLD"])
-            except ValueError:
-                pass
-
         # FactsAI Deep Research overrides
         if os.environ.get("FACTSAI_API_KEY"):
             config.facts_ai.api_key = os.environ["FACTSAI_API_KEY"]
@@ -162,6 +132,12 @@ class ConfigStore:
             config.facts_ai.enabled = os.environ["FACTSAI_ENABLED"].lower() in ("true", "1", "yes")
         if os.environ.get("FACTSAI_API_URL"):
             config.facts_ai.api_url = os.environ["FACTSAI_API_URL"]
+
+        # Tavily overrides
+        if os.environ.get("TAVILY_API_KEY"):
+            config.tavily.api_key = os.environ["TAVILY_API_KEY"]
+        if os.environ.get("TAVILY_ENABLED"):
+            config.tavily.enabled = os.environ["TAVILY_ENABLED"].lower() in ("true", "1", "yes")
 
         return config
 
@@ -233,8 +209,12 @@ class ConfigStore:
             config.server.host = srv.get("host", config.server.host)
             config.server.port = int(srv.get("port", config.server.port))
             config.server.api_key = srv.get("api_key", config.server.api_key)
-            if "public_feed_monthly_budget_usd" in srv:
-                config.server.public_feed_monthly_budget_usd = float(srv["public_feed_monthly_budget_usd"])
+
+        # Load Tavily
+        if "tavily" in raw:
+            t = raw["tavily"]
+            config.tavily.enabled = bool(t.get("enabled", config.tavily.enabled))
+            config.tavily.api_key = t.get("api_key", config.tavily.api_key)
 
         config.default_provider = raw.get("default_provider", config.default_provider)
         if "fallback_providers" in raw and isinstance(raw["fallback_providers"], list):
@@ -296,7 +276,10 @@ class ConfigStore:
                 "host": config.server.host,
                 "port": config.server.port,
                 "api_key": config.server.api_key,
-                "public_feed_monthly_budget_usd": config.server.public_feed_monthly_budget_usd,
+            },
+            "tavily": {
+                "enabled": config.tavily.enabled,
+                "api_key": config.tavily.api_key,
             }
         }
         self.save_raw(data)

@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 class ForecastPipeline:
     def __init__(self, config: ForecastConfig, memory_store: Optional[MemoryStore] = None):
         self.config = config
-        self.source_manager = SourceManager(config)
         self.provider_manager = ProviderManager(config)
+        self.source_manager = SourceManager(config, provider_manager=self.provider_manager)
         self.consensus_engine = ConsensusEngine(config)
         self.memory_store = memory_store or MemoryStore(config)
         self._init_agents()
@@ -73,11 +73,11 @@ class ForecastPipeline:
         predictions = []
 
         agent_source_map = {
-            "news": ["news", "rss", "facts_ai"],
+            "news": ["news", "rss", "facts_ai", "tavily"],
             "social": ["twitter", "social", "reddit", "rss"],
             "reddit": ["reddit", "social"],
-            "research": ["facts_ai", "arxiv", "research"],
-            "macro": ["macro", "cme", "fred", "news", "rss"],
+            "research": ["facts_ai", "arxiv", "research", "tavily"],
+            "macro": ["macro", "cme", "fred", "news", "rss", "tavily"],
             "onchain": ["blockchain", "onchain", "polygonscan"],
             "market": ["kalshi", "polymarket", "market", "robinhood"]
         }

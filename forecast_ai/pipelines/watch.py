@@ -9,7 +9,6 @@ import logging
 from typing import List
 from ..config import ForecastConfig
 from .forecast import ForecastPipeline
-from .public_feed import PublicFeedRunner
 from ..polymarket.gamma import GammaClient
 from ..kalshi.client import KalshiClient
 
@@ -19,7 +18,6 @@ class WatchPipeline:
     def __init__(self, config: ForecastConfig, forecast_pipeline: ForecastPipeline):
         self.config = config
         self.forecast_pipeline = forecast_pipeline
-        self.public_feed_runner = PublicFeedRunner(config, forecast_pipeline=forecast_pipeline)
         self.gamma_client = GammaClient(config.polymarket.gamma_api_url)
         self.kalshi_client = KalshiClient(config.kalshi.api_base_url)
         self._running = False
@@ -30,11 +28,7 @@ class WatchPipeline:
         
         while self._running:
             try:
-                # 1. Update Public Feed topics due for tiered refresh
-                logger.info("[WatchPipeline] Checking public feed topic refresh status...")
-                await self.public_feed_runner.refresh_all_due_topics()
-
-                # 2. Fetch active markets from Polymarket & Kalshi for general watch
+                # 1. Fetch active markets from Polymarket & Kalshi for general watch
                 pm_markets = await self.gamma_client.list_markets(active=True, limit=5)
                 kalshi_markets = await self.kalshi_client.fetch_markets(limit=5)
                 

@@ -2,21 +2,41 @@
 API Routes for Forecast AI API Server.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+import time
+from fastapi import APIRouter, HTTPException, Depends, Request, Query
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from ..pipelines.forecast import ForecastPipeline
 from ..polymarket.gamma import GammaClient
-from ..config import ForecastConfig
+from ..services.market_search import MarketSearchService
 
 router = APIRouter()
 
 # Global reference to pipeline, will be set during server init
 _pipeline: Optional[ForecastPipeline] = None
 
+_IP_RATE_LIMITS: Dict[str, List[float]] = {}
+MAX_PER_HOUR = 50
+WINDOW_SECONDS = 3600.0
+
+def check_ip_rate_limit(request: Request):
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    timestamps = _IP_RATE_LIMITS.setdefault(ip, [])
+    _IP_RATE_LIMITS[ip] = [t for t in timestamps if now - t < WINDOW_SECONDS]
+    if len(_IP_RATE_LIMITS[ip]) >= MAX_PER_HOUR:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Maximum {MAX_PER_HOUR} requests per hour per IP."
+        )
+    _IP_RATE_LIMITS[ip].append(now)
+
 class PredictionRequest(BaseModel):
     question: str
     market_id: str = "custom_market"
+    model_override: Optional[str] = None
+    facts_key: Optional[str] = None
+    venue: Optional[str] = "Kalshi / Robinhood Predict"
 
 class CalibrateRequest(BaseModel):
     agent_name: str
@@ -27,6 +47,12 @@ def get_pipeline() -> ForecastPipeline:
     if _pipeline is None:
         raise HTTPException(status_code=500, detail="Forecast pipeline is not initialized.")
     return _pipeline
+
+def get_search_service(pipeline: ForecastPipeline = Depends(get_pipeline)) -> MarketSearchService:
+    return MarketSearchService(
+        kalshi_base_url=pipeline.config.kalshi.api_base_url,
+        gamma_api_url=pipeline.config.polymarket.gamma_api_url
+    )
 
 AGENT_METADATA = [
     {"id": "news", "name": "News Agent", "icon": "ti-news", "color": "blue"},
@@ -50,10 +76,36 @@ async def get_agents_metadata():
     """
     return AGENT_METADATA
 
+@router.get("/markets/search")
+async def search_markets(
+    request: Request,
+    q: Optional[str] = Query(None, description="Query text to search across prediction markets"),
+    limit: int = Query(10, ge=1, le=50),
+    search_service: MarketSearchService = Depends(get_search_service)
+) -> List[Dict[str, Any]]:
+    """
+    GET /markets/search?q=<query>
+    Searches open prediction markets on Kalshi & Polymarket matching the query text.
+    IP-based rate limited.
+    """
+    check_ip_rate_limit(request)
+    return await search_service.search_markets(query=q, limit=limit)
+
 @router.post("/predict")
-async def predict(req: PredictionRequest, pipeline: ForecastPipeline = Depends(get_pipeline)):
+async def predict(
+    request: Request,
+    req: PredictionRequest, 
+    pipeline: ForecastPipeline = Depends(get_pipeline)
+):
+    check_ip_rate_limit(request)
     try:
-        result = await pipeline.run_forecast(req.question, req.market_id)
+        result = await pipeline.run_forecast(
+            question=req.question, 
+            market_id=req.market_id,
+            is_public_feed=False,
+            model_override=req.model_override,
+            facts_key=req.facts_key
+        )
         return {
             "market_id": result.market_id,
             "probability": result.probability,
@@ -72,28 +124,6 @@ async def predict(req: PredictionRequest, pipeline: ForecastPipeline = Depends(g
                 } for p in result.individual_predictions
             ]
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/markets")
-async def get_markets(category: Optional[str] = None):
-    try:
-        gamma = GammaClient()
-        markets = await gamma.list_markets(active=True, limit=20)
-        if category:
-            markets = [m for m in markets if m.category.lower() == category.lower()]
-        
-        return [
-            {
-                "id": m.id,
-                "question": m.question,
-                "slug": m.slug,
-                "volume": m.volume,
-                "liquidity": m.liquidity,
-                "category": m.category,
-                "end_date": m.end_date_iso
-            } for m in markets
-        ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

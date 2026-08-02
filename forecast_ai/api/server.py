@@ -9,11 +9,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from . import routes
-from .public_routes import create_public_router
+from ..pipelines.forecast import ForecastPipeline
 from ..config import ForecastConfig
 from ..config_store import ConfigStore
-from ..pipelines.forecast import ForecastPipeline
-from ..pipelines.public_feed import PublicFeedRunner
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +19,6 @@ class ApiServer:
     def __init__(self, config: ForecastConfig, pipeline: ForecastPipeline):
         self.config = config
         self.pipeline = pipeline
-        self.public_runner = PublicFeedRunner(config, forecast_pipeline=pipeline)
         self.app = FastAPI(title="Forecast AI API", version="0.2.0")
         self._server_task: Optional[asyncio.Task] = None
         self._init_app()
@@ -39,25 +36,6 @@ class ApiServer:
         # Set pipeline reference in routes
         routes._pipeline = self.pipeline
         self.app.include_router(routes.router)
-
-        # Mount Public Read-Only Router
-        public_router = create_public_router(self.public_runner, self.config)
-        self.app.include_router(public_router)
-
-        # Mount Authenticated Profile Router (/profile/me)
-        from .profile_routes import create_profile_router
-        profile_router = create_profile_router(self.config)
-        self.app.include_router(profile_router)
-
-        # Mount Authenticated Custom Analyses Router (/markets/search & /analyses)
-        from .analysis_routes import create_analysis_router
-        analysis_router = create_analysis_router(self.config, self.pipeline)
-        self.app.include_router(analysis_router)
-
-        # Mount Owner Admin Router (/admin/featured-market)
-        from .admin_routes import create_admin_router
-        admin_router = create_admin_router(self.config, self.pipeline)
-        self.app.include_router(admin_router)
 
     async def start(self):
         """

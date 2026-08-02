@@ -59,28 +59,6 @@ class ServerConfig:
     host: str = "0.0.0.0"
     port: int = 30000
     api_key: str = ""
-    public_feed_monthly_budget_usd: float = 50.0
-
-@dataclass
-class HolderTierConfig:
-    token_contract_address: str = "0xcc9c1ec224c3824ae5ea699ec72ef5fad4165e49"
-    rpc_url: str = "https://rpc.mainnet.chain.robinhood.com"
-    holder_threshold: float = 100000.0        # >= 100,000 $FORAI -> Holder (lowered for testing)
-    pro_holder_threshold: float = 1000000.0   # >= 1,000,000 $FORAI -> Pro Holder
-    balance_cache_ttl_seconds: int = 300      # Cache balance checks for 5 minutes
-    long_term_holder_days: int = 30           # Days required to earn Long-Term Holder badge
-
-@dataclass
-class PrivyAuthConfig:
-    app_id: str = ""
-    app_secret: str = ""
-    jwks_url: str = "https://auth.privy.io/.well-known/jwks.json"
-
-@dataclass
-class SupabaseConfig:
-    url: str = ""
-    key: str = ""  # Service role key or anon key
-    table_name: str = "profiles"
 
 @dataclass
 class FactsAIConfig:
@@ -90,24 +68,12 @@ class FactsAIConfig:
     query_max_length: int = 1000
     rate_limit_per_min: int = 100
     coarse_refresh_interval_cycles: int = 2
-
 @dataclass
-class CustomAnalysisTierConfig:
-    free_daily_limit: int = 10      # Testing phase: 10/day for all users
-    holder_daily_limit: int = 20    # Holders (≥100k $FORAI): 20/day
-    pro_daily_limit: int = 20       # Pro Holders (≥1M $FORAI): 20/day
-    search_rate_limit_per_hour: int = 30
-    free_model_override: str = "gpt-4o-mini"
-    holder_model_override: str = "gpt-4o"
-    pro_model_override: str = "claude-3-5-sonnet"
-
-@dataclass
-class ProfileConfig:
-    tier: HolderTierConfig = field(default_factory=HolderTierConfig)
-    privy: PrivyAuthConfig = field(default_factory=PrivyAuthConfig)
-    supabase: SupabaseConfig = field(default_factory=SupabaseConfig)
-    custom_analysis: CustomAnalysisTierConfig = field(default_factory=CustomAnalysisTierConfig)
-    early_adopter_cutoff: str = "2026-09-01T00:00:00Z"
+class TavilyConfig:
+    enabled: bool = False
+    api_key: str = ""
+    enabled: bool = False
+    api_key: str = ""
 
 @dataclass
 class SourcesConfig:
@@ -128,6 +94,7 @@ class ForecastConfig:
     kalshi: KalshiConfig = field(default_factory=KalshiConfig)
     robinhood_agentic: RobinhoodAgenticConfig = field(default_factory=RobinhoodAgenticConfig)
     facts_ai: FactsAIConfig = field(default_factory=FactsAIConfig)
+    tavily: TavilyConfig = field(default_factory=TavilyConfig)
     sources: SourcesConfig = field(default_factory=SourcesConfig)
     agents: Dict[str, AgentSettings] = field(default_factory=lambda: {
         "news": AgentSettings(enabled=True, weight=1.2),
@@ -141,7 +108,6 @@ class ForecastConfig:
     consensus: ConsensusConfig = field(default_factory=ConsensusConfig)
     memory: MemoryConfig = field(default_factory=MemoryConfig)
     server: ServerConfig = field(default_factory=ServerConfig)
-    profile: ProfileConfig = field(default_factory=ProfileConfig)
     default_provider: str = "openai"
     fallback_providers: List[str] = field(default_factory=lambda: [
         "gemini",
