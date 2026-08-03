@@ -63,6 +63,7 @@ class GammaClient:
             liquidity=float(data.get("liquidity", 0.0) or 0.0),
             category=str(data.get("category", "")),
             event_id=str(data.get("eventId", "")),
+            image=data.get("image") or data.get("icon") or None,
             raw_data=data
         )
 
@@ -121,6 +122,7 @@ class GammaClient:
         async with self._get_client() as client:
             try:
                 params = {
+                    "active": "true" if active else "false",
                     "closed": "false" if active else "true",
                     "limit": limit,
                     "offset": offset
@@ -160,6 +162,7 @@ class GammaClient:
         async with self._get_client() as client:
             try:
                 params = {
+                    "active": "true" if active else "false",
                     "closed": "false" if active else "true",
                     "limit": limit,
                     "offset": offset

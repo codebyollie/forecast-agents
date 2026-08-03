@@ -71,7 +71,7 @@ class KalshiClient:
             ticker=data.get("ticker", ""),
             title=data.get("title", "") or data.get("subtitle", ""),
             subtitle=data.get("subtitle", ""),
-            category=data.get("category", ""),
+            category="", # Deprecated by Kalshi, use series discovery instead
             event_ticker=data.get("event_ticker", ""),
             status=data.get("status", "active"),
             yes_bid=yes_bid,
@@ -86,13 +86,15 @@ class KalshiClient:
             raw_data=data
         )
 
-    async def fetch_markets(self, limit: int = 20, status: str = "open", series_ticker: Optional[str] = None) -> List[KalshiMarket]:
-        """Fetch list of open markets from Kalshi."""
+    async def fetch_markets(self, limit: int = 20, status: str = "open", series_ticker: Optional[str] = None, cursor: Optional[str] = None) -> Tuple[List[KalshiMarket], Optional[str]]:
+        """Fetch list of open markets from Kalshi. Returns (markets, next_cursor)."""
         async with httpx.AsyncClient(verify=False) as client:
             try:
                 params = {"limit": limit, "status": status}
                 if series_ticker:
                     params["series_ticker"] = series_ticker
+                if cursor:
+                    params["cursor"] = cursor
                 resp = await client.get(
                     f"{self.base_url}/markets",
                     params=params,
@@ -101,10 +103,54 @@ class KalshiClient:
                 if resp.status_code == 200:
                     data = resp.json()
                     markets_raw = data.get("markets", [])
-                    return [self._parse_market(m) for m in markets_raw]
-            except Exception:
+                    next_cursor = data.get("cursor")
+                    return [self._parse_market(m) for m in markets_raw], next_cursor
+            except Exception as e:
+                logger.warning(f"[KalshiClient] fetch_markets error: {e}")
                 pass
-        return []
+        return [], None
+
+    async def get_tags_by_categories(self) -> Dict[str, Any]:
+        """Fetch all tags grouped by categories from Kalshi."""
+        async with httpx.AsyncClient(verify=False) as client:
+            try:
+                resp = await client.get(
+                    f"{self.base_url}/search/tags_by_categories",
+                    headers=self._headers()
+                )
+                if resp.status_code == 200:
+                    return resp.json()
+            except Exception as e:
+                logger.warning(f"[KalshiClient] get_tags_by_categories error: {e}")
+        return {}
+
+    async def get_series(self, category: str, limit: int = 200) -> List[str]:
+        """Fetch series tickers for a given category."""
+        series_tickers = []
+        cursor = None
+        async with httpx.AsyncClient(verify=False) as client:
+            try:
+                while True:
+                    params = {"category": category, "limit": 100}
+                    if cursor:
+                        params["cursor"] = cursor
+                    resp = await client.get(
+                        f"{self.base_url}/series",
+                        params=params,
+                        headers=self._headers()
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        for s in data.get("series", []):
+                            series_tickers.append(s.get("ticker"))
+                        cursor = data.get("cursor")
+                        if not cursor or len(series_tickers) >= limit:
+                            break
+                    else:
+                        break
+            except Exception as e:
+                logger.warning(f"[KalshiClient] get_series error: {e}")
+        return series_tickers[:limit]
 
     async def fetch_market_by_ticker(self, ticker: str) -> Optional[KalshiMarket]:
         """Fetch a specific Kalshi market by ticker symbol."""

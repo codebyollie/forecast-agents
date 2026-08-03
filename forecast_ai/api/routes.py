@@ -76,6 +76,31 @@ async def get_agents_metadata():
     """
     return AGENT_METADATA
 
+@router.get("/markets/browse")
+async def browse_markets_route(
+    request: Request,
+    venue: str = Query("all", description="Venue filter: kalshi, polymarket, or all"),
+    category: Optional[str] = Query(None, description="Category filter"),
+    sort: str = Query("volume", description="Sort by: volume, ending_soon, newest"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(24, ge=1, le=50, description="Page size"),
+    q: Optional[str] = Query(None, description="Optional keyword search"),
+    search_service: MarketSearchService = Depends(get_search_service)
+) -> Dict[str, Any]:
+    """
+    GET /markets/browse
+    Full browse endpoint for markets with pagination, sorting, and unified categories.
+    """
+    check_ip_rate_limit(request)
+    return await search_service.browse_markets(
+        venue=venue.lower(),
+        category=category,
+        sort=sort.lower(),
+        page=page,
+        page_size=page_size,
+        q=q
+    )
+
 @router.get("/markets/search")
 async def search_markets(
     request: Request,

@@ -20,6 +20,7 @@ class PolymarketMarket:
     liquidity: float = 0.0
     category: str = ""
     event_id: str = ""
+    image: Optional[str] = None
     raw_data: Dict[str, Any] = field(default_factory=dict)
 
     @property

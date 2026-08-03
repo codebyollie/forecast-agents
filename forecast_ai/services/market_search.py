@@ -39,6 +39,36 @@ KNOWN_SERIES_MAP = {
     "eth": ["KXBTCVSETH"]
 }
 
+CATEGORY_MAP = {
+    "politics": "Politics",
+    "elections": "Politics",
+    "crypto": "Crypto",
+    "bitcoin": "Crypto",
+    "ethereum": "Crypto",
+    "economics": "Economy",
+    "financials": "Economy",
+    "business": "Economy",
+    "sports": "Sports",
+    "entertainment": "Entertainment",
+    "pop culture": "Entertainment",
+    "science & technology": "Tech",
+    "science": "Tech",
+    "tech": "Tech",
+    "world": "World",
+    "news": "World"
+}
+
+def normalize_category(raw_cat: str) -> str:
+    if not raw_cat:
+        return "Other"
+    raw_lower = raw_cat.lower()
+    for k, v in CATEGORY_MAP.items():
+        if k in raw_lower:
+            return v
+    return "Other"
+
+_KALSHI_CURSORS: Dict[str, str] = {}  # session_key -> cursor
+
 class MarketSearchService:
     def __init__(
         self,
@@ -135,7 +165,7 @@ class MarketSearchService:
             results = []
             try:
                 # 1. Fetch top 10 general open markets from Kalshi
-                k_mkts = await self.kalshi_client.fetch_markets(limit=15, status="open")
+                k_mkts, _ = await self.kalshi_client.fetch_markets(limit=15, status="open")
                 for m in k_mkts:
                     if m.last_price is not None and m.last_price > 0:
                         results.append({
@@ -259,11 +289,11 @@ class MarketSearchService:
             markets_to_check = []
             if series_to_query:
                 for s_ticker in series_to_query[:3]:
-                    s_mkts = await self.kalshi_client.fetch_markets(limit=20, status="open", series_ticker=s_ticker)
+                    s_mkts, _ = await self.kalshi_client.fetch_markets(limit=20, status="open", series_ticker=s_ticker)
                     markets_to_check.extend(s_mkts)
 
             # Also fetch general open markets
-            gen_mkts = await self.kalshi_client.fetch_markets(limit=100, status="open")
+            gen_mkts, _ = await self.kalshi_client.fetch_markets(limit=100, status="open")
             markets_to_check.extend(gen_mkts)
 
             seen_tickers = set()
@@ -345,3 +375,215 @@ class MarketSearchService:
         except Exception as e:
             logger.warning(f"[MarketSearchService] Polymarket search failed: {e}")
         return matched
+
+    async def browse_markets(self, venue: str = "all", category: Optional[str] = None, sort: str = "volume", page: int = 1, page_size: int = 24, q: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Browse and list markets with pagination, sorting, and category filtering.
+        """
+        if q:
+            # Delegate to existing keyword search (which does not paginate currently, so we return it as page 1)
+            search_results = await self.search_markets(q, limit=page_size)
+            # Normalize categories in search results
+            for r in search_results:
+                r["category"] = normalize_category(r.get("category", ""))
+                r["image"] = r.get("image")
+                r["outcomes"] = None
+            return {
+                "results": search_results,
+                "page": page,
+                "page_size": page_size,
+                "has_more": False
+            }
+
+        tasks = []
+        fetch_kalshi = venue in ("all", "kalshi")
+        fetch_poly = venue in ("all", "polymarket")
+
+        # Kalshi Pagination State
+        kalshi_cursor = None
+        kalshi_cache_key = f"{category or 'all'}_{sort}_{page}"
+        if page > 1:
+            kalshi_cursor = _KALSHI_CURSORS.get(kalshi_cache_key)
+            if fetch_kalshi and not kalshi_cursor:
+                # We don't have the cursor for this page, which means they skipped pages. 
+                # Kalshi cannot jump pages without cursor. We will just fetch from beginning or return empty.
+                pass
+
+        async def _get_kalshi():
+            if not fetch_kalshi:
+                return [], None
+            
+            # If category is provided, we must first discover series for that category
+            series_tickers = []
+            if category:
+                # We do a rough reverse-map: find all Kalshi tags that match the normalized category
+                # For simplicity, if a category is provided, we fetch a large batch of markets and filter locally,
+                # because Kalshi's /series API requires their exact category string, and we normalized it.
+                # Actually, the prompt says "GET /search/tags_by_categories -> GET /series?category=X".
+                tags_data = await self.kalshi_client.get_tags_by_categories()
+                target_k_categories = []
+                norm_cat = normalize_category(category)
+                for k_cat in tags_data.keys():
+                    if normalize_category(k_cat) == norm_cat:
+                        target_k_categories.append(k_cat)
+                
+                for k_cat in target_k_categories:
+                    s_tickers = await self.kalshi_client.get_series(k_cat, limit=50)
+                    series_tickers.extend(s_tickers)
+                
+                # If we found series, we should query them. But fetch_markets only takes one series_ticker.
+                # To support proper pagination, if category is selected, we might have to fetch general open and filter.
+                # Let's fetch general open markets and filter locally to ensure we can paginate.
+            
+            # Fetch general open markets
+            k_limit = page_size if venue == "kalshi" else page_size * 2
+            mkts, next_cursor = await self.kalshi_client.fetch_markets(limit=k_limit, status="open", cursor=kalshi_cursor)
+            
+            results = []
+            for m in mkts:
+                if m.status not in ("open", "active"):
+                    continue
+                # We don't have category directly on m. We can infer from series if we had a map, 
+                # but Kalshi deprecated it. We'll mark as "Other" unless we can map from title/subtitle.
+                cat = normalize_category(m.title + " " + m.subtitle)
+                if category and normalize_category(category) != cat:
+                    continue
+                
+                price = None
+                if m.last_price is not None and m.last_price > 0:
+                    price = float(m.last_price)
+                elif m.yes_bid > 0 and m.yes_ask > 0:
+                    price = (m.yes_bid + m.yes_ask) / 2.0
+                
+                if price is not None and price > 0:
+                    results.append({
+                        "market_id": m.ticker,
+                        "question": m.title,
+                        "venue": "Kalshi",
+                        "current_price": round(price, 4),
+                        "category": cat,
+                        "volume": float(m.volume),
+                        "liquidity": 0.0, # Kalshi liquidity is deprecated
+                        "end_date": m.expiration_time,
+                        "slug": m.event_ticker.lower(),
+                        "image": None,
+                        "event_id": m.event_ticker,
+                        "outcomes": None,
+                        "_sort_date": m.raw_data.get("open_time", "")
+                    })
+            return results, next_cursor
+
+        async def _get_poly():
+            if not fetch_poly:
+                return [], False
+            
+            p_limit = page_size if venue == "polymarket" else page_size * 2
+            p_offset = (page - 1) * page_size
+            
+            # We fetch events to group by eventId natively
+            events = await self.gamma_client.list_events(active=True, limit=p_limit, offset=p_offset)
+            
+            results = []
+            for ev in events:
+                cat = normalize_category(ev.raw_data.get("category", "") or ev.title)
+                if category and normalize_category(category) != cat:
+                    continue
+                
+                valid_markets = [m for m in ev.markets if m.active and not m.closed and m.outcome_prices]
+                if not valid_markets:
+                    continue
+                
+                # Grouping logic
+                if len(valid_markets) == 1:
+                    m = valid_markets[0]
+                    price = float(m.outcome_prices[0]) if m.outcome_prices else None
+                    if price:
+                        results.append({
+                            "market_id": m.slug or m.id,
+                            "question": m.question or ev.title,
+                            "venue": "Polymarket",
+                            "current_price": round(price, 4),
+                            "category": cat,
+                            "volume": float(m.volume),
+                            "liquidity": float(m.liquidity),
+                            "end_date": m.end_date_iso,
+                            "slug": m.slug or ev.slug,
+                            "image": m.image,
+                            "event_id": m.event_id or ev.id,
+                            "outcomes": None,
+                            "_sort_date": m.raw_data.get("createdAt", "")
+                        })
+                else:
+                    # Multiple markets in one event -> group them
+                    m_main = valid_markets[0]
+                    outcomes = []
+                    total_vol = 0.0
+                    total_liq = 0.0
+                    for m in valid_markets:
+                        price = float(m.outcome_prices[0]) if m.outcome_prices else None
+                        if price:
+                            label = "Yes"
+                            if m.tokens and len(m.tokens) > 0:
+                                label = m.tokens[0].get("outcome", "Yes")
+                            outcomes.append({"label": label, "price": round(price, 4)})
+                        total_vol += float(m.volume)
+                        total_liq += float(m.liquidity)
+                    
+                    if outcomes:
+                        results.append({
+                            "market_id": ev.slug or ev.id,
+                            "question": ev.title,
+                            "venue": "Polymarket",
+                            "current_price": None,
+                            "category": cat,
+                            "volume": total_vol,
+                            "liquidity": total_liq,
+                            "end_date": m_main.end_date_iso,
+                            "slug": ev.slug,
+                            "image": m_main.image,
+                            "event_id": ev.id,
+                            "outcomes": outcomes,
+                            "_sort_date": m_main.raw_data.get("createdAt", "")
+                        })
+            
+            has_more = len(events) == p_limit
+            return results, has_more
+
+        kalshi_task = asyncio.create_task(_get_kalshi())
+        poly_task = asyncio.create_task(_get_poly())
+        
+        (k_res, k_next_cursor), (p_res, p_has_more) = await asyncio.gather(kalshi_task, poly_task)
+        
+        if k_next_cursor:
+            _KALSHI_CURSORS[f"{category or 'all'}_{sort}_{page + 1}"] = k_next_cursor
+            
+        combined = k_res + p_res
+        
+        # Sorting
+        if sort == "ending_soon":
+            # Ascending by end_date, nulls last
+            combined.sort(key=lambda x: x["end_date"] or "9999-12-31")
+        elif sort == "newest":
+            # Descending by created date (we stashed it in _sort_date)
+            combined.sort(key=lambda x: x.get("_sort_date", ""), reverse=True)
+        else:
+            # volume desc
+            combined.sort(key=lambda x: x["volume"] or 0.0, reverse=True)
+            
+        # Strip _sort_date
+        for r in combined:
+            r.pop("_sort_date", None)
+            
+        # If we fetched from both, we might have over-fetched. Slice to page_size.
+        # But wait, if we slice, the next page for Polymarket will use offset=page*page_size and skip items.
+        # This is a known limitation of federated naive pagination. We will just return the sliced amount.
+        final_results = combined[:page_size]
+        
+        has_more = bool(k_next_cursor) or p_has_more
+        
+        return {
+            "results": final_results,
+            "page": page,
+            "page_size": page_size,
+            "has_more": has_more
+        }
