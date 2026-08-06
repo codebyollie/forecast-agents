@@ -1,8 +1,32 @@
-*.pyc
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# Tests and tooling
+.pytest_cache/
+.pytest_tmp/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# Runtime state
+memory_data/
 records/
 wandb/
-memory_data/skills
-memory_data/*.json
-!memory_data/public_feed.json
-*prompt*.md
+*.log
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -2,21 +2,25 @@
 API Routes for Forecast AI API Server.
 """
 
+import os
 import time
+import secrets
+import logging
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from ..pipelines.forecast import ForecastPipeline
 from ..polymarket.gamma import GammaClient
 from ..services.market_search import MarketSearchService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Global reference to pipeline, will be set during server init
 _pipeline: Optional[ForecastPipeline] = None
 
 _IP_RATE_LIMITS: Dict[str, List[float]] = {}
-MAX_PER_HOUR = 50
+MAX_PER_HOUR = max(1, int(os.getenv("PUBLIC_RATE_LIMIT_PER_HOUR", "50")))
 WINDOW_SECONDS = 3600.0
 
 def check_ip_rate_limit(request: Request):
@@ -31,17 +35,53 @@ def check_ip_rate_limit(request: Request):
         )
     _IP_RATE_LIMITS[ip].append(now)
 
+def require_server_api_key(request: Request) -> bool:
+    """Protect the private production deployment while keeping OSS self-hosting easy."""
+    expected = ""
+    if _pipeline is not None:
+        expected = getattr(_pipeline.config.server, "api_key", "") or ""
+    if not expected:
+        return False
+
+    provided = request.headers.get("x-api-key", "")
+    authorization = request.headers.get("authorization", "")
+    if not provided and authorization.lower().startswith("bearer "):
+        provided = authorization[7:].strip()
+    if not provided or not secrets.compare_digest(provided, expected):
+        raise HTTPException(status_code=401, detail="Invalid agents API key.")
+    return True
+
+def enforce_request_access(request: Request) -> bool:
+    """Authenticate production service calls and rate-limit only public OSS traffic."""
+    is_authenticated_service = require_server_api_key(request)
+    if not is_authenticated_service:
+        check_ip_rate_limit(request)
+    return is_authenticated_service
+
+
+def require_private_access(request: Request) -> None:
+    """Keep history, configuration, and reputation endpoints private."""
+    expected = ""
+    if _pipeline is not None:
+        expected = getattr(_pipeline.config.server, "api_key", "") or ""
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="SERVER_API_KEY must be configured to use this endpoint.",
+        )
+    require_server_api_key(request)
+
 class PredictionRequest(BaseModel):
-    question: str
-    market_id: str = "custom_market"
-    model_override: Optional[str] = None
-    facts_key: Optional[str] = None
-    venue: Optional[str] = "Kalshi / Robinhood Predict"
+    question: str = Field(min_length=1, max_length=2000)
+    market_id: str = Field(default="custom_market", max_length=512)
+    model_override: Optional[str] = Field(default=None, max_length=128)
+    venue: Optional[str] = Field(default=None, max_length=64)
+    source_venue: Optional[str] = Field(default=None, max_length=64)
 
 class CalibrateRequest(BaseModel):
-    agent_name: str
+    agent_name: str = Field(min_length=1, max_length=64)
     outcome_correct: bool
-    error_delta: float
+    error_delta: float = Field(ge=0.0, le=1.0)
 
 def get_pipeline() -> ForecastPipeline:
     if _pipeline is None:
@@ -84,14 +124,14 @@ async def browse_markets_route(
     sort: str = Query("volume", description="Sort by: volume, ending_soon, newest"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(24, ge=1, le=50, description="Page size"),
-    q: Optional[str] = Query(None, description="Optional keyword search"),
+    q: Optional[str] = Query(None, max_length=200, description="Optional keyword search"),
     search_service: MarketSearchService = Depends(get_search_service)
 ) -> Dict[str, Any]:
     """
     GET /markets/browse
     Full browse endpoint for markets with pagination, sorting, and unified categories.
     """
-    check_ip_rate_limit(request)
+    enforce_request_access(request)
     return await search_service.browse_markets(
         venue=venue.lower(),
         category=category,
@@ -104,7 +144,7 @@ async def browse_markets_route(
 @router.get("/markets/search")
 async def search_markets(
     request: Request,
-    q: Optional[str] = Query(None, description="Query text to search across prediction markets"),
+    q: Optional[str] = Query(None, max_length=200, description="Query text to search across prediction markets"),
     limit: int = Query(10, ge=1, le=50),
     search_service: MarketSearchService = Depends(get_search_service)
 ) -> List[Dict[str, Any]]:
@@ -113,7 +153,7 @@ async def search_markets(
     Searches open prediction markets on Kalshi & Polymarket matching the query text.
     IP-based rate limited.
     """
-    check_ip_rate_limit(request)
+    enforce_request_access(request)
     return await search_service.search_markets(query=q, limit=limit)
 
 @router.post("/predict")
@@ -122,45 +162,79 @@ async def predict(
     req: PredictionRequest, 
     pipeline: ForecastPipeline = Depends(get_pipeline)
 ):
-    check_ip_rate_limit(request)
+    is_authenticated = enforce_request_access(request)
+    if req.model_override and not is_authenticated:
+        raise HTTPException(
+            status_code=403,
+            detail="Model overrides require SERVER_API_KEY authentication.",
+        )
     try:
+        selected_venue = req.source_venue or req.venue
         result = await pipeline.run_forecast(
             question=req.question, 
             market_id=req.market_id,
-            is_public_feed=False,
             model_override=req.model_override,
-            facts_key=req.facts_key
+            venue=selected_venue,
         )
+        agent_breakdown = [
+            {
+                "id": p.agent_name,
+                "name": p.agent_name,
+                "agent": p.agent_name,
+                "probability": p.probability,
+                "confidence": p.confidence.score,
+                "reasoning": p.reasoning,
+                "summary": p.summary,
+                "key_drivers": p.key_drivers,
+                "counter_signals": p.counter_signals,
+                "uncertainties": p.uncertainties,
+                "watch_next": p.watch_next,
+                "warnings": p.confidence.warnings,
+                "citations": p.citations,
+                "providers": p.research_providers,
+                "provider_insights": p.provider_insights,
+                "provider_statuses": p.provider_statuses,
+            }
+            for p in result.individual_predictions
+        ]
         return {
+            "question": req.question,
             "market_id": result.market_id,
+            "venue": selected_venue,
+            "source_venue": selected_venue,
             "probability": result.probability,
+            "recommendation": "YES" if result.probability >= 0.5 else "NO",
             "confidence": {
                 "score": result.confidence.score,
                 "warnings": result.confidence.warnings
             },
             "reasoning": result.metadata.get("summary_reasoning", ""),
+            "reasoning_trace": {
+                "agent_contributions": result.reasoning_trace.agent_contributions,
+                "aggregation_steps": result.reasoning_trace.aggregation_steps,
+                "conflicts_resolved": result.reasoning_trace.conflicts_resolved,
+            },
+            "market_context": result.metadata.get("market_context", []),
             "timestamp": result.timestamp.isoformat(),
-            "individual_predictions": [
-                {
-                    "agent": p.agent_name,
-                    "probability": p.probability,
-                    "confidence": p.confidence.score,
-                    "reasoning": p.reasoning
-                } for p in result.individual_predictions
-            ]
+            "agent_breakdown": agent_breakdown,
+            "individual_predictions": agent_breakdown,
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Forecast execution failed")
+        raise HTTPException(status_code=500, detail="Forecast execution failed. Check server logs.")
 
 @router.get("/forecasts")
-async def get_forecasts(pipeline: ForecastPipeline = Depends(get_pipeline)):
+async def get_forecasts(request: Request, pipeline: ForecastPipeline = Depends(get_pipeline)):
+    require_private_access(request)
     try:
         return pipeline.memory_store.list_forecasts()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Could not read forecast history")
+        raise HTTPException(status_code=500, detail="Could not read forecast history.")
 
 @router.get("/stats")
-async def get_stats(pipeline: ForecastPipeline = Depends(get_pipeline)):
+async def get_stats(request: Request, pipeline: ForecastPipeline = Depends(get_pipeline)):
+    require_private_access(request)
     try:
         forecasts = pipeline.memory_store.list_forecasts()
         reputations = pipeline.memory_store.get_agent_reputations()
@@ -174,11 +248,13 @@ async def get_stats(pipeline: ForecastPipeline = Depends(get_pipeline)):
             "average_confidence": avg_conf,
             "agent_reputations": reputations
         }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Could not compute forecast statistics")
+        raise HTTPException(status_code=500, detail="Could not compute forecast statistics.")
 
 @router.post("/reputation/calibrate")
-async def calibrate_reputation(req: CalibrateRequest, pipeline: ForecastPipeline = Depends(get_pipeline)):
+async def calibrate_reputation(request: Request, req: CalibrateRequest, pipeline: ForecastPipeline = Depends(get_pipeline)):
+    require_private_access(request)
     try:
         pipeline.memory_store.update_agent_reputation(
             agent_name=req.agent_name,
@@ -186,11 +262,13 @@ async def calibrate_reputation(req: CalibrateRequest, pipeline: ForecastPipeline
             error_delta=req.error_delta
         )
         return {"status": "success", "new_reputation": pipeline.memory_store.get_agent_reputation(req.agent_name)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logger.exception("Could not update agent reputation")
+        raise HTTPException(status_code=500, detail="Could not update agent reputation.")
 
 @router.get("/config")
-async def get_config(pipeline: ForecastPipeline = Depends(get_pipeline)):
+async def get_config(request: Request, pipeline: ForecastPipeline = Depends(get_pipeline)):
+    require_private_access(request)
     # Redact sensitive keys
     cfg = pipeline.config
     providers_redacted = {}
@@ -206,8 +284,8 @@ async def get_config(pipeline: ForecastPipeline = Depends(get_pipeline)):
         "polymarket": {
             "gamma_api_url": cfg.polymarket.gamma_api_url,
             "clob_api_url": cfg.polymarket.clob_api_url,
-            "wallet_address": cfg.polymarket.wallet_address,
-            "builder_code": cfg.polymarket.builder_code
+            "wallet_address": getattr(cfg.polymarket, "wallet_address", ""),
+            "builder_code": getattr(cfg.polymarket, "builder_code", "")
         },
         "agents": {
             name: {

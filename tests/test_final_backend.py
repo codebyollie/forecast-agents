@@ -4,6 +4,17 @@ from forecast_ai.services.spend_guard import SpendGuard, SpendCapExceededError
 from forecast_ai.services.market_search import MarketSearchService
 from forecast_ai.sources.facts_ai import FactsAISource
 from forecast_ai.config import ForecastConfig
+from forecast_ai.providers import ProviderManager
+
+
+def test_spend_guard_is_disabled_by_default(tmp_path):
+    config = ForecastConfig()
+    config.memory.store_dir = str(tmp_path)
+
+    manager = ProviderManager(config)
+
+    assert manager.spend_guard is None
+    assert not (tmp_path / "llm_spend_log.json").exists()
 
 def test_spend_guard_circuit_breaker(tmp_path):
     store_file = tmp_path / "spend.json"

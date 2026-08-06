@@ -49,15 +49,20 @@ class FactsAISource(BaseSource):
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        # text:true requests full article text in citations (per FactsAI docs)
-        payload = {"query": clean_query, "text": True}
+        # Keep the request body aligned with the public FactsAI API contract.
+        # The endpoint currently documents a single required `query` field.
+        payload = {"query": clean_query}
 
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.post(self.api_url, headers=headers, json=payload, timeout=30.0)
+                resp = await client.post(self.api_url, headers=headers, json=payload, timeout=90.0)
                 
                 if resp.status_code == 200:
                     res_data = resp.json()
+                    if not isinstance(res_data, dict):
+                        raise FactsAIError(500, "FactsAI returned a non-object JSON response.")
+                    if res_data.get("success") is False:
+                        raise FactsAIError(500, str(res_data.get("error") or "FactsAI request failed."))
                     # Support both data.answer / data.citations and top-level response format
                     data_obj = res_data.get("data") if isinstance(res_data.get("data"), dict) else res_data
                     
@@ -123,7 +128,8 @@ class FactsAISource(BaseSource):
                     content=res["answer"],
                     relevance_score=0.95,
                     title=f"FactsAI Research: {query[:60]}",
-                    url="https://factsai.org"
+                    url="https://factsai.org",
+                    metadata={"provider": "FactsAI", "source_type": "summary"},
                 ))
 
             # Citations Evidence
@@ -133,7 +139,8 @@ class FactsAISource(BaseSource):
                     content=f"Citation for '{query[:60]}': {c.get('title')}",
                     relevance_score=0.90,
                     title=c.get("title"),
-                    url=c.get("url")
+                    url=c.get("url"),
+                    metadata={"provider": "FactsAI", "source_type": "research"},
                 ))
 
             return evidence_list

@@ -5,11 +5,11 @@ Lightweight file-based cache for data source queries to save API costs
 and speed up repeated agent requests.
 """
 
-import os
 import json
 import time
 import hashlib
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from ..models.evidence import Evidence
@@ -63,7 +63,8 @@ class SourceCache:
                         relevance_score=item.get("relevance_score", 1.0),
                         title=item.get("title", ""),
                         url=item.get("url", ""),
-                        timestamp=item.get("timestamp")
+                        timestamp=self._parse_timestamp(item.get("timestamp")),
+                        metadata=item.get("metadata", {}),
                     )
                 )
             
@@ -73,6 +74,17 @@ class SourceCache:
         except Exception as e:
             logger.warning(f"[SourceCache] Failed to read cache file {cache_path}: {e}")
             return None
+
+    @staticmethod
+    def _parse_timestamp(value: Any) -> datetime:
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                pass
+        return datetime.now(timezone.utc)
 
     def set(self, source_name: str, query: str, evidence: List[Evidence]) -> None:
         """
@@ -88,7 +100,8 @@ class SourceCache:
                     "relevance_score": e.relevance_score,
                     "title": e.title,
                     "url": e.url,
-                    "timestamp": e.timestamp
+                    "timestamp": e.timestamp.isoformat(),
+                    "metadata": e.metadata,
                 }
                 for e in evidence
             ]

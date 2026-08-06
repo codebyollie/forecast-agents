@@ -4,7 +4,7 @@ News API Data Source.
 
 from typing import List, Optional
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import BaseSource
 from ..models.evidence import Evidence
 
@@ -36,7 +36,7 @@ class NewsSource(BaseSource):
                         try:
                             dt = datetime.fromisoformat(published.replace("Z", "+00:00"))
                         except Exception:
-                            dt = datetime.utcnow()
+                            dt = datetime.now(timezone.utc)
 
                         results.append(Evidence(
                             source_name="news",

@@ -11,7 +11,7 @@ from ..models.evidence import Evidence
 from ..kalshi.client import KalshiClient
 
 class KalshiSource(BaseSource):
-    def __init__(self, api_base_url: str = "https://api.elections.kalshi.com/trade-api/v2"):
+    def __init__(self, api_base_url: str = "https://external-api.kalshi.com/trade-api/v2"):
         self.client = KalshiClient(base_url=api_base_url)
 
     async def fetch(self, query: str, limit: int = 5) -> List[Evidence]:
@@ -28,7 +28,7 @@ class KalshiSource(BaseSource):
                     source_name="kalshi",
                     content=content,
                     url=f"https://kalshi.com/markets/{m.ticker}",
-                    score=0.85,
+                    relevance_score=0.85,
                     metadata={"ticker": m.ticker, "last_price": m.last_price, "volume": m.volume}
                 )
                 evidences.append(ev)

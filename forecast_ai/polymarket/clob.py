@@ -40,10 +40,10 @@ class ClobClient:
     async def fetch_midpoint_price(self, token_id: str) -> Optional[float]:
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.get(f"{self.base_url}/prices/midpoint", params={"token_id": token_id})
+                resp = await client.get(f"{self.base_url}/midpoint", params={"token_id": token_id})
                 if resp.status_code == 200:
                     data = resp.json()
-                    midpoint = data.get("midpoint")
+                    midpoint = data.get("mid_price")
                     if midpoint is not None:
                         return float(midpoint)
             except Exception:
@@ -53,7 +53,7 @@ class ClobClient:
     async def fetch_last_trade_price(self, token_id: str) -> Optional[float]:
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.get(f"{self.base_url}/prices/last", params={"token_id": token_id})
+                resp = await client.get(f"{self.base_url}/last-trade-price", params={"token_id": token_id})
                 if resp.status_code == 200:
                     data = resp.json()
                     price = data.get("price")
@@ -66,11 +66,10 @@ class ClobClient:
     async def fetch_spread(self, token_id: str) -> Optional[float]:
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.get(f"{self.base_url}/prices/spread", params={"token_id": token_id})
+                resp = await client.get(f"{self.base_url}/spread", params={"token_id": token_id})
                 if resp.status_code == 200:
                     data = resp.json()
                     return float(data.get("spread", 0.0))
             except Exception:
                 pass
         return None
-

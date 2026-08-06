@@ -1,18 +1,42 @@
-# Architecture Reference
+# Architecture
 
-Forecast AI acts as a modular multi-agent intelligence infrastructure for prediction markets.
+Forecast AI is a self-hosted Python backend and CLI.
 
-## Module Map
+```text
+Kalshi / Polymarket / News / RSS / Social / Research
+                         |
+                    SourceManager
+                         |
+          Seven independent forecast agents
+                         |
+                  Consensus Engine
+                         |
+           Memory + REST API + CLI output
+```
 
-*   `forecast_ai/kalshi/`: Primary market-data client for Kalshi & Robinhood Predict event contracts.
-*   `forecast_ai/robinhood_agentic/`: Recommendation formatter for hand-off to Robinhood Agentic Trading MCP.
-*   `forecast_ai/polymarket/`: Read-only market data client for Polymarket.
-*   `forecast_ai/agents/`: Individual, specialized AI agents (News, Social, Reddit, Research, Macro, On-chain, Market).
-*   `forecast_ai/consensus/`: Consensus Engine integrating evidence and calibrations.
-*   `forecast_ai/intelligence/`: Algorithms for signal scoring, anomaly detection, and probability calibration.
-*   `forecast_ai/memory/`: Long-term forecast history, accuracy metrics, and agent reputations.
-*   `forecast_ai/sources/`: Data connector adapters.
-*   `forecast_ai/providers/`: Unified wrappers for LLM APIs.
-*   `forecast_ai/pipelines/`: Running forecasting and watching loops.
-*   `forecast_ai/api/`: FastAPI server.
-*   `forecast_ai/cli/`: Interactive configuration and click commands.
+## Modules
+
+- `forecast_ai/kalshi/`: public Kalshi market and orderbook client.
+- `forecast_ai/polymarket/`: public Gamma and read-only CLOB clients.
+- `forecast_ai/sources/`: news, social, research, blockchain, and market adapters.
+- `forecast_ai/agents/`: the seven specialized agents.
+- `forecast_ai/providers/`: LLM provider adapters and fallback routing.
+- `forecast_ai/consensus/`: weighted aggregation and confidence calculation.
+- `forecast_ai/memory/`: local forecast history and reputation state.
+- `forecast_ai/pipelines/`: one-shot forecasts and continuous watching.
+- `forecast_ai/api/`: FastAPI application.
+- `forecast_ai/cli/`: setup, diagnostics, forecasting, and server commands.
+- `forecast_ai/robinhood_agentic/`: recommendation formatting only.
+
+## Forecast flow
+
+1. Resolve the selected market and venue.
+2. Gather exact market data plus configured external evidence.
+3. Give each agent only relevant evidence.
+4. Run agents concurrently.
+5. Deduplicate and label citations.
+6. Aggregate predictions using confidence and reputation weights.
+7. Save the result under `MEMORY_STORE_DIR`.
+8. Return a structured API response.
+
+The open-source backend has no dependency on the hosted Forecast AI website, Supabase, Privy, token-holder tiers, or production user accounts.

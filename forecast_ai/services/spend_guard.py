@@ -1,8 +1,9 @@
 """
-LLM Spend Guard & Hard Circuit Breaker for Forecast AI.
+Optional LLM Spend Guard & Hard Circuit Breaker for self-hosted Forecast AI.
 
 Tracks cumulative daily and monthly LLM spend across OpenAI, Gemini, Anthropic, and OpenRouter calls.
-Persists spend state to `memory_data/llm_spend_log.json` to prevent runaway LLM costs across process restarts.
+Persists estimated spend state to the configured memory directory to prevent
+runaway LLM costs across process restarts. It is disabled by default.
 Raises `SpendCapExceededError` if configured budget caps are reached.
 """
 

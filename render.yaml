@@ -1,31 +1,19 @@
 services:
   - type: web
     name: forecast-agents
-    runtime: python
-    region: oregon
-    buildCommand: pip install -e ".[ws]"
-    startCommand: forecast run
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /healthz
     envVars:
       - key: OPENAI_API_KEY
         sync: false
-      - key: GEMINI_API_KEY
+      - key: TAVILY_API_KEY
         sync: false
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: OPENROUTER_API_KEY
-        sync: false
-      - key: KALSHI_API_KEY
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_KEY
-        sync: false
-      - key: PRIVY_APP_ID
-        sync: false
-      - key: PRIVY_APP_SECRET
-        sync: false
+      - key: TAVILY_ENABLED
+        value: "false"
       - key: FACTSAI_API_KEY
         sync: false
       - key: FACTSAI_ENABLED
+        value: "false"
+      - key: SERVER_API_KEY
         sync: false

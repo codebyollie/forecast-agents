@@ -13,7 +13,7 @@ class ProviderConfig:
     provider: str = "openai"  # "openai" | "anthropic" | "gemini" | "ollama" | "openrouter"
     api_key: str = ""
     api_base: str = ""
-    model_id: str = "gpt-4o"
+    model_id: str = "gpt-4o-mini"
     temperature: float = 0.2
     max_tokens: int = 2000
 
@@ -24,8 +24,7 @@ class PolymarketConfig:
 
 @dataclass
 class KalshiConfig:
-    api_base_url: str = "https://api.elections.kalshi.com/trade-api/v2"
-    api_key: str = ""   # Optional, for authenticated endpoints
+    api_base_url: str = "https://external-api.kalshi.com/trade-api/v2"
 
 @dataclass
 class RobinhoodAgenticConfig:
@@ -59,6 +58,9 @@ class ServerConfig:
     host: str = "0.0.0.0"
     port: int = 30000
     api_key: str = ""
+    spend_guard_enabled: bool = False
+    daily_llm_budget_usd: float = 10.0
+    monthly_llm_budget_usd: float = 50.0
 
 @dataclass
 class FactsAIConfig:
@@ -67,11 +69,9 @@ class FactsAIConfig:
     api_url: str = "https://deep-research-api.degodmode3-33.workers.dev/answer"
     query_max_length: int = 1000
     rate_limit_per_min: int = 100
-    coarse_refresh_interval_cycles: int = 2
+
 @dataclass
 class TavilyConfig:
-    enabled: bool = False
-    api_key: str = ""
     enabled: bool = False
     api_key: str = ""
 
@@ -84,11 +84,11 @@ class SourcesConfig:
 @dataclass
 class ForecastConfig:
     providers: Dict[str, ProviderConfig] = field(default_factory=lambda: {
-        "openai": ProviderConfig(provider="openai", model_id="gpt-4o"),
-        "anthropic": ProviderConfig(provider="anthropic", model_id="claude-3-5-sonnet-latest"),
+        "openai": ProviderConfig(provider="openai", model_id="gpt-4o-mini"),
+        "anthropic": ProviderConfig(provider="anthropic", model_id="claude-sonnet-4-6"),
         "gemini": ProviderConfig(provider="gemini", model_id="gemini-flash-latest"),
         "ollama": ProviderConfig(provider="ollama", api_base="http://localhost:11434", model_id="llama3"),
-        "openrouter": ProviderConfig(provider="openrouter", model_id="meta-llama/llama-3.1-405b"),
+        "openrouter": ProviderConfig(provider="openrouter", model_id="meta-llama/llama-3.3-70b-instruct"),
     })
     polymarket: PolymarketConfig = field(default_factory=PolymarketConfig)
     kalshi: KalshiConfig = field(default_factory=KalshiConfig)

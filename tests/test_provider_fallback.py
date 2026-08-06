@@ -3,6 +3,21 @@ import asyncio
 from forecast_ai.config import ForecastConfig, ProviderConfig, AgentSettings
 from forecast_ai.providers import BaseProvider, ProviderError, ProviderManager
 
+
+def test_model_override_uses_current_provider_defaults_for_fallbacks():
+    cfg = ForecastConfig()
+    manager = ProviderManager(cfg)
+
+    assert manager._map_model_for_provider("openai", "gpt-4o-mini") == "gpt-4o-mini"
+    assert (
+        manager._map_model_for_provider("anthropic", "gpt-4o-mini")
+        == cfg.providers["anthropic"].model_id
+    )
+    assert (
+        manager._map_model_for_provider("openrouter", "gpt-4o-mini")
+        == "openai/gpt-4o-mini"
+    )
+
 class MockFailingProvider(BaseProvider):
     def __init__(self, name: str):
         self.name = name
@@ -61,34 +76,6 @@ async def test_fallback_deduplicates_and_excludes_primary():
     assert res == "Gemini Success!"
     # Primary 'openai' attempted once at start, not retried in fallback
     assert failed_attempts == ["openai", "anthropic"]
-
-@pytest.mark.asyncio
-async def test_fallback_excludes_ollama_for_public_feed():
-    cfg = ForecastConfig()
-    cfg.fallback_providers = ["openai", "ollama", "anthropic"]
-    pm = ProviderManager(cfg)
-
-    attempted = []
-    class TrackingFailingProvider(BaseProvider):
-        def __init__(self, name: str):
-            self.name = name
-        async def generate(self, system_prompt: str, user_prompt: str, temperature=None, max_tokens=None) -> str:
-            attempted.append(self.name)
-            raise ProviderError(self.name, "Failed")
-
-    pm.providers["openai"] = TrackingFailingProvider("openai")
-    pm.providers["ollama"] = TrackingFailingProvider("ollama")
-    pm.providers["anthropic"] = MockSucceedingProvider("anthropic", "Anthropic Success!")
-
-    res = await pm.generate_with_fallback(
-        primary_name="openai",
-        system_prompt="sys",
-        user_prompt="user",
-        is_public_feed=True
-    )
-    assert res == "Anthropic Success!"
-    assert "ollama" not in attempted
-    assert attempted == ["openai"]
 
 @pytest.mark.asyncio
 async def test_fallback_full_chain_failure_raises_provider_error():

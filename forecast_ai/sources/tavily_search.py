@@ -7,7 +7,7 @@ Uses Tavily API to perform fast fact-checking and deep research.
 from __future__ import annotations
 
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import httpx
 from .base import BaseSource
 from ..models.evidence import Evidence
@@ -29,7 +29,12 @@ class TavilySearchSource(BaseSource):
         self.enabled = enabled
         self.api_base_url = "https://api.tavily.com"
 
-    async def fetch(self, query: str, limit: int = 5) -> List[Evidence]:
+    async def fetch(
+        self,
+        query: str,
+        limit: int = 5,
+        include_domains: Optional[List[str]] = None,
+    ) -> List[Evidence]:
         """BaseSource interface: returns list of Evidence objects."""
         if not self.enabled or not self.api_key:
             logger.debug("[TavilySearchSource] Source is disabled or API key is missing.")
@@ -47,6 +52,8 @@ class TavilySearchSource(BaseSource):
             "include_raw_content": False,
             "max_results": limit
         }
+        if include_domains:
+            payload["include_domains"] = include_domains
         
         try:
             async with httpx.AsyncClient() as client:
@@ -75,7 +82,8 @@ class TavilySearchSource(BaseSource):
                             content=answer,
                             relevance_score=0.95,
                             title=f"Tavily Summary: {query[:50]}",
-                            url=""
+                            url="",
+                            metadata={"provider": "Tavily", "source_type": "summary"},
                         )
                     )
                 
@@ -89,7 +97,8 @@ class TavilySearchSource(BaseSource):
                                 content=text_content,
                                 relevance_score=res.get("score", 0.85),
                                 title=res.get("title", "Web Result"),
-                                url=res.get("url", "")
+                                url=res.get("url", ""),
+                                metadata={"provider": "Tavily", "source_type": "web"},
                             )
                         )
                         

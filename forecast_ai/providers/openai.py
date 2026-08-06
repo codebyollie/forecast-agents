@@ -7,7 +7,7 @@ import httpx
 from .base import BaseProvider, ProviderError
 
 class OpenAIProvider(BaseProvider):
-    def __init__(self, api_key: str, api_base: str = "https://api.openai.com/v1", model_id: str = "gpt-4o"):
+    def __init__(self, api_key: str, api_base: str = "https://api.openai.com/v1", model_id: str = "gpt-4o-mini"):
         self.api_key = api_key
         self.api_base = api_base.rstrip('/')
         self.model_id = model_id

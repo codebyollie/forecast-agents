@@ -1,12 +1,11 @@
-"""
-Interactive setup wizard for Forecast AI.
-"""
+"""Interactive setup wizard for Forecast AI."""
 
 import os
+
 import click
-from pathlib import Path
-from ..config import ForecastConfig, ProviderConfig, PolymarketConfig
+
 from ..config_store import ConfigStore
+
 
 class SetupWizard:
     def __init__(self, config_store: ConfigStore = None):
@@ -14,86 +13,105 @@ class SetupWizard:
 
     def run(self):
         click.secho("=" * 60, fg="cyan")
-        click.secho("🔮 Welcome to the Forecast AI Configuration Wizard 🔮", fg="cyan", bold=True)
-        click.secho("Set up your prediction market intelligence infrastructure in minutes.", fg="cyan")
+        click.secho("Forecast AI self-hosted configuration", fg="cyan", bold=True)
         click.secho("=" * 60, fg="cyan")
 
-        # Load config with env overrides
         cfg = self.cs.load_config()
 
-        # 1. Default LLM Provider Selection
-        click.echo("\n--- [1] Default LLM Provider Configuration ---")
+        click.echo("\n--- [1] LLM Provider ---")
         choices = ["openai", "anthropic", "gemini", "ollama", "openrouter"]
         provider = click.prompt(
             "Select default LLM provider",
             type=click.Choice(choices),
-            default=cfg.default_provider
+            default=cfg.default_provider,
         )
         cfg.default_provider = provider
 
-        # Configure selected provider keys
         p_cfg = cfg.providers[provider]
         env_var_name = f"{provider.upper()}_API_KEY"
-        env_val = os.environ.get(env_var_name)
-        if env_val:
-            click.secho(f"ℹ️ {provider.capitalize()} API Key currently set via environment variable ({env_var_name}).", fg="yellow")
+        if os.environ.get(env_var_name):
+            click.secho(
+                f"{provider.capitalize()} key is already set through {env_var_name}.",
+                fg="yellow",
+            )
+        elif provider != "ollama":
+            api_key = click.prompt(
+                f"Enter API key for {provider}",
+                default=p_cfg.api_key,
+                show_default=False,
+            )
+            if api_key:
+                p_cfg.api_key = api_key
 
-        api_key = click.prompt(
-            f"Enter API key for {provider} (press enter to skip or keep current)",
-            default=p_cfg.api_key if p_cfg.api_key else "",
-            show_default=False
+        p_cfg.model_id = click.prompt(
+            f"Model ID for {provider}",
+            default=p_cfg.model_id,
         )
-        if api_key:
-            p_cfg.api_key = api_key
 
-        model_id = click.prompt(
-            f"Enter model ID for {provider}",
-            default=p_cfg.model_id
+        click.echo("\n--- [2] Kalshi Public Market Data ---")
+        cfg.kalshi.api_base_url = click.prompt(
+            "Kalshi API base URL",
+            default=cfg.kalshi.api_base_url,
         )
-        p_cfg.model_id = model_id
+        click.echo("Kalshi public market discovery does not require an API key.")
 
-        # 2. Kalshi & Robinhood Predict Data Configuration
-        click.echo("\n--- [2] Kalshi / Robinhood Predict Integration ---")
-        kalshi_url = click.prompt(
-            "Kalshi API Base URL",
-            default=cfg.kalshi.api_base_url
-        )
-        cfg.kalshi.api_base_url = kalshi_url
-
-        if os.environ.get("KALSHI_API_KEY"):
-            click.secho("ℹ️ Kalshi API Key currently set via environment variable (KALSHI_API_KEY).", fg="yellow")
-
-        kalshi_key = click.prompt(
-            "Kalshi API Key (optional for public market data)",
-            default=cfg.kalshi.api_key,
-            show_default=False
-        )
-        cfg.kalshi.api_key = kalshi_key
-
-        # 3. Polymarket Read-Only Signal Configuration
-        click.echo("\n--- [3] Polymarket Integration (Read-Only Signal) ---")
-        gamma_url = click.prompt(
+        click.echo("\n--- [3] Polymarket Read-Only Data ---")
+        cfg.polymarket.gamma_api_url = click.prompt(
             "Polymarket Gamma API URL",
-            default=cfg.polymarket.gamma_api_url
+            default=cfg.polymarket.gamma_api_url,
         )
-        cfg.polymarket.gamma_api_url = gamma_url
+        cfg.polymarket.clob_api_url = click.prompt(
+            "Polymarket CLOB API URL",
+            default=cfg.polymarket.clob_api_url,
+        )
 
-        # 4. Robinhood Agentic Trading MCP Info
-        click.echo("\n--- [4] Robinhood Agentic Trading MCP Notice ---")
-        click.secho("Execution Layer: Trade recommendations are formatted for hand-off to your personal AI agent.", fg="yellow")
-        click.secho("Connect your agent (Claude, ChatGPT, Cursor, etc.) to MCP endpoint: https://agent.robinhood.com/mcp/trading", fg="yellow")
+        click.echo("\n--- [4] Optional Research Providers ---")
+        cfg.tavily.enabled = click.confirm(
+            "Enable Tavily web research?",
+            default=cfg.tavily.enabled,
+        )
+        if cfg.tavily.enabled and not os.environ.get("TAVILY_API_KEY"):
+            cfg.tavily.api_key = click.prompt(
+                "Tavily API key",
+                default=cfg.tavily.api_key,
+                show_default=False,
+            )
 
-        # 5. Server Configuration
-        click.echo("\n--- [5] API Server Configuration ---")
-        host = click.prompt("Server Host", default=cfg.server.host)
-        port = click.prompt("Server Port", default=cfg.server.port, type=int)
-        cfg.server.host = host
-        cfg.server.port = port
+        cfg.facts_ai.enabled = click.confirm(
+            "Enable FactsAI deep research?",
+            default=cfg.facts_ai.enabled,
+        )
+        if cfg.facts_ai.enabled and not os.environ.get("FACTSAI_API_KEY"):
+            cfg.facts_ai.api_key = click.prompt(
+                "FactsAI API key",
+                default=cfg.facts_ai.api_key,
+                show_default=False,
+            )
 
-        # Save config
+        click.echo("\n--- [5] Robinhood Agentic Trading MCP ---")
+        click.echo(
+            "Forecast AI only formats a recommendation for hand-off to the user's "
+            "personal AI agent."
+        )
+        click.echo("MCP endpoint: https://agent.robinhood.com/mcp/trading")
+        click.echo(
+            "Forecast AI does not authenticate Robinhood accounts or execute trades itself."
+        )
+
+        click.echo("\n--- [6] API Server ---")
+        cfg.server.host = click.prompt("Server host", default=cfg.server.host)
+        cfg.server.port = click.prompt(
+            "Server port",
+            default=cfg.server.port,
+            type=int,
+        )
+        cfg.server.api_key = click.prompt(
+            "Server API key (recommended for public deployments; blank leaves rate limiting enabled)",
+            default=cfg.server.api_key,
+            show_default=False,
+        )
+
         self.cs.save_config(cfg)
-        
-        click.secho("\n" + "=" * 60, fg="green")
-        click.secho("🎉 Forecast AI Configuration successfully saved! 🎉", fg="green", bold=True)
+
+        click.secho("\nConfiguration saved.", fg="green", bold=True)
         click.secho(f"Config path: {self.cs.config_file}", fg="green")
-        click.secho("=" * 60, fg="green")

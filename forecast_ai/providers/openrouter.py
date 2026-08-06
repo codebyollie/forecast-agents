@@ -7,7 +7,7 @@ import httpx
 from .base import BaseProvider, ProviderError
 
 class OpenRouterProvider(BaseProvider):
-    def __init__(self, api_key: str, api_base: str = "https://openrouter.ai/api/v1", model_id: str = "meta-llama/llama-3.1-405b"):
+    def __init__(self, api_key: str, api_base: str = "https://openrouter.ai/api/v1", model_id: str = "meta-llama/llama-3.3-70b-instruct"):
         self.api_key = api_key
         self.api_base = api_base.rstrip('/')
         self.model_id = model_id

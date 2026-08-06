@@ -1,15 +1,17 @@
-﻿FROM python:3.11-slim
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml README.md LICENSE ./
+COPY forecast_ai ./forecast_ai
+RUN pip install --no-cache-dir .
 
-COPY . .
-
-# Install the package itself in editable mode
-RUN pip install -e .
+COPY start.sh ./
+RUN chmod +x /app/start.sh
 
 EXPOSE 30000
 
-CMD ["uvicorn", "forecast_ai.api.server:app", "--host", "0.0.0.0", "--port", "30000"]
+CMD ["sh", "/app/start.sh"]

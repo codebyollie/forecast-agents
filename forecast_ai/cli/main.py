@@ -19,7 +19,7 @@ from ..launcher import ForecastLauncher
 
 @click.group()
 def forecast():
-    """Forecast AI — Multi-Agent Intelligence Infrastructure for Prediction Markets."""
+    """Forecast AI - Multi-Agent Intelligence Infrastructure for Prediction Markets."""
     pass
 
 @forecast.command()
@@ -132,6 +132,12 @@ def sources():
     click.secho("\n=== AVAILABLE SOURCES ===", fg="cyan", bold=True)
     for name in mgr.sources.keys():
         click.echo(f"  * {name}")
+    click.echo(
+        f"  * tavily [{'ENABLED' if cfg.tavily.enabled and cfg.tavily.api_key else 'DISABLED'}]"
+    )
+    click.echo(
+        f"  * facts_ai [{'ENABLED' if cfg.facts_ai.enabled and cfg.facts_ai.api_key else 'DISABLED'}]"
+    )
 
 @forecast.command()
 def agents():
@@ -155,9 +161,60 @@ def providers():
     for name, p in cfg.providers.items():
         status = "Configured" if p.api_key or name == "ollama" else "Keys Missing"
         fg_color = "green" if status == "Configured" else "red"
-        click.echo(f"  * {name:<12} [")
+        click.echo(f"  * {name:<12} [", nl=False)
         click.secho(f"{status}", fg=fg_color, nl=False)
         click.echo(f"]  Model: {p.model_id}")
+
+
+@forecast.command()
+def doctor():
+    """Validate local configuration and free public market-data connections."""
+    from ..services.market_search import MarketSearchService
+
+    cfg = ConfigStore().load_config()
+    configured_llms = [
+        name
+        for name, provider in cfg.providers.items()
+        if provider.api_key or name == "ollama"
+    ]
+    click.echo(f"LLM providers available: {', '.join(configured_llms) or 'none'}")
+    click.echo(
+        "Tavily: "
+        + ("enabled" if cfg.tavily.enabled and cfg.tavily.api_key else "disabled")
+    )
+    click.echo(
+        "FactsAI: "
+        + ("enabled" if cfg.facts_ai.enabled and cfg.facts_ai.api_key else "disabled")
+    )
+
+    async def _check_markets():
+        service = MarketSearchService(
+            kalshi_base_url=cfg.kalshi.api_base_url,
+            gamma_api_url=cfg.polymarket.gamma_api_url,
+        )
+        failures = []
+        for venue in ("kalshi", "polymarket"):
+            try:
+                result = await service.browse_markets(
+                    venue=venue,
+                    page=1,
+                    page_size=3,
+                    sort="volume",
+                )
+                count = len(result.get("results", []))
+                if count == 0:
+                    failures.append(f"{venue}: no active markets returned")
+                    click.secho(f"{venue}: failed (no active markets)", fg="red")
+                else:
+                    click.secho(f"{venue}: ok ({count} markets)", fg="green")
+            except Exception as exc:
+                failures.append(f"{venue}: {exc}")
+                click.secho(f"{venue}: failed ({exc})", fg="red")
+        return failures
+
+    failures = asyncio.run(_check_markets())
+    if failures:
+        raise click.ClickException("; ".join(failures))
 
 @forecast.command()
 @click.argument("query")
@@ -198,4 +255,3 @@ def server():
     except KeyboardInterrupt:
         click.echo("\nStopping API server...")
         srv.stop()
-

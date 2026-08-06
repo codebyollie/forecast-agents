@@ -4,7 +4,7 @@ X (formerly Twitter) Data Source.
 
 from typing import List, Optional
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import BaseSource
 from ..models.evidence import Evidence
 
@@ -37,14 +37,20 @@ class TwitterSource(BaseSource):
                         try:
                             dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
                         except Exception:
-                            dt = datetime.utcnow()
+                            dt = datetime.now(timezone.utc)
 
                         results.append(Evidence(
                             source_name="twitter",
                             content=t.get("text", ""),
                             timestamp=dt,
+                            title="X post",
+                            url=f"https://x.com/i/web/status/{t.get('id')}" if t.get("id") else None,
                             relevance_score=0.6,
-                            metadata={"author_id": t.get("author_id")}
+                            metadata={
+                                "provider": "X",
+                                "source_type": "social",
+                                "author_id": t.get("author_id"),
+                            }
                         ))
                     return results
             except Exception:

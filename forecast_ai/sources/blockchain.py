@@ -4,7 +4,7 @@ Blockchain On-chain Data Source.
 
 from typing import List, Optional
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import BaseSource
 from ..models.evidence import Evidence
 
@@ -40,7 +40,11 @@ class BlockchainSource(BaseSource):
                     results = []
                     for tx in txs[:limit]:
                         timestamp = int(tx.get("timeStamp", 0))
-                        dt = datetime.fromtimestamp(timestamp) if timestamp else datetime.utcnow()
+                        dt = (
+                            datetime.fromtimestamp(timestamp, timezone.utc)
+                            if timestamp
+                            else datetime.now(timezone.utc)
+                        )
                         
                         results.append(Evidence(
                             source_name="blockchain",

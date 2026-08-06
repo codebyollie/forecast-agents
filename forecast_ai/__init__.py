@@ -4,7 +4,7 @@ Forecast AI
 Open-source Multi-Agent Intelligence Infrastructure for Prediction Markets.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 from .config import ForecastConfig
 from .launcher import ForecastLauncher

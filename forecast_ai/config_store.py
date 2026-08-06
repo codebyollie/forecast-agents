@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import yaml
+from dotenv import load_dotenv
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -26,6 +27,10 @@ from .config import (
 
 CONFIG_DIR = Path.home() / ".forecast_ai"
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
+
+# Local self-hosted installs commonly use a .env file. Platform-provided
+# environment variables keep precedence because override=False is the default.
+load_dotenv()
 
 def _coerce(value: Any) -> Any:
     """Coerce string representations into native types."""
@@ -90,8 +95,6 @@ class ConfigStore:
             config.providers["ollama"].api_base = os.environ["OLLAMA_API_BASE"]
 
         # Kalshi overrides
-        if os.environ.get("KALSHI_API_KEY"):
-            config.kalshi.api_key = os.environ["KALSHI_API_KEY"]
         if os.environ.get("KALSHI_API_BASE_URL"):
             config.kalshi.api_base_url = os.environ["KALSHI_API_BASE_URL"]
 
@@ -120,6 +123,20 @@ class ConfigStore:
                 pass
         if os.environ.get("SERVER_API_KEY"):
             config.server.api_key = os.environ["SERVER_API_KEY"]
+        if os.environ.get("MEMORY_STORE_DIR"):
+            config.memory.store_dir = os.environ["MEMORY_STORE_DIR"]
+        if os.environ.get("LLM_SPEND_GUARD_ENABLED"):
+            config.server.spend_guard_enabled = os.environ["LLM_SPEND_GUARD_ENABLED"].lower() in ("true", "1", "yes")
+        if os.environ.get("DAILY_LLM_BUDGET_USD"):
+            try:
+                config.server.daily_llm_budget_usd = float(os.environ["DAILY_LLM_BUDGET_USD"])
+            except ValueError:
+                pass
+        if os.environ.get("MONTHLY_LLM_BUDGET_USD"):
+            try:
+                config.server.monthly_llm_budget_usd = float(os.environ["MONTHLY_LLM_BUDGET_USD"])
+            except ValueError:
+                pass
 
         # Default provider override
         if os.environ.get("DEFAULT_PROVIDER"):
@@ -167,7 +184,6 @@ class ConfigStore:
         if "kalshi" in raw:
             k = raw["kalshi"]
             config.kalshi.api_base_url = k.get("api_base_url", config.kalshi.api_base_url)
-            config.kalshi.api_key = k.get("api_key", config.kalshi.api_key)
 
         # Load Robinhood Agentic
         if "robinhood_agentic" in raw:
@@ -209,6 +225,16 @@ class ConfigStore:
             config.server.host = srv.get("host", config.server.host)
             config.server.port = int(srv.get("port", config.server.port))
             config.server.api_key = srv.get("api_key", config.server.api_key)
+            config.server.spend_guard_enabled = bool(srv.get("spend_guard_enabled", config.server.spend_guard_enabled))
+            config.server.daily_llm_budget_usd = float(srv.get("daily_llm_budget_usd", config.server.daily_llm_budget_usd))
+            config.server.monthly_llm_budget_usd = float(srv.get("monthly_llm_budget_usd", config.server.monthly_llm_budget_usd))
+
+        # Load FactsAI
+        if "facts_ai" in raw:
+            facts = raw["facts_ai"]
+            config.facts_ai.enabled = bool(facts.get("enabled", config.facts_ai.enabled))
+            config.facts_ai.api_key = facts.get("api_key", config.facts_ai.api_key)
+            config.facts_ai.api_url = facts.get("api_url", config.facts_ai.api_url)
 
         # Load Tavily
         if "tavily" in raw:
@@ -245,7 +271,6 @@ class ConfigStore:
             },
             "kalshi": {
                 "api_base_url": config.kalshi.api_base_url,
-                "api_key": config.kalshi.api_key,
             },
             "robinhood_agentic": {
                 "mcp_endpoint": config.robinhood_agentic.mcp_endpoint,
@@ -276,6 +301,14 @@ class ConfigStore:
                 "host": config.server.host,
                 "port": config.server.port,
                 "api_key": config.server.api_key,
+                "spend_guard_enabled": config.server.spend_guard_enabled,
+                "daily_llm_budget_usd": config.server.daily_llm_budget_usd,
+                "monthly_llm_budget_usd": config.server.monthly_llm_budget_usd,
+            },
+            "facts_ai": {
+                "enabled": config.facts_ai.enabled,
+                "api_key": config.facts_ai.api_key,
+                "api_url": config.facts_ai.api_url,
             },
             "tavily": {
                 "enabled": config.tavily.enabled,

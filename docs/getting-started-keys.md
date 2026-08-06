@@ -1,42 +1,61 @@
-# 🔑 Configuring API Keys & LLM Providers
+# API Keys and Local Configuration
 
-Forecast AI supports multi-provider LLM forecasting with automatic fallback chains (e.g., primary OpenAI with Gemini fallback). You can configure your credentials using either interactive CLI prompts or environment variables.
+Forecast AI loads configuration in this order:
 
----
+1. environment variables supplied by the host;
+2. values from a local `.env` file;
+3. `~/.forecast_ai/config.yaml`;
+4. built-in defaults.
 
-## 1. Local Installations (`forecast setup`)
+Environment variables take precedence.
 
-For local machines or virtual machines where you run Forecast AI directly:
+## Required
 
-1. Run the interactive configuration wizard:
-   ```bash
-   forecast setup
-   ```
-2. Select your default LLM provider (e.g. `openai`) and enter your API key when prompted.
-3. **Adding a Secondary/Fallback Provider**: You can re-run `forecast setup` at any time to configure additional providers (e.g., set up `openai` first, then run `forecast setup` again for `gemini`). Existing configuration keys for other providers will be preserved.
-4. Your settings are stored in `~/.forecast_ai/config.yaml`.
+Configure at least one LLM provider, unless you use a local Ollama server:
 
----
+```env
+DEFAULT_PROVIDER=openai
+OPENAI_API_KEY=your_key
+```
 
-## 2. Hosted Deployments (Render, Railway, GitHub Codespaces)
+Alternative keys are `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, and `OPENROUTER_API_KEY`.
 
-On hosted cloud platforms without an interactive terminal, Forecast AI automatically reads secrets from **environment variables** (taking precedence over `config.yaml`):
+## Optional research
 
-| Environment Variable | Description | Example |
-| :--- | :--- | :--- |
-| `OPENAI_API_KEY` | OpenAI API Secret Key | `sk-proj-...` |
-| `GEMINI_API_KEY` | Google Gemini API Key | `AIzaSy...` |
-| `ANTHROPIC_API_KEY` | Anthropic Claude API Key | `sk-ant-...` |
-| `OPENROUTER_API_KEY` | OpenRouter API Key | `sk-or-v1-...` |
-| `KALSHI_API_KEY` | Kalshi API Key (optional) | `your_kalshi_key` |
-| `TAVILY_API_KEY` | Tavily Search API Key | `tvly-...` |
-| `FACTSAI_API_KEY` | FactsAI Deep Research API Key | `forecast_b0db...` |
-| `FACTSAI_ENABLED` | Enable FactsAI (`true`/`false`) | `true` |
-| `SERVER_PORT` | FastAPI Server Port | `30000` |
+```env
+TAVILY_API_KEY=
+TAVILY_ENABLED=false
 
-### Setting Environment Variables on Cloud Platforms:
-- **Render**: Navigate to your Service Settings → Environment Variables (or fill in the `sync: false` prompts during Blueprint deployment).
-- **Railway**: Go to your Service Variables tab and enter key-value pairs matching `.env.example`.
-- **GitHub Codespaces**: Set Repository Secrets or create a `.env` file in the root directory.
+FACTSAI_API_KEY=
+FACTSAI_ENABLED=false
+```
 
+A key alone does not enable Tavily or FactsAI. The corresponding enabled flag must be `true`.
 
+## Market data
+
+Kalshi and Polymarket discovery are public and read-only. No trading API keys are required.
+
+## Server protection
+
+```env
+SERVER_API_KEY=generate_a_long_random_value
+PUBLIC_RATE_LIMIT_PER_HOUR=50
+```
+
+When `SERVER_API_KEY` is set, protected endpoints accept either:
+
+- `X-API-Key: ...`
+- `Authorization: Bearer ...`
+
+When it is blank, public endpoints use the per-IP rate limit.
+
+`/forecasts`, `/stats`, `/config`, and `/reputation/calibrate` remain
+disabled until a server API key is configured.
+
+## Security
+
+- Never commit `.env` or `~/.forecast_ai/config.yaml`.
+- Rotate any key that has appeared in a screenshot, log, issue, or commit.
+- Use deployment-platform secret variables in production.
+- Use a dedicated key with the lowest necessary quota.

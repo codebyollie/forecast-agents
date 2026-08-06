@@ -3,14 +3,14 @@ Evidence model definition.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
 @dataclass
 class Evidence:
     source_name: str           # e.g., "polymarket", "reddit", "news", "rss"
     content: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     title: Optional[str] = None
     url: Optional[str] = None
     relevance_score: float = 0.5

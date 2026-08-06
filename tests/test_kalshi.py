@@ -1,5 +1,5 @@
 """
-Tests for Kalshi Market Data Integration (Robinhood Predict Proxy).
+Tests for Kalshi public market-data integration.
 """
 
 import pytest
@@ -43,3 +43,25 @@ def test_kalshi_orderbook_midpoint():
     assert ob.ticker == "FED-CUT-26SEP"
     assert ob.spread == 0.02
     assert ob.midpoint == 0.65
+
+
+def test_kalshi_parses_current_dollar_and_fp_fields():
+    client = KalshiClient()
+    market = client._parse_market({
+        "ticker": "KXTEST-26",
+        "market_title": "Will the current schema parse?",
+        "status": "open",
+        "yes_bid_dollars": "0.41",
+        "yes_ask_dollars": "0.45",
+        "last_price_dollars": "0.43",
+        "volume_fp": "1234.5",
+        "open_interest_fp": "456.0",
+        "close_time": "2026-12-31T00:00:00Z",
+    })
+
+    assert market.title == "Will the current schema parse?"
+    assert market.yes_bid == 0.41
+    assert market.yes_ask == 0.45
+    assert market.midpoint_price == 0.43
+    assert market.volume == 1234.5
+    assert market.open_interest == 456.0

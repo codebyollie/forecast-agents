@@ -1,7 +1,7 @@
 import os
 import pytest
 import httpx
-from unittest.mock import AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
 from forecast_ai.config import ForecastConfig
 from forecast_ai.config_store import ConfigStore
@@ -27,7 +27,7 @@ async def test_facts_ai_source_success():
         }
     }
 
-    mock_resp = AsyncMock()
+    mock_resp = MagicMock()
     mock_resp.status_code = 200
     mock_resp.json = lambda: mock_resp_data
 
@@ -39,11 +39,24 @@ async def test_facts_ai_source_success():
         assert res["citations"][0]["url"] == "https://example.com/fed-analysis"
 
 @pytest.mark.asyncio
+async def test_facts_ai_uses_documented_query_payload():
+    source = FactsAISource(api_key="test_key", api_url="https://mock.factsai.org/answer")
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json = lambda: {"data": {"answer": "Answer", "citations": []}}
+
+    with patch("httpx.AsyncClient.post", return_value=mock_resp) as post:
+        await source.fetch_deep_research("Question")
+
+    assert post.await_args.kwargs["json"] == {"query": "Question"}
+    assert post.await_args.kwargs["timeout"] == 90.0
+
+@pytest.mark.asyncio
 async def test_facts_ai_source_error_handling():
     source = FactsAISource(api_key="invalid_key", api_url="https://mock.factsai.org/answer")
 
     # Test 401 Unauthorized
-    mock_resp_401 = AsyncMock()
+    mock_resp_401 = MagicMock()
     mock_resp_401.status_code = 401
     mock_resp_401.text = "Unauthorized"
     with patch("httpx.AsyncClient.post", return_value=mock_resp_401):
@@ -52,7 +65,7 @@ async def test_facts_ai_source_error_handling():
         assert exc_info_401.value.status_code == 401
 
     # Test 402 Insufficient Credits
-    mock_resp_402 = AsyncMock()
+    mock_resp_402 = MagicMock()
     mock_resp_402.status_code = 402
     mock_resp_402.text = "Payment Required"
     with patch("httpx.AsyncClient.post", return_value=mock_resp_402):
@@ -61,7 +74,7 @@ async def test_facts_ai_source_error_handling():
         assert exc_info_402.value.status_code == 402
 
     # Test 429 Rate Limit
-    mock_resp_429 = AsyncMock()
+    mock_resp_429 = MagicMock()
     mock_resp_429.status_code = 429
     mock_resp_429.text = "Too Many Requests"
     with patch("httpx.AsyncClient.post", return_value=mock_resp_429):
@@ -83,6 +96,8 @@ async def test_facts_ai_agent_graceful_fallback():
         assert pred.probability == 0.75
         assert pred.agent_name == "research"
         assert "Test reasoning" in pred.reasoning
+        assert pred.provider_statuses["FactsAI"] == "unavailable"
+        assert any("FactsAI unavailable" in warning for warning in pred.confidence.warnings)
 
 def test_facts_ai_config_env_overrides():
     os.environ["FACTSAI_API_KEY"] = "forecast_test_key_123"

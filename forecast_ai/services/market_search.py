@@ -41,21 +41,81 @@ KNOWN_SERIES_MAP = {
 
 CATEGORY_MAP = {
     "politics": "Politics",
+    "political": "Politics",
     "elections": "Politics",
+    "election": "Politics",
+    "president": "Politics",
+    "congress": "Politics",
+    "senate": "Politics",
+    "governor": "Politics",
+    "white house": "Politics",
+    "trump": "Politics",
+    "biden": "Politics",
     "crypto": "Crypto",
     "bitcoin": "Crypto",
     "ethereum": "Crypto",
+    "solana": "Crypto",
+    "blockchain": "Crypto",
     "economics": "Economy",
+    "economic": "Economy",
+    "economy": "Economy",
     "financials": "Economy",
+    "finance": "Economy",
     "business": "Economy",
+    "federal reserve": "Economy",
+    "interest rate": "Economy",
+    "inflation": "Economy",
+    "recession": "Economy",
+    "unemployment": "Economy",
+    "gdp": "Economy",
+    "climate": "Climate",
+    "weather": "Climate",
+    "temperature": "Climate",
+    "temp ": "Climate",
+    "hurricane": "Climate",
+    "rainfall": "Climate",
+    "snowfall": "Climate",
+    "commodities": "Commodities",
+    "commodity": "Commodities",
+    "oil": "Commodities",
+    "gold": "Commodities",
+    "silver": "Commodities",
     "sports": "Sports",
+    "baseball": "Sports",
+    "basketball": "Sports",
+    "football": "Sports",
+    "soccer": "Sports",
+    "tennis": "Sports",
     "entertainment": "Entertainment",
     "pop culture": "Entertainment",
+    "movies": "Entertainment",
+    "music": "Entertainment",
+    "awards": "Entertainment",
     "science & technology": "Tech",
+    "technology": "Tech",
+    "artificial intelligence": "Tech",
     "science": "Tech",
     "tech": "Tech",
     "world": "World",
+    "geopolitics": "World",
+    "ukraine": "World",
+    "russia": "World",
+    "israel": "World",
+    "iran": "World",
+    "ceasefire": "World",
     "news": "World"
+}
+
+POLYMARKET_CATEGORY_TAGS = {
+    "Politics": ["politics"],
+    "Crypto": ["crypto"],
+    "Economy": ["business", "economy", "finance"],
+    "Climate": ["climate", "weather"],
+    "Commodities": ["commodities"],
+    "Sports": ["sports"],
+    "Entertainment": ["pop-culture", "entertainment"],
+    "Tech": ["technology", "science", "ai"],
+    "World": ["world", "geopolitics"],
 }
 
 def normalize_category(raw_cat: str) -> str:
@@ -67,12 +127,49 @@ def normalize_category(raw_cat: str) -> str:
             return v
     return "Other"
 
+def _poly_outcomes(market: Any) -> List[Dict[str, Any]]:
+    prices = market.outcome_prices or []
+    labels = [token.get("outcome") for token in market.tokens]
+    return [
+        {"label": labels[index] if index < len(labels) else f"Outcome {index + 1}", "price": round(float(price), 4)}
+        for index, price in enumerate(prices)
+    ]
+
+def _kalshi_category(market: Any) -> str:
+    return normalize_category(f"{market.category} {market.title} {market.subtitle}")
+
+def _polymarket_category(event: Any, market: Any = None) -> str:
+    raw = event.raw_data or {}
+    tag_parts = []
+    for tag in raw.get("tags", []) or []:
+        if isinstance(tag, dict):
+            tag_parts.extend([str(tag.get("label") or ""), str(tag.get("slug") or "")])
+        elif tag:
+            tag_parts.append(str(tag))
+    market_parts = ""
+    if market is not None:
+        market_parts = f"{getattr(market, 'category', '')} {getattr(market, 'question', '')}"
+    else:
+        market_parts = " ".join(
+            f"{getattr(item, 'category', '')} {getattr(item, 'question', '')}"
+            for item in (getattr(event, "markets", []) or [])
+        )
+    return normalize_category(
+        " ".join([
+            str(raw.get("category") or ""),
+            str(raw.get("subcategory") or ""),
+            *tag_parts,
+            str(event.title or ""),
+            market_parts,
+        ])
+    )
+
 _KALSHI_CURSORS: Dict[str, str] = {}  # session_key -> cursor
 
 class MarketSearchService:
     def __init__(
         self,
-        kalshi_base_url: str = "https://api.elections.kalshi.com/trade-api/v2",
+        kalshi_base_url: str = "https://external-api.kalshi.com/trade-api/v2",
         gamma_api_url: str = "https://gamma-api.polymarket.com"
     ):
         self.kalshi_client = KalshiClient(base_url=kalshi_base_url)
@@ -129,28 +226,32 @@ class MarketSearchService:
         Fetches the exact real live market price for a given market_id.
         Returns None if no real price can be found (NO hardcoded 0.50 fallback).
         """
-        # 1. Try Kalshi first if ticker format
-        try:
-            k_mkt = await self.kalshi_client.fetch_market_by_ticker(market_id)
-            if k_mkt and k_mkt.last_price is not None and k_mkt.last_price > 0:
-                return round(float(k_mkt.last_price), 4)
-        except Exception:
-            pass
+        venue_name = (venue or "").lower()
 
-        # 2. Try Polymarket Gamma
-        try:
-            p_mkt = await self.gamma_client.fetch_market(market_id)
-            if p_mkt and p_mkt.outcome_prices and len(p_mkt.outcome_prices) > 0:
-                return round(float(p_mkt.outcome_prices[0]), 4)
+        # Do not resolve an identifier against the wrong venue: slugs and
+        # tickers can both be opaque strings and a cross-venue guess can return
+        # a valid but unrelated market.
+        if not venue_name or "kalshi" in venue_name or "robinhood" in venue_name:
+            try:
+                k_mkt = await self.kalshi_client.fetch_market_by_ticker(market_id.upper())
+                if k_mkt and k_mkt.status in ("open", "active") and k_mkt.last_price is not None and k_mkt.last_price > 0:
+                    return round(float(k_mkt.last_price), 4)
+            except Exception:
+                pass
 
-            # Try by slug
-            ev = await self.gamma_client.fetch_event_by_slug(market_id)
-            if ev and ev.markets and ev.markets[0].raw_data:
-                op = ev.markets[0].raw_data.get("outcomePrices")
-                if isinstance(op, list) and len(op) > 0:
-                    return round(float(op[0]), 4)
-        except Exception:
-            pass
+        if not venue_name or "polymarket" in venue_name:
+            try:
+                p_mkt = await self.gamma_client.fetch_market(market_id)
+                if p_mkt and p_mkt.active and not p_mkt.closed and p_mkt.outcome_prices:
+                    return round(float(p_mkt.outcome_prices[0]), 4)
+
+                ev = await self.gamma_client.fetch_event_by_slug(market_id)
+                if ev:
+                    active_markets = [m for m in ev.markets if m.active and not m.closed and m.outcome_prices]
+                    if active_markets:
+                        return round(float(active_markets[0].outcome_prices[0]), 4)
+            except Exception:
+                pass
 
         return None
 
@@ -171,9 +272,16 @@ class MarketSearchService:
                         results.append({
                             "market_id": m.ticker,
                             "question": m.title,
-                            "venue": "Kalshi (mirrors Robinhood Predict)",
+                            "venue": "Kalshi",
                             "current_price": round(float(m.last_price), 4),
-                            "category": m.category or "General",
+                            "category": _kalshi_category(m),
+                            "volume": float(m.volume),
+                            "end_date": m.expiration_time,
+                            "image": None,
+                            "outcomes": ([
+                                {"label": "Yes", "price": round(float(m.last_price), 4)},
+                                {"label": "No", "price": round(1.0 - float(m.last_price), 4)},
+                            ] if m.last_price is not None else []),
                             "slug": m.event_ticker.lower()
                         })
             except Exception as e:
@@ -193,7 +301,11 @@ class MarketSearchService:
                                         "question": m.question or ev.title,
                                         "venue": "Polymarket",
                                         "current_price": price,
-                                        "category": m.category or "General",
+                                        "category": normalize_category(m.category or ev.raw_data.get("category", "") or ev.title),
+                                        "volume": float(m.volume),
+                                        "end_date": m.end_date_iso,
+                                        "image": m.image,
+                                        "outcomes": _poly_outcomes(m),
                                         "slug": m.slug or ev.slug
                                     })
                                     break # Only take one market per event for diversity
@@ -254,7 +366,11 @@ class MarketSearchService:
                         "question": m.question,
                         "venue": "Polymarket",
                         "current_price": round(price, 4),
-                        "category": m.category or "General",
+                        "category": normalize_category(m.category or ""),
+                        "volume": float(m.volume),
+                        "end_date": m.end_date_iso,
+                        "image": m.image,
+                        "outcomes": _poly_outcomes(m),
                         "slug": m.slug
                     }
             except Exception as e:
@@ -267,9 +383,16 @@ class MarketSearchService:
                     return {
                         "market_id": k_mkt.ticker,
                         "question": k_mkt.title,
-                        "venue": "Kalshi (mirrors Robinhood Predict)",
+                        "venue": "Kalshi",
                         "current_price": round(float(k_mkt.last_price), 4),
-                        "category": k_mkt.category or "General",
+                        "category": _kalshi_category(k_mkt),
+                        "volume": float(k_mkt.volume),
+                        "end_date": k_mkt.expiration_time,
+                        "image": None,
+                        "outcomes": [
+                            {"label": "Yes", "price": round(float(k_mkt.last_price), 4)},
+                            {"label": "No", "price": round(1.0 - float(k_mkt.last_price), 4)},
+                        ],
                         "slug": k_mkt.event_ticker.lower()
                     }
             except Exception as e:
@@ -312,8 +435,8 @@ class MarketSearchService:
                         continue
 
                 comb = f"{m.ticker} {m.title} {m.subtitle} {m.category}".lower()
-                # Strict match: require ALL extracted keywords to match
-                if all(kw in comb for kw in keywords):
+                match_score = sum(1 for kw in keywords if kw in comb)
+                if match_score > 0:
                     price = None
                     if m.last_price is not None and m.last_price > 0:
                         price = float(m.last_price)
@@ -324,16 +447,23 @@ class MarketSearchService:
                         matched.append({
                             "market_id": m.ticker,
                             "question": m.title,
-                            "venue": "Kalshi (mirrors Robinhood Predict)",
+                            "venue": "Kalshi",
                             "current_price": round(price, 4),
-                            "category": m.category or "General",
-                            "slug": m.event_ticker.lower()
+                            "category": _kalshi_category(m),
+                            "volume": float(m.volume),
+                            "end_date": m.expiration_time,
+                            "image": None,
+                            "outcomes": [
+                                {"label": "Yes", "price": round(float(price), 4)},
+                                {"label": "No", "price": round(1.0 - float(price), 4)},
+                            ],
+                            "slug": m.event_ticker.lower(),
+                            "_match_score": match_score,
                         })
-                        if len(matched) >= limit:
-                            break
         except Exception as e:
             logger.warning(f"[MarketSearchService] Kalshi search failed: {e}")
-        return matched
+        matched.sort(key=lambda item: item.pop("_match_score", 0), reverse=True)
+        return matched[:limit]
 
     async def _search_polymarket(self, keywords: List[str], limit: int = 10) -> List[Dict[str, Any]]:
         matched = []
@@ -347,9 +477,17 @@ class MarketSearchService:
                 events = await self.gamma_client.list_events(active=True, limit=50)
 
             for ev in events:
-                comb = f"{ev.title} {ev.slug} {ev.description}".lower()
-                # Strict match: require ALL extracted keywords to match
-                if all(kw in comb for kw in keywords):
+                comb = " ".join([
+                    ev.title,
+                    ev.slug,
+                    ev.description,
+                    *[
+                        f"{m.question} {m.slug} {m.category}"
+                        for m in ev.markets
+                    ],
+                ]).lower()
+                match_score = sum(1 for kw in keywords if kw in comb)
+                if match_score > 0:
                     for m in ev.markets:
                         # Exclude closed or inactive markets
                         if m.closed or not m.active:
@@ -363,33 +501,47 @@ class MarketSearchService:
                                         "question": m.question or ev.title,
                                         "venue": "Polymarket",
                                         "current_price": price,
-                                        "category": m.category or "General",
-                                        "slug": m.slug or ev.slug
+                                        "category": normalize_category(m.category or ev.raw_data.get("category", "") or ev.title),
+                                        "volume": float(m.volume),
+                                        "end_date": m.end_date_iso,
+                                        "image": m.image,
+                                        "outcomes": _poly_outcomes(m),
+                                        "slug": m.slug or ev.slug,
+                                        "_match_score": match_score,
                                     })
-                                    if len(matched) >= limit:
-                                        break
                             except (ValueError, TypeError):
                                 pass
-                    if len(matched) >= limit:
-                        break
         except Exception as e:
             logger.warning(f"[MarketSearchService] Polymarket search failed: {e}")
-        return matched
+        matched.sort(key=lambda item: item.pop("_match_score", 0), reverse=True)
+        return matched[:limit]
 
     async def browse_markets(self, venue: str = "all", category: Optional[str] = None, sort: str = "volume", page: int = 1, page_size: int = 24, q: Optional[str] = None) -> Dict[str, Any]:
         """
         Browse and list markets with pagination, sorting, and category filtering.
         """
+        category = category if category and category.lower() != "all" else None
+
         if q:
             # Delegate to existing keyword search (which does not paginate currently, so we return it as page 1)
-            search_results = await self.search_markets(q, limit=page_size)
+            search_results = await self.search_markets(q, limit=max(50, page_size * 3))
             # Normalize categories in search results
             for r in search_results:
                 r["category"] = normalize_category(r.get("category", ""))
                 r["image"] = r.get("image")
-                r["outcomes"] = None
+            if venue != "all":
+                search_results = [
+                    r for r in search_results
+                    if str(r.get("venue") or "").lower() == venue
+                ]
+            if category:
+                target_category = normalize_category(category)
+                search_results = [
+                    r for r in search_results
+                    if normalize_category(r.get("category", "")) == target_category
+                ]
             return {
-                "results": search_results,
+                "results": search_results[:page_size],
                 "page": page,
                 "page_size": page_size,
                 "has_more": False
@@ -415,29 +567,47 @@ class MarketSearchService:
             
             # If category is provided, we must first discover series for that category
             series_tickers = []
+            target_category = normalize_category(category or "") if category else None
             if category:
-                # We do a rough reverse-map: find all Kalshi tags that match the normalized category
-                # For simplicity, if a category is provided, we fetch a large batch of markets and filter locally,
-                # because Kalshi's /series API requires their exact category string, and we normalized it.
-                # Actually, the prompt says "GET /search/tags_by_categories -> GET /series?category=X".
+                # Resolve our normalized UI category to Kalshi's canonical
+                # category, then discover the most active series in it.
                 tags_data = await self.kalshi_client.get_tags_by_categories()
                 target_k_categories = []
-                norm_cat = normalize_category(category)
                 for k_cat in tags_data.keys():
-                    if normalize_category(k_cat) == norm_cat:
+                    if normalize_category(k_cat) == target_category:
                         target_k_categories.append(k_cat)
                 
                 for k_cat in target_k_categories:
-                    s_tickers = await self.kalshi_client.get_series(k_cat, limit=50)
+                    s_tickers = await self.kalshi_client.get_series(k_cat, limit=12)
                     series_tickers.extend(s_tickers)
-                
-                # If we found series, we should query them. But fetch_markets only takes one series_ticker.
-                # To support proper pagination, if category is selected, we might have to fetch general open and filter.
-                # Let's fetch general open markets and filter locally to ensure we can paginate.
             
-            # Fetch general open markets
-            k_limit = page_size if venue == "kalshi" else page_size * 2
-            mkts, next_cursor = await self.kalshi_client.fetch_markets(limit=k_limit, status="open", cursor=kalshi_cursor)
+            # Kalshi returns markets in API order rather than by liquidity.
+            # The first ~100 rows are frequently newly-created, zero-volume
+            # hourly contracts, which made the UI look as if Kalshi had no
+            # useful markets. Pull the full supported page and sort locally.
+            k_limit = 1000
+            if series_tickers:
+                batches = await asyncio.gather(*[
+                    self.kalshi_client.fetch_markets(
+                        limit=250,
+                        status="open",
+                        series_ticker=series_ticker,
+                    )
+                    for series_ticker in dict.fromkeys(series_tickers)
+                ])
+                market_by_ticker = {
+                    market.ticker: market
+                    for markets, _ in batches
+                    for market in markets
+                }
+                mkts = list(market_by_ticker.values())
+                next_cursor = None
+            else:
+                mkts, next_cursor = await self.kalshi_client.fetch_markets(
+                    limit=k_limit,
+                    status="open",
+                    cursor=kalshi_cursor,
+                )
             
             results = []
             for m in mkts:
@@ -445,15 +615,12 @@ class MarketSearchService:
                     continue
                 # We don't have category directly on m. We can infer from series if we had a map, 
                 # but Kalshi deprecated it. We'll mark as "Other" unless we can map from title/subtitle.
-                cat = normalize_category(m.title + " " + m.subtitle)
-                if category and normalize_category(category) != cat:
+                cat = target_category if series_tickers and target_category else _kalshi_category(m)
+                if target_category and target_category != cat:
                     continue
                 
-                price = None
-                if m.last_price is not None and m.last_price > 0:
-                    price = float(m.last_price)
-                elif m.yes_bid > 0 and m.yes_ask > 0:
-                    price = (m.yes_bid + m.yes_ask) / 2.0
+                # Prefer the current quoted midpoint over a stale last trade.
+                price = m.midpoint_price
                 
                 if price is not None and price > 0:
                     results.append({
@@ -464,11 +631,17 @@ class MarketSearchService:
                         "category": cat,
                         "volume": float(m.volume),
                         "liquidity": 0.0, # Kalshi liquidity is deprecated
+                        "yes_bid": round(float(m.yes_bid), 4),
+                        "yes_ask": round(float(m.yes_ask), 4),
+                        "spread": round(float(m.yes_ask - m.yes_bid), 4) if m.yes_bid > 0 and m.yes_ask > 0 else None,
                         "end_date": m.expiration_time,
                         "slug": m.event_ticker.lower(),
                         "image": None,
                         "event_id": m.event_ticker,
-                        "outcomes": None,
+                        "outcomes": [
+                            {"label": "Yes", "price": round(price, 4)},
+                            {"label": "No", "price": round(1.0 - price, 4)},
+                        ],
                         "_sort_date": m.raw_data.get("open_time", "")
                     })
             return results, next_cursor
@@ -476,17 +649,49 @@ class MarketSearchService:
         async def _get_poly():
             if not fetch_poly:
                 return [], False
-            
-            p_limit = page_size if venue == "polymarket" else page_size * 2
-            p_offset = (page - 1) * page_size
-            
-            # We fetch events to group by eventId natively
-            events = await self.gamma_client.list_events(active=True, limit=p_limit, offset=p_offset)
+
+            target_category = normalize_category(category or "") if category else None
+            tag_slugs = POLYMARKET_CATEGORY_TAGS.get(target_category or "", [])
+            used_tag_filter = False
+            if tag_slugs:
+                tag_batches = await asyncio.gather(*[
+                    self.gamma_client.list_events(
+                        active=True,
+                        limit=max(page_size * 4, 50),
+                        offset=0,
+                        tag_slug=tag_slug,
+                        related_tags=True,
+                    )
+                    for tag_slug in tag_slugs
+                ])
+                event_by_id = {
+                    event.id: event
+                    for batch in tag_batches
+                    for event in batch
+                }
+                events = list(event_by_id.values())
+                used_tag_filter = bool(events)
+            else:
+                events = []
+
+            # Fall back to broad discovery when Polymarket has no canonical
+            # tag for the requested category or a tag temporarily returns no
+            # events. This also powers the unfiltered directory.
+            if not events:
+                p_limit = max(100, min(500, page_size * 10)) if category else (page_size if venue == "polymarket" else page_size * 2)
+                p_offset = 0 if category else (page - 1) * page_size
+                events = await self.gamma_client.list_events(
+                    active=True,
+                    limit=p_limit,
+                    offset=p_offset,
+                )
+            else:
+                p_limit = max(page_size * 4, 50)
             
             results = []
             for ev in events:
-                cat = normalize_category(ev.raw_data.get("category", "") or ev.title)
-                if category and normalize_category(category) != cat:
+                cat = target_category if used_tag_filter and target_category else _polymarket_category(ev)
+                if target_category and target_category != cat:
                     continue
                 
                 valid_markets = [m for m in ev.markets if m.active and not m.closed and m.outcome_prices]
@@ -510,7 +715,7 @@ class MarketSearchService:
                             "slug": m.slug or ev.slug,
                             "image": m.image,
                             "event_id": m.event_id or ev.id,
-                            "outcomes": None,
+                            "outcomes": _poly_outcomes(m),
                             "_sort_date": m.raw_data.get("createdAt", "")
                         })
                 else:
@@ -562,22 +767,45 @@ class MarketSearchService:
         # Sorting
         if sort == "ending_soon":
             # Ascending by end_date, nulls last
-            combined.sort(key=lambda x: x["end_date"] or "9999-12-31")
+            sort_key = lambda item: item["end_date"] or "9999-12-31"
+            reverse_sort = False
         elif sort == "newest":
             # Descending by created date (we stashed it in _sort_date)
-            combined.sort(key=lambda x: x.get("_sort_date", ""), reverse=True)
+            sort_key = lambda item: item.get("_sort_date", "")
+            reverse_sort = True
         else:
             # volume desc
-            combined.sort(key=lambda x: x["volume"] or 0.0, reverse=True)
+            sort_key = lambda item: item["volume"] or 0.0
+            reverse_sort = True
+
+        # Sort each venue as well as the combined list. Venue quotas below must
+        # select the best rows, not whichever order an upstream API returned.
+        k_res.sort(key=sort_key, reverse=reverse_sort)
+        p_res.sort(key=sort_key, reverse=reverse_sort)
+        combined.sort(key=sort_key, reverse=reverse_sort)
             
-        # Strip _sort_date
-        for r in combined:
-            r.pop("_sort_date", None)
-            
-        # If we fetched from both, we might have over-fetched. Slice to page_size.
-        # But wait, if we slice, the next page for Polymarket will use offset=page*page_size and skip items.
-        # This is a known limitation of federated naive pagination. We will just return the sliced amount.
-        final_results = combined[:page_size]
+        # If both venues are requested, a global volume sort can let
+        # Polymarket's much larger notional volumes fill the entire page and
+        # hide Kalshi completely. Keep the directory useful by reserving
+        # roughly half of the first page for each venue, then fill any spare
+        # slots from the remaining globally sorted results.
+        if venue == "all" and k_res and p_res:
+            kalshi_quota = max(1, page_size // 2)
+            polymarket_quota = max(1, page_size - kalshi_quota)
+            selected = k_res[:kalshi_quota] + p_res[:polymarket_quota]
+            selected_keys = {(r.get("venue"), r.get("market_id")) for r in selected}
+            if len(selected) < page_size:
+                selected.extend(
+                    r for r in combined
+                    if (r.get("venue"), r.get("market_id")) not in selected_keys
+                )
+            selected.sort(key=sort_key, reverse=reverse_sort)
+            final_results = selected[:page_size]
+        else:
+            final_results = combined[:page_size]
+
+        for result in final_results:
+            result.pop("_sort_date", None)
         
         has_more = bool(k_next_cursor) or p_has_more
         

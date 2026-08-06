@@ -7,7 +7,7 @@ import httpx
 from .base import BaseProvider, ProviderError
 
 class AnthropicProvider(BaseProvider):
-    def __init__(self, api_key: str, api_base: str = "https://api.anthropic.com/v1", model_id: str = "claude-3-5-sonnet-latest"):
+    def __init__(self, api_key: str, api_base: str = "https://api.anthropic.com/v1", model_id: str = "claude-sonnet-4-6"):
         self.api_key = api_key
         self.api_base = api_base.rstrip('/')
         self.model_id = model_id

@@ -6,7 +6,7 @@ recency, and sentiment alignment.
 """
 
 from typing import Dict, Any
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from ..models.evidence import Evidence
 
 class SignalScorer:
@@ -25,11 +25,11 @@ class SignalScorer:
         cred = self.source_credibility.get(evidence.source_name, 0.5)
 
         # 2. Recency decay (decays over 7 days)
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         evidence_time = evidence.timestamp
         if evidence_time.tzinfo is None:
             # Assume UTC
-            evidence_time = evidence_time.replace(tzinfo=UTC)
+            evidence_time = evidence_time.replace(tzinfo=timezone.utc)
         
         age_seconds = (now - evidence_time).total_seconds()
         age_days = max(0.0, age_seconds / (24 * 3600))

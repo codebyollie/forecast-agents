@@ -3,7 +3,7 @@ Forecast models: ReasoningTrace and ForecastResult.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Any
 from .prediction import Prediction
 from .confidence import ConfidenceScore
@@ -22,7 +22,7 @@ class ForecastResult:
     confidence: ConfidenceScore         # Consensus confidence
     reasoning_trace: ReasoningTrace     # Explainable trace of consensus
     individual_predictions: List[Prediction] = field(default_factory=list)
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property

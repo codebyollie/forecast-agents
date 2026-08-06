@@ -2,8 +2,8 @@
 Kalshi API Client.
 
 Provides public read-only access to Kalshi event contracts and orderbooks.
-Note: Kalshi market data serves as the primary market-data proxy for Robinhood Predict,
-since Robinhood Predict event contracts settle via Kalshi's exchange infrastructure.
+Kalshi data represents Kalshi-listed contracts and is not treated as a complete
+mirror of another broker's prediction-market catalog.
 """
 
 import logging
@@ -19,20 +19,29 @@ _MARKET_RESOLUTION_CACHE: Dict[str, Tuple[float, KalshiMarket]] = {}
 RESOLUTION_CACHE_TTL_SECONDS = 86400.0  # 24 hours
 
 class KalshiClient:
-    def __init__(self, base_url: str = "https://api.elections.kalshi.com/trade-api/v2", api_key: Optional[str] = None):
+    def __init__(self, base_url: str = "https://external-api.kalshi.com/trade-api/v2"):
         self.base_url = base_url.rstrip('/')
-        self.api_key = api_key
 
     def _headers(self) -> Dict[str, str]:
         headers = {
             "Accept": "application/json",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         }
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+        # Read-only market and orderbook endpoints are public. Kalshi private
+        # endpoints use signed request headers, not bearer-token authentication.
         return headers
 
     def _parse_market(self, data: Dict[str, Any]) -> KalshiMarket:
+        # Kalshi has kept the endpoint stable but has progressively moved from
+        # integer-cent fields to *_dollars / *_fp fields.  Accept both shapes
+        # so a schema refresh does not make the market browser silently empty.
+        def first_value(*keys: str, default: Any = None) -> Any:
+            for key in keys:
+                value = data.get(key)
+                if value is not None and value != "":
+                    return value
+            return default
+
         def parse_val(cents_key: str, dollars_key: str, default_val: float = 0.0) -> float:
             if data.get(dollars_key) is not None:
                 try:
@@ -67,10 +76,29 @@ class KalshiClient:
         no_ask = parse_val("no_ask", "no_ask_dollars", 0.0)
         last_price = parse_opt_val("last_price", "last_price_dollars")
 
+        title = first_value(
+            "title", "market_title", "question", "yes_sub_title", "subtitle",
+            default=data.get("ticker", "")
+        )
+        subtitle = first_value("subtitle", "no_sub_title", default="")
+
+        def parse_number(*keys: str) -> float:
+            value = first_value(*keys, default=0)
+            try:
+                return float(value or 0)
+            except (TypeError, ValueError):
+                return 0.0
+
+        volume = parse_number("volume", "volume_fp", "volume_24h_fp")
+        open_interest = parse_number("open_interest", "open_interest_fp")
+        expiration_time = first_value(
+            "expiration_time", "latest_expiration_time", "close_time", default=""
+        )
+
         return KalshiMarket(
             ticker=data.get("ticker", ""),
-            title=data.get("title", "") or data.get("subtitle", ""),
-            subtitle=data.get("subtitle", ""),
+            title=str(title or data.get("ticker", "")),
+            subtitle=str(subtitle or ""),
             category="", # Deprecated by Kalshi, use series discovery instead
             event_ticker=data.get("event_ticker", ""),
             status=data.get("status", "active"),
@@ -79,18 +107,27 @@ class KalshiClient:
             no_bid=no_bid,
             no_ask=no_ask,
             last_price=last_price,
-            volume=float(data.get("volume", 0) or 0),
-            open_interest=float(data.get("open_interest", 0) or 0),
-            expiration_time=data.get("expiration_time", ""),
+            volume=volume,
+            open_interest=open_interest,
+            expiration_time=str(expiration_time or ""),
             result=data.get("result"),
             raw_data=data
         )
 
     async def fetch_markets(self, limit: int = 20, status: str = "open", series_ticker: Optional[str] = None, cursor: Optional[str] = None) -> Tuple[List[KalshiMarket], Optional[str]]:
         """Fetch list of open markets from Kalshi. Returns (markets, next_cursor)."""
-        async with httpx.AsyncClient(verify=False) as client:
+        # A full 1,000-market discovery page can take longer than httpx's
+        # default timeout during exchange rollovers.
+        async with httpx.AsyncClient(verify=True, timeout=20.0) as client:
             try:
-                params = {"limit": limit, "status": status}
+                params = {
+                    "limit": limit,
+                    "status": status,
+                    # Kalshi's newest pages are often dominated by zero-price
+                    # multi-leg contracts. They made the browse endpoint look
+                    # empty after our real-price filter was applied.
+                    "mve_filter": "exclude",
+                }
                 if series_ticker:
                     params["series_ticker"] = series_ticker
                 if cursor:
@@ -104,6 +141,22 @@ class KalshiClient:
                     data = resp.json()
                     markets_raw = data.get("markets", [])
                     next_cursor = data.get("cursor")
+
+                    # Keep the browser useful if Kalshi temporarily returns
+                    # no rows for the status filter during a market rollover.
+                    # The unfiltered public endpoint still contains the live
+                    # contracts and we filter active rows in the service.
+                    if not markets_raw and status == "open" and not cursor:
+                        fallback = await client.get(
+                            f"{self.base_url}/markets",
+                            params={"limit": limit, "mve_filter": "exclude"},
+                            headers=self._headers(),
+                        )
+                        if fallback.status_code == 200:
+                            fallback_data = fallback.json()
+                            markets_raw = fallback_data.get("markets", [])
+                            next_cursor = fallback_data.get("cursor")
+
                     return [self._parse_market(m) for m in markets_raw], next_cursor
             except Exception as e:
                 logger.warning(f"[KalshiClient] fetch_markets error: {e}")
@@ -112,26 +165,32 @@ class KalshiClient:
 
     async def get_tags_by_categories(self) -> Dict[str, Any]:
         """Fetch all tags grouped by categories from Kalshi."""
-        async with httpx.AsyncClient(verify=False) as client:
+        async with httpx.AsyncClient(verify=True) as client:
             try:
                 resp = await client.get(
                     f"{self.base_url}/search/tags_by_categories",
                     headers=self._headers()
                 )
                 if resp.status_code == 200:
-                    return resp.json()
+                    data = resp.json()
+                    return data.get("tags_by_categories", data)
             except Exception as e:
                 logger.warning(f"[KalshiClient] get_tags_by_categories error: {e}")
         return {}
 
     async def get_series(self, category: str, limit: int = 200) -> List[str]:
         """Fetch series tickers for a given category."""
-        series_tickers = []
+        series_rows = []
         cursor = None
-        async with httpx.AsyncClient(verify=False) as client:
+        scan_limit = max(limit, 200)
+        async with httpx.AsyncClient(verify=True) as client:
             try:
                 while True:
-                    params = {"category": category, "limit": 100}
+                    params = {
+                        "category": category,
+                        "limit": 100,
+                        "include_volume": "true",
+                    }
                     if cursor:
                         params["cursor"] = cursor
                     resp = await client.get(
@@ -142,19 +201,26 @@ class KalshiClient:
                     if resp.status_code == 200:
                         data = resp.json()
                         for s in data.get("series", []):
-                            series_tickers.append(s.get("ticker"))
+                            ticker = s.get("ticker")
+                            if ticker:
+                                try:
+                                    volume = float(s.get("volume") or s.get("volume_fp") or 0)
+                                except (TypeError, ValueError):
+                                    volume = 0.0
+                                series_rows.append((ticker, volume))
                         cursor = data.get("cursor")
-                        if not cursor or len(series_tickers) >= limit:
+                        if not cursor or len(series_rows) >= scan_limit:
                             break
                     else:
                         break
             except Exception as e:
                 logger.warning(f"[KalshiClient] get_series error: {e}")
-        return series_tickers[:limit]
+        series_rows.sort(key=lambda item: item[1], reverse=True)
+        return [ticker for ticker, _ in series_rows[:limit]]
 
     async def fetch_market_by_ticker(self, ticker: str) -> Optional[KalshiMarket]:
         """Fetch a specific Kalshi market by ticker symbol."""
-        async with httpx.AsyncClient(verify=False) as client:
+        async with httpx.AsyncClient(verify=True) as client:
             try:
                 resp = await client.get(
                     f"{self.base_url}/markets/{ticker}",
@@ -195,7 +261,7 @@ class KalshiClient:
                 return fallback_mkt
 
         # 2. Query markets under base series_ticker
-        async with httpx.AsyncClient(verify=False) as client:
+        async with httpx.AsyncClient(verify=True) as client:
             try:
                 resp = await client.get(
                     f"{self.base_url}/markets",
@@ -238,7 +304,7 @@ class KalshiClient:
 
     async def fetch_orderbook(self, ticker: str) -> Optional[KalshiOrderbook]:
         """Fetch orderbook depth for a market ticker."""
-        async with httpx.AsyncClient(verify=False) as client:
+        async with httpx.AsyncClient(verify=True) as client:
             try:
                 resp = await client.get(
                     f"{self.base_url}/markets/{ticker}/orderbook",
@@ -248,13 +314,27 @@ class KalshiClient:
                     data = resp.json()
                     ob_data = data.get("orderbook", data)
                     
+                    def parse_price(raw: Any) -> float:
+                        value = float(raw)
+                        return value / 100.0 if value > 1.0 else value
+
                     yes_bids = [
-                        KalshiBookLevel(price=float(b[0])/100.0 if b[0] > 1 else float(b[0]), size=float(b[1]))
+                        KalshiBookLevel(price=parse_price(b[0]), size=float(b[1]))
                         for b in ob_data.get("yes", []) if len(b) >= 2
                     ]
+                    no_bids = [
+                        KalshiBookLevel(price=parse_price(b[0]), size=float(b[1]))
+                        for b in ob_data.get("no", []) if len(b) >= 2
+                    ]
+                    # Kalshi exposes YES and NO bids. A YES ask is the
+                    # complement of a NO bid, and vice versa.
                     yes_asks = [
-                        KalshiBookLevel(price=float(a[0])/100.0 if a[0] > 1 else float(a[0]), size=float(a[1]))
-                        for a in ob_data.get("no", []) if len(a) >= 2
+                        KalshiBookLevel(price=round(1.0 - level.price, 4), size=level.size)
+                        for level in no_bids
+                    ]
+                    no_asks = [
+                        KalshiBookLevel(price=round(1.0 - level.price, 4), size=level.size)
+                        for level in yes_bids
                     ]
 
                     spread = 0.0
@@ -267,6 +347,8 @@ class KalshiClient:
                         ticker=ticker,
                         yes_bids=yes_bids,
                         yes_asks=yes_asks,
+                        no_bids=no_bids,
+                        no_asks=no_asks,
                         spread=spread,
                         midpoint=midpoint,
                         raw_data=data

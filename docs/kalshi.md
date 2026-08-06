@@ -1,39 +1,34 @@
-# 📊 Kalshi & Robinhood Predict Integration
+# Kalshi Integration
 
-## Overview
+Forecast AI uses Kalshi's public Trade API for read-only market discovery and analysis.
 
-Forecast AI integrates with **Kalshi's Public Market Data API** as the primary market-data source reflecting **Robinhood Predict** event contracts. 
+Default production endpoint:
 
-### Why Kalshi is the Proxy for Robinhood Predict
-Robinhood Predict offers regulated binary prediction market contracts (pricing range $0.01 – $0.99, representing implied outcome probabilities). Robinhood Predict contracts settle through Kalshi's exchange infrastructure (as well as partner exchanges ForecastEX and Rothera). Because Robinhood Predict does not provide an independent, anonymous public market-data REST/WebSocket API, Forecast AI programmatically queries Kalshi's public trade API (`https://api.elections.kalshi.com/trade-api/v2`) to pull real-time prices, orderbooks, and event listings.
+```text
+https://external-api.kalshi.com/trade-api/v2
+```
 
-## Features
+Public market, series, event, and orderbook requests do not require authentication.
 
-- **Public Event Market Discovery**: Search and list active prediction markets across politics, macroeconomics, finance, and entertainment.
-- **Orderbook Depth Analysis**: Retrieve live bid/ask spreads (`yes_bid`, `yes_ask`, `no_bid`, `no_ask`) and calculate midpoint implied probabilities.
-- **Uniform Consensus Integration**: Kalshi market data is normalized into standard `Evidence` and `Market` models consumable by Forecast AI's Market Agent and Consensus Engine.
+## Supported behavior
+
+- active-market discovery;
+- keyword search;
+- category-to-series discovery;
+- current Yes bid/ask midpoint;
+- support for cents, `*_dollars`, and `*_fp` response fields;
+- multi-leg market exclusion in the default browser;
+- live Yes/No orderbook normalization;
+- selected-market evidence for the Market agent.
 
 ## Configuration
 
-In `~/.forecast_ai/config.yaml`:
-
-```yaml
-kalshi:
-  api_base_url: "https://api.elections.kalshi.com/trade-api/v2"
-  api_key: "" # Optional for public market-data endpoints
+```env
+KALSHI_API_BASE_URL=https://external-api.kalshi.com/trade-api/v2
 ```
 
-## Python API Example
+Forecast AI does not implement Kalshi private order signing or trade execution.
 
-```python
-import asyncio
-from forecast_ai.kalshi import KalshiClient
+## Robinhood distinction
 
-async def main():
-    client = KalshiClient()
-    markets = await client.fetch_markets(limit=5)
-    for m in markets:
-        print(f"Market: {m.title} [{m.ticker}] - Implied Prob: {m.midpoint_price:.1%}")
-
-asyncio.run(main())
-```
+Kalshi data represents Kalshi-listed contracts only. Forecast AI does not claim that Kalshi is a complete mirror of the markets displayed by Robinhood Predict.

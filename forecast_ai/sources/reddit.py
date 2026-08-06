@@ -6,7 +6,7 @@ Fetches data via Reddit API or falls back to public search JSON when API keys ar
 
 from typing import List, Optional
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import BaseSource
 from ..models.evidence import Evidence
 
@@ -38,7 +38,11 @@ class RedditSource(BaseSource):
                     for child in children:
                         post_data = child.get("data", {})
                         created_utc = post_data.get("created_utc", 0.0)
-                        dt = datetime.fromtimestamp(created_utc) if created_utc else datetime.utcnow()
+                        dt = (
+                            datetime.fromtimestamp(created_utc, timezone.utc)
+                            if created_utc
+                            else datetime.now(timezone.utc)
+                        )
                         
                         title = post_data.get("title", "")
                         selftext = post_data.get("selftext", "")
@@ -50,7 +54,12 @@ class RedditSource(BaseSource):
                             timestamp=dt,
                             title=title,
                             url=f"https://reddit.com{post_data.get('permalink', '')}",
-                            relevance_score=0.5
+                            relevance_score=0.5,
+                            metadata={
+                                "provider": "Reddit",
+                                "source_type": "reddit",
+                                "subreddit": subreddit,
+                            },
                         ))
                     return results
             except Exception:

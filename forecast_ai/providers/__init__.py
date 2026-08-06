@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Dict, List, Optional
 from .base import BaseProvider, ProviderError
 from .openai import OpenAIProvider
@@ -16,9 +17,14 @@ class ProviderManager:
     def __init__(self, config: ForecastConfig):
         self.config = config
         self.providers: Dict[str, BaseProvider] = {}
-        daily_budget = getattr(config.server, "daily_llm_budget_usd", 10.0)
-        monthly_budget = getattr(config.server, "public_feed_monthly_budget_usd", 50.0)
-        self.spend_guard = SpendGuard(daily_cap_usd=daily_budget, monthly_cap_usd=monthly_budget)
+        self.spend_guard = None
+        if config.server.spend_guard_enabled:
+            spend_path = Path(config.memory.store_dir) / "llm_spend_log.json"
+            self.spend_guard = SpendGuard(
+                store_path=str(spend_path),
+                daily_cap_usd=config.server.daily_llm_budget_usd,
+                monthly_cap_usd=config.server.monthly_llm_budget_usd,
+            )
         self._init_providers()
 
     def _init_providers(self):
@@ -55,62 +61,32 @@ class ProviderManager:
     def _map_model_for_provider(self, provider_name: str, model_override: str) -> str:
         p_name = provider_name.lower()
         m_override = model_override.lower()
-        
-        # Fictional meta model maps to best available for each provider
-        if "luna" in m_override or "gpt-5.6" in m_override:
-            if p_name == "openai":
-                return "gpt-4o"
-            elif p_name == "anthropic":
-                return "claude-3-5-sonnet-latest"
-            elif p_name == "gemini":
-                return "gemini-1.5-flash"
-            elif p_name == "openrouter":
-                return "meta-llama/llama-3.1-405b"
-            elif p_name == "ollama":
-                return "llama3"
 
-        # OpenAI specific models
-        if "gpt-4o-mini" in m_override:
-            if p_name == "openai":
-                return "gpt-4o-mini"
-            elif p_name == "anthropic":
-                return "claude-3-5-haiku-latest"
-            elif p_name == "gemini":
-                return "gemini-1.5-flash"
-            elif p_name == "openrouter":
-                return "meta-llama/llama-3.1-8b-instruct"
-                
-        if "gpt-4o" in m_override or "gpt-4" in m_override:
-            if p_name == "openai":
-                return "gpt-4o"
-            elif p_name == "anthropic":
-                return "claude-3-5-sonnet-latest"
-            elif p_name == "gemini":
-                return "gemini-1.5-flash"
-            elif p_name == "openrouter":
-                return "meta-llama/llama-3.1-405b"
+        # Preserve an override only when it is native to the provider handling
+        # the request. Cross-provider fallbacks use that provider's configured
+        # model instead of hard-coded model IDs that can become retired.
+        native_override = (
+            (p_name == "openai" and m_override.startswith(("gpt-", "o1", "o3", "o4")))
+            or (p_name == "anthropic" and m_override.startswith("claude-"))
+            or (p_name == "gemini" and m_override.startswith("gemini-"))
+            or p_name == "ollama"
+        )
+        if native_override:
+            return model_override
 
-        # Anthropic specific models
-        if "claude-3-5-sonnet" in m_override:
-            if p_name == "openai":
-                return "gpt-4o"
-            elif p_name == "anthropic":
-                return "claude-3-5-sonnet-latest"
-            elif p_name == "gemini":
-                return "gemini-1.5-flash"
-            elif p_name == "openrouter":
-                return "meta-llama/llama-3.1-405b"
+        if p_name == "openrouter":
+            if "/" in model_override:
+                return model_override
+            if m_override.startswith(("gpt-", "o1", "o3", "o4")):
+                return f"openai/{model_override}"
+            if m_override.startswith("claude-"):
+                return f"anthropic/{model_override}"
+            if m_override.startswith("gemini-"):
+                return f"google/{model_override}"
 
-        if "claude" in m_override:
-            if p_name == "openai":
-                return "gpt-4o-mini"
-            elif p_name == "anthropic":
-                return "claude-3-5-haiku-latest"
-            elif p_name == "gemini":
-                return "gemini-1.5-flash"
-            elif p_name == "openrouter":
-                return "meta-llama/llama-3.1-8b-instruct"
-
+        provider_config = self.config.providers.get(provider_name)
+        if provider_config and provider_config.model_id:
+            return provider_config.model_id
         return model_override
 
     def get_provider(self, name: str) -> BaseProvider:
@@ -129,14 +105,12 @@ class ProviderManager:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         agent_name: Optional[str] = None,
-        is_public_feed: bool = False,
         model_override: Optional[str] = None
     ) -> str:
         """
         Attempts generation with primary_name provider first.
         Upon ProviderError, falls through configured fallback providers in sequence.
         Deduplicates and excludes primary_name from fallback sequence.
-        Excludes 'ollama' if is_public_feed is True.
         """
         # Determine candidate sequence
         agent_cfg = self.config.agents.get(agent_name) if agent_name else None
@@ -146,15 +120,13 @@ class ProviderManager:
             else getattr(self.config, "fallback_providers", ["openai", "anthropic", "gemini", "openrouter"])
         )
 
-        # Filter candidates: dedupe, exclude primary_name, exclude 'ollama' if public feed
+        # Filter candidates: dedupe and exclude primary_name from fallbacks.
         # Only include primary if it's actually initialized
         candidates: List[str] = []
         if primary_name in self.providers:
             candidates.append(primary_name)
         for name in configured_fallbacks:
             if name == primary_name:
-                continue
-            if is_public_feed and name == "ollama":
                 continue
             if name not in candidates and name in self.providers:
                 candidates.append(name)
@@ -166,7 +138,7 @@ class ProviderManager:
         for idx, provider_name in enumerate(candidates):
             provider = self.providers[provider_name]
             try:
-                # Map model_override (e.g. fictional gpt-5.6-luna) to provider's native identifier
+                # Map a requested model family to the active fallback provider.
                 resolved_override = None
                 if model_override is not None:
                     resolved_override = self._map_model_for_provider(provider_name, model_override)

@@ -1,140 +1,245 @@
-# 🔮 Forecast AI
+# Forecast AI
 
-### Open-Source Multi-Agent Intelligence Infrastructure for Prediction Markets
+Self-hosted, bring-your-own-keys multi-agent intelligence for prediction markets.
 
-**Powered by $FORAI CA: 0xcc9c1ec224c3824ae5ea699ec72ef5fad4165e49**
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/new?template=https://github.com/codebyollie/forecast-agents)
 
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](#)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge)](#)
-[![Robinhood Predict](https://img.shields.io/badge/Robinhood-Predict-green?style=for-the-badge)](#)
+Forecast AI collects live evidence, asks seven specialized agents for independent probability estimates, and combines them into an explainable consensus forecast.
 
-<p align="center">
-  <a href="https://railway.app/template/new?template=https://github.com/codebyollie/forecast-agents">
-    <img src="https://railway.app/button.svg" alt="Deploy on Railway">
-  </a>
-  <a href="https://render.com/deploy?repo=https://github.com/codebyollie/forecast-agents">
-    <img src="https://render.com/images/deploy-to-render.svg" alt="Deploy to Render">
-  </a>
-</p>
+This repository contains the open-source backend, CLI, REST API, tests, and self-hosting configuration. It does not contain the hosted Forecast AI website, user accounts, token-holder tiers, quotas, or private production infrastructure.
 
----
+## What it includes
 
-**Forecast AI** is a fully open-source, BYOK (Bring-Your-Own-Keys) multi-agent intelligence infrastructure for Prediction Markets (Kalshi, Robinhood Predict, and Polymarket). It enables specialized autonomous AI agents to continuously monitor real-world events, aggregate multi-modal data, reason collaboratively, and generate explainable probability forecasts.
+- Live read-only market discovery for Kalshi and Polymarket.
+- Search, venue filters, category filters, live prices, outcomes, and orderbook context.
+- Seven agents: News, Social, Reddit, Research, Macro, On-chain, and Market.
+- Optional Tavily and FactsAI research with visible provider attribution and graceful fallbacks.
+- Structured agent output: summary, key drivers, counter-signals, uncertainties, watch items, citations, and provider status.
+- Confidence-weighted consensus, local history, and agent reputation memory.
+- OpenAI, Anthropic, Gemini, OpenRouter, and local Ollama support.
+- Optional recommendation formatting for hand-off to a user-controlled Robinhood Agentic Trading MCP session.
 
-Instead of relying on a single static LLM, Forecast AI deploys **7 domain-specialized agents** (News, Social, Reddit, Research, Macro, On-chain, and Market Agents). A **Consensus Engine** aggregates their analysis into a calibrated probability forecast and formats trade recommendations for hand-off to your personal **Robinhood Agentic Trading MCP** session.
+## Agent data sources
 
----
+| Agent | Primary evidence |
+| --- | --- |
+| News | News API, RSS, FactsAI or web-search fallback |
+| Social | X/Twitter when configured; domain-filtered Tavily/web results |
+| Reddit | Reddit public data; Reddit-filtered Tavily/web results |
+| Research | FactsAI, Tavily, and cited web research |
+| Macro | Macro/news evidence plus FactsAI or web-search fallback |
+| On-chain | Configured blockchain explorer data |
+| Market | The selected Kalshi or Polymarket market, prices, outcomes, and orderbook |
 
-## 🚀 Quick Setup Guide
+Disabled or unconfigured paid sources are skipped. FactsAI and Tavily are off by default.
 
-Forecast AI is designed to be hosted on your own infrastructure using your own API keys. 
+## Quick start
 
-### 1. Clone & Install
+Requirements: Python 3.10 or newer and Git.
+
 ```bash
 git clone https://github.com/codebyollie/forecast-agents.git
 cd forecast-agents
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+python -m venv .venv
 ```
 
-### 2. Configure Environment (Bring-Your-Own-Keys)
-Copy the example environment file:
+Activate the environment:
+
 ```bash
-cp .env.example .env
-```
-Open `.env` and add your required API keys. You can use any combination of LLM providers and Data APIs:
-* **LLMs**: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, or `OLLAMA_API_BASE`
-* **Data Sources**: `TAVILY_API_KEY`, `FACTSAI_API_KEY`, `NEWS_API_KEY`, `TWITTER_BEARER_TOKEN`
+# macOS / Linux
+source .venv/bin/activate
 
-### 3. Run the CLI or Server
-Run an interactive setup wizard to verify your keys:
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
+
+Install Forecast AI:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+Create your local configuration:
+
+```bash
+# macOS / Linux
+cp .env.example .env
+
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+Open `.env` and add at least one LLM provider key, or configure a local Ollama server. Do not commit `.env`.
+
+You can also use the interactive wizard:
+
 ```bash
 forecast setup
 ```
-Or immediately start the API server and market surveillance loop:
+
+Validate free public market connections without calling paid research or LLM APIs:
+
 ```bash
-forecast run --category crypto
+forecast doctor
 ```
 
----
+Run only the API server:
 
-## 🏗 System Architecture & Smart Orchestration
-
-Forecast AI features a state-of-the-art **Smart Orchestrator** to prevent API spam and reduce costs:
-
-1. **Smart Routing**: The `SourceManager` dynamically routes queries to the correct APIs. (e.g., deep research queries hit FactsAI + Tavily; crypto queries hit Blockchain + News).
-2. **Local Caching**: All API responses are cached locally with a TTL mechanism so that 7 agents querying similar data only trigger a single API charge.
-3. **Synthesis Layer**: Raw search results are synthesized, deduplicated, and fact-checked by a lightweight LLM *before* being handed to the Agent cluster.
-
-```mermaid
-graph TD
-    subgraph Smart Orchestrator & Sources
-        Router[Smart Router]
-        Cache[(Local JSON Cache)]
-        Synth[LLM Synthesis Layer]
-        
-        Router --> Cache
-        Cache -->|Miss| kalshi[Kalshi / Polymarket]
-        Cache -->|Miss| tavily[Tavily API]
-        Cache -->|Miss| factsai[FactsAI Deep Research]
-        Cache -->|Miss| social[Reddit / Twitter]
-        
-        kalshi & tavily & factsai & social --> Synth
-    end
-
-    subgraph 7 Specialized AI Agents
-        A_News[News Agent]
-        A_Social[Social Agent]
-        A_Reddit[Reddit Agent]
-        A_Research[Research Agent]
-        A_Macro[Macro Agent]
-        A_Onchain[On-chain Agent]
-        A_Market[Market Agent]
-    end
-
-    subgraph Consensus Engine
-        CE[Consensus Engine]
-        Calibrator[Calibrator & Anomaly Detector]
-        Memory[Memory Store & Reputations]
-    end
-
-    Synth --> A_News & A_Social & A_Reddit & A_Research & A_Macro & A_Onchain & A_Market
-    A_News & A_Social & A_Reddit & A_Research & A_Macro & A_Onchain & A_Market -->|Individual Forecasts| CE
-    CE --> Calibrator
-    Calibrator -->|Consensus Probability| Memory
-    Memory --> API[Public REST API]
+```bash
+forecast server
 ```
 
----
+The default local URLs are:
 
-## 🤖 LLM Providers & Automatic Fallback Chain
+- API: `http://localhost:30000`
+- OpenAPI UI: `http://localhost:30000/docs`
+- Health check: `http://localhost:30000/healthz`
 
-Forecast AI features an enterprise-grade LLM provider routing and automatic fallback system:
+Run a one-shot forecast:
 
-- **Default Pair**: Primary **OpenAI** (`gpt-4o`) paired with **Google Gemini** (`gemini-flash-latest`).
-- **Automatic Fallback Chain**: If the primary provider encounters rate limits (HTTP 429), quota exhaustion (HTTP 429/402), or server errors (HTTP 500+), the system automatically retries across backup providers without failing the forecast.
-- **Supported Providers**: OpenAI, Google Gemini, Anthropic Claude, OpenRouter, and local Ollama.
+```bash
+forecast predict "Will the Federal Reserve cut rates before the end of the year?"
+```
 
----
+`forecast run` starts both the API server and the continuous market-watching loop. The loop can make recurring LLM calls, so review your provider costs before using it.
 
-## 🖥️ Full CLI Command Reference
+## Environment variables
 
-All commands are implemented in `forecast_ai/cli/main.py`:
+See [`.env.example`](.env.example) for the complete template.
 
-| Command | Arguments / Flags | Description |
-| :--- | :--- | :--- |
-| `forecast setup` | None | Runs the interactive first-time setup wizard. |
-| `forecast predict` | `<query>` `--market-id <id>` | Runs a one-shot multi-agent consensus forecast for a query. |
-| `forecast run` | `--category <cat>` | Launches surveillance watching loops and the FastAPI server. |
-| `forecast watch` | `--category <cat>` | Runs standalone market surveillance without launching the API server. |
-| `forecast sources` | None | Lists all registered data sources (Tavily, FactsAI, Reddit, News, etc.). |
-| `forecast agents` | None | Displays status (ENABLED/DISABLED), weights, and providers for all 7 agents. |
-| `forecast providers` | None | Lists configured LLM providers. |
-| `forecast server` | None | Starts the FastAPI HTTP server manually on host/port. |
+The important variables are:
 
----
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, or `OPENROUTER_API_KEY` | One provider, unless using Ollama | Agent reasoning |
+| `TAVILY_API_KEY` + `TAVILY_ENABLED=true` | No | Live web research |
+| `FACTSAI_API_KEY` + `FACTSAI_ENABLED=true` | No | Deep research and citations |
+| `SERVER_API_KEY` | Recommended for public deployments | Protects API endpoints using `X-API-Key` or Bearer auth |
+| `CORS_ALLOW_ORIGINS` | No | Comma-separated browser origins; defaults to `*` |
+| `MEMORY_STORE_DIR` | No | Persistent forecast and reputation storage |
+| `PUBLIC_RATE_LIMIT_PER_HOUR` | No | Per-IP limit when no server API key is configured |
 
-## 🛡 License
+Kalshi and Polymarket market discovery use public read-only endpoints and do not require trading credentials.
 
-Forecast AI is open-source software licensed under the **Apache 2.0 License**.
+When `SERVER_API_KEY` is blank, market and prediction endpoints use the
+per-IP rate limit. History, statistics, configuration, and
+reputation-calibration endpoints stay disabled until a server key is set.
+Client-supplied model overrides also require authenticated access so public
+callers cannot select a more expensive model on the operator's account.
+
+## REST API examples
+
+Browse markets:
+
+```bash
+curl "http://localhost:30000/markets/browse?venue=all&category=Politics&page_size=10"
+```
+
+Search markets:
+
+```bash
+curl "http://localhost:30000/markets/search?q=bitcoin&limit=10"
+```
+
+Analyze a selected market:
+
+```bash
+curl -X POST "http://localhost:30000/predict" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_SERVER_API_KEY" \
+  -d '{
+    "question": "Will Bitcoin trade above the selected strike at expiry?",
+    "market_id": "MARKET_ID_OR_SLUG",
+    "venue": "kalshi"
+  }'
+```
+
+The response includes the consensus probability, confidence, recommendation, market context, reasoning trace, and a structured breakdown for every agent.
+
+## Docker
+
+```bash
+docker build -t forecast-ai .
+docker run --rm -p 30000:30000 --env-file .env forecast-ai
+```
+
+For persistent memory:
+
+```bash
+docker run --rm -p 30000:30000 \
+  --env-file .env \
+  -e MEMORY_STORE_DIR=/data/memory \
+  -v forecast-ai-data:/data \
+  forecast-ai
+```
+
+## Railway and Render
+
+The repository includes `Dockerfile`, `railway.json`, `render.yaml`, `Procfile`, and a dynamic-port `start.sh`.
+
+For Railway:
+
+1. Create a service from this GitHub repository.
+2. Add at least one LLM provider key.
+3. Set `SERVER_API_KEY` when exposing the API publicly.
+4. Optionally attach a volume at `/data` and set `MEMORY_STORE_DIR=/data/memory`.
+5. Deploy and verify `/healthz`.
+
+See [Deployment](docs/deployment.md) for more detail.
+
+## FactsAI, Tavily, and costs
+
+Forecast AI never requires FactsAI or Tavily. They are optional and disabled by default.
+
+The optional spend guard uses estimated cost per call, not provider billing data. Enable it only if you want a local circuit breaker:
+
+```env
+LLM_SPEND_GUARD_ENABLED=true
+DAILY_LLM_BUDGET_USD=10
+MONTHLY_LLM_BUDGET_USD=50
+```
+
+## Robinhood scope
+
+Forecast AI can format a forecast as a recommendation for hand-off to a user's separately authenticated Robinhood Trading MCP connection.
+
+This project does not:
+
+- collect Robinhood credentials;
+- connect Robinhood accounts inside this backend;
+- claim that Kalshi is a complete mirror of Robinhood Predict;
+- guarantee that Robinhood MCP supports prediction-market contracts;
+- execute trades automatically.
+
+Review Robinhood's current documentation and disclosures before using an AI agent for trading.
+
+## Development
+
+Install development dependencies and run tests:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+```
+
+Paid APIs are mocked in the test suite. Live public market checks are opt-in through `forecast doctor`.
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Agents](docs/agents.md)
+- [Providers](docs/providers.md)
+- [Sources](docs/sources.md)
+- [Kalshi](docs/kalshi.md)
+- [Polymarket](docs/polymarket.md)
+- [FactsAI](docs/facts_ai.md)
+- [Robinhood Agentic hand-off](docs/robinhood_agentic.md)
+- [Memory](docs/memory.md)
+- [Consensus](docs/consensus.md)
+
+## License
+
+Forecast AI is distributed under the MIT License. See [LICENSE](LICENSE).

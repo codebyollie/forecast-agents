@@ -1,7 +1,7 @@
 """
 Watch Pipeline.
 
-Regularly monitors active prediction markets and updates public feed & forecasts.
+Regularly monitors active prediction markets and stores forecasts.
 """
 
 import asyncio

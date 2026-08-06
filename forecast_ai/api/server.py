@@ -4,6 +4,7 @@ FastAPI Server for Forecast AI.
 
 import asyncio
 import logging
+import os
 from typing import Optional
 import uvicorn
 from fastapi import FastAPI
@@ -12,6 +13,7 @@ from . import routes
 from ..pipelines.forecast import ForecastPipeline
 from ..config import ForecastConfig
 from ..config_store import ConfigStore
+from .. import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +21,20 @@ class ApiServer:
     def __init__(self, config: ForecastConfig, pipeline: ForecastPipeline):
         self.config = config
         self.pipeline = pipeline
-        self.app = FastAPI(title="Forecast AI API", version="0.2.0")
+        self.app = FastAPI(title="Forecast AI API", version=__version__)
         self._server_task: Optional[asyncio.Task] = None
         self._init_app()
 
     def _init_app(self):
-        # Enable CORS
+        # The website normally calls this API server-side, but direct clients
+        # still need a controlled CORS policy when the API is exposed publicly.
+        configured_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+        allow_origins = [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+        if not allow_origins:
+            allow_origins = ["*"]
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=allow_origins,
             allow_methods=["*"],
             allow_headers=["*"],
         )
@@ -38,7 +45,7 @@ class ApiServer:
 
     async def start(self):
         """
-        Starts the API server asynchronously and launches the public feed update loop.
+        Starts the API server asynchronously.
         """
         host = self.config.server.host
         port = self.config.server.port

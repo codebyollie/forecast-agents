@@ -1,35 +1,29 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=69.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "forecast-ai"
-version = "0.1.0"
-description = "Open-Source Multi-Agent Intelligence Infrastructure for Prediction Markets"
+version = "1.0.0"
+description = "Self-hosted multi-agent intelligence infrastructure for prediction markets"
+readme = "README.md"
 requires-python = ">=3.10"
+license = { file = "LICENSE" }
 dependencies = [
     "click>=8.0",
     "pyyaml>=6.0",
-    "fastapi",
-    "uvicorn[standard]",
-    "httpx",
-    "tiktoken",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
     "pydantic>=2.0",
+    "python-dotenv>=1.0",
+    "websockets>=13.0",
 ]
 
 [project.optional-dependencies]
-# Real-time WebSocket subscriptions
-ws = [
-    "websockets",
-]
-# Onchain integration
-onchain = [
-    "eth-account",
-]
-# Development and tests
 dev = [
-    "pytest",
-    "pytest-asyncio",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
 ]
 
 [project.scripts]
@@ -38,6 +32,10 @@ forecast = "forecast_ai.cli.main:forecast"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["forecast_ai*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120

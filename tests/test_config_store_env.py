@@ -10,14 +10,12 @@ def test_config_store_env_overrides(tmp_path, monkeypatch):
     # Set mock environment variables
     monkeypatch.setenv("OPENAI_API_KEY", "env_sk_openai_test_123")
     monkeypatch.setenv("GEMINI_API_KEY", "env_gemini_test_key_456")
-    monkeypatch.setenv("KALSHI_API_KEY", "env_kalshi_key_789")
     monkeypatch.setenv("SERVER_PORT", "30005")
 
     cfg = cs.load_config()
 
     assert cfg.providers["openai"].api_key == "env_sk_openai_test_123"
     assert cfg.providers["gemini"].api_key == "env_gemini_test_key_456"
-    assert cfg.kalshi.api_key == "env_kalshi_key_789"
     assert cfg.server.port == 30005
 
 def test_default_and_fallback_provider_defaults():

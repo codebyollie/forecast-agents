@@ -22,7 +22,7 @@ class ForecastPipeline:
     def __init__(self, config: ForecastConfig, memory_store: Optional[MemoryStore] = None):
         self.config = config
         self.provider_manager = ProviderManager(config)
-        self.source_manager = SourceManager(config, provider_manager=self.provider_manager)
+        self.source_manager = SourceManager(config)
         self.consensus_engine = ConsensusEngine(config)
         self.memory_store = memory_store or MemoryStore(config)
         self._init_agents()
@@ -58,15 +58,18 @@ class ForecastPipeline:
         self,
         question: str,
         market_id: str = "custom_market",
-        is_public_feed: bool = False,
         model_override: Optional[str] = None,
-        facts_key: Optional[str] = None
+        venue: Optional[str] = None,
     ) -> ForecastResult:
         """
         Orchestrates full forecasting process.
         """
         # 1. Gather evidence
-        evidence = await self.source_manager.gather_evidence(question)
+        evidence = await self.source_manager.gather_evidence(
+            question,
+            market_id=market_id,
+            venue=venue,
+        )
 
         # 2. Query active agents in parallel
         active_agents = list(self.agents.values())
@@ -74,8 +77,8 @@ class ForecastPipeline:
 
         agent_source_map = {
             "news": ["news", "rss", "facts_ai", "tavily"],
-            "social": ["twitter", "social", "reddit", "rss"],
-            "reddit": ["reddit", "social"],
+            "social": ["twitter", "social"],
+            "reddit": ["reddit"],
             "research": ["facts_ai", "arxiv", "research", "tavily"],
             "macro": ["macro", "cme", "fred", "news", "rss", "tavily"],
             "onchain": ["blockchain", "onchain", "polygonscan"],
@@ -85,10 +88,14 @@ class ForecastPipeline:
         async def _query_agent(agent):
             allowed = agent_source_map.get(agent.name.lower(), [agent.name.lower()])
             agent_evidence = [e for e in evidence if any(s in e.source_name.lower() for s in allowed)]
-            if not agent_evidence:
+            if not agent_evidence and agent.name.lower() not in ("social", "reddit"):
                 agent_evidence = evidence
             try:
-                return await agent.forecast(question, agent_evidence, is_public_feed=is_public_feed, model_override=model_override, facts_key=facts_key)
+                return await agent.forecast(
+                    question,
+                    agent_evidence,
+                    model_override=model_override,
+                )
             except ProviderError as pe:
                 logger.error(f"[ForecastPipeline] Agent '{agent.name}' failed after provider fallbacks: {pe}")
                 return None
@@ -108,10 +115,23 @@ class ForecastPipeline:
         result = await self.consensus_engine.aggregate_predictions(market_id, predictions, reputations)
         
         # 4. Attach model_used metadata reflecting reality
-        result.metadata["model_used"] = model_override or getattr(self.config, "default_model", "gpt-4o")
+        default_provider = self.config.providers.get(self.config.default_provider)
+        result.metadata["model_used"] = (
+            model_override
+            or (default_provider.model_id if default_provider else self.config.default_provider)
+        )
+        result.metadata["market_context"] = [
+            {
+                "source": item.source_name,
+                "title": item.title,
+                "url": item.url,
+                "metadata": item.metadata,
+            }
+            for item in evidence
+            if item.source_name in ("kalshi", "polymarket")
+        ]
 
-        # 5. Save to Memory (skip saving private forecast store if public feed, handled separately)
-        if not is_public_feed:
-            self.memory_store.save_forecast(result)
+        # 5. Save to the self-hosted memory store.
+        self.memory_store.save_forecast(result)
 
         return result

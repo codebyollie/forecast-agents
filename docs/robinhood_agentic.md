@@ -1,25 +1,36 @@
-# 🤖 Robinhood Agentic Trading MCP Integration
+# Robinhood Agentic Trading MCP Hand-off
 
-## Architecture & Security Boundary
+Forecast AI includes a recommendation formatter for user-controlled hand-off to Robinhood's Trading MCP.
 
-Forecast AI serves as an **open-source reasoning and consensus forecasting layer**. It does **not** store private user credentials, session tokens, or trade execution keys server-side.
+MCP endpoint:
 
-Execution of trades based on Forecast AI consensus probabilities is managed using the official **Robinhood Agentic Trading MCP** protocol.
+```text
+https://agent.robinhood.com/mcp/trading
+```
 
-### MCP Endpoint
-`https://agent.robinhood.com/mcp/trading`
+## Boundary
 
-## How It Works
+Forecast AI can:
 
-1. **Forecast & Consensus Generation**: Forecast AI orchestrates multi-agent intelligence (News, Social, Reddit, Research, Macro, On-chain, and Market Agents) to produce calibrated event probability estimates and confidence scores.
-2. **Structured Recommendation Formatting**: The `RobinhoodRecommendationEngine` formats the forecast into a `RobinhoodTradeRecommendation` containing target contracts, action (`BUY_YES`, `BUY_NO`, `HOLD`), recommended allocation percentage, and rationale.
-3. **User Agent Hand-off**: The user presents the recommendation to their personal, authenticated AI client (Claude Code, Claude Desktop, ChatGPT, Cursor, Grok, etc.) connected to the Robinhood Agentic Trading MCP server.
-4. **Account-Scoped Execution**: The trade is executed inside the user's personal Robinhood Agentic account under their explicit control.
+1. create a consensus forecast;
+2. format an action-oriented recommendation;
+3. print that recommendation through `forecast recommend`.
 
-## CLI Usage
+Forecast AI does not:
 
-Generate an executable recommendation directly from the command line:
+- request or store Robinhood credentials;
+- authenticate a Robinhood account;
+- embed a Robinhood login flow;
+- call MCP tools from this backend;
+- guarantee support for prediction-market contracts;
+- execute a trade.
+
+The user separately connects a supported AI client to Robinhood, reviews Robinhood's disclosures, authenticates directly with Robinhood, and controls any resulting action.
+
+## CLI
 
 ```bash
-forecast recommend "Will the Fed lower interest rates in the next FOMC meeting?"
+forecast recommend "Will the Federal Reserve cut rates at the next meeting?"
 ```
+
+Always verify current Robinhood documentation, product availability, account eligibility, and supported asset types.
