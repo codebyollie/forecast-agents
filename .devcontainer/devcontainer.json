@@ -1,7 +1,7 @@
 {
   "name": "Forecast AI Agents",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
-  "postCreateCommand": "pip install -e \".[ws,dev]\"",
+  "postCreateCommand": "pip install -e \".[dev]\"",
   "forwardPorts": [30000],
   "portsAttributes": {
     "30000": {
